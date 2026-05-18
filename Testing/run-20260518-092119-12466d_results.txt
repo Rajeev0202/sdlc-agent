@@ -1,0 +1,40 @@
+
+=================================== ERRORS ====================================
+_ ERROR collecting tests/test_audit_all_payment_limit_changes_made_by_retail_customers_within_the_last_12_months.py _
+ImportError while importing test module 'C:\Users\rajeevranjan.jha\OneDrive - HCL Technologies Ltd\Desktop\SDLC_Agent\tests\test_audit_all_payment_limit_changes_made_by_retail_customers_within_the_last_12_months.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_audit_all_payment_limit_changes_made_by_retail_customers_within_the_last_12_months.py:3: in <module>
+    from src.payment_limits_management import app
+E   ImportError: cannot import name 'app' from 'src.payment_limits_management' (C:\Users\rajeevranjan.jha\OneDrive - HCL Technologies Ltd\Desktop\SDLC_Agent\src\payment_limits_management.py)
+_ ERROR collecting tests/test_request_an_increase_to_my_daily_or_per_transaction_payment_limit_subject_to_risk_checks.py _
+ImportError while importing test module 'C:\Users\rajeevranjan.jha\OneDrive - HCL Technologies Ltd\Desktop\SDLC_Agent\tests\test_request_an_increase_to_my_daily_or_per_transaction_payment_limit_subject_to_risk_checks.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_request_an_increase_to_my_daily_or_per_transaction_payment_limit_subject_to_risk_checks.py:3: in <module>
+    from src.payment_limits_management import app
+E   ImportError: cannot import name 'app' from 'src.payment_limits_management' (C:\Users\rajeevranjan.jha\OneDrive - HCL Technologies Ltd\Desktop\SDLC_Agent\src\payment_limits_management.py)
+_ ERROR collecting tests/test_view_my_current_daily_and_per_transaction_payment_limits_in_the_mobile_app.py _
+ImportError while importing test module 'C:\Users\rajeevranjan.jha\OneDrive - HCL Technologies Ltd\Desktop\SDLC_Agent\tests\test_view_my_current_daily_and_per_transaction_payment_limits_in_the_mobile_app.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_view_my_current_daily_and_per_transaction_payment_limits_in_the_mobile_app.py:3: in <module>
+    from src.payment_limits_management import app
+E   ImportError: cannot import name 'app' from 'src.payment_limits_management' (C:\Users\rajeevranjan.jha\OneDrive - HCL Technologies Ltd\Desktop\SDLC_Agent\src\payment_limits_management.py)
+=========================== short test summary info ===========================
+ERROR tests/test_audit_all_payment_limit_changes_made_by_retail_customers_within_the_last_12_months.py
+ERROR tests/test_request_an_increase_to_my_daily_or_per_transaction_payment_limit_subject_to_risk_checks.py
+ERROR tests/test_view_my_current_daily_and_per_transaction_payment_limits_in_the_mobile_app.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!
+3 errors in 0.93s
+
+--- STDERR ---

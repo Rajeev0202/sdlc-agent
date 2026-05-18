@@ -1,0 +1,104 @@
+{
+  "pr_number": 1,
+  "findings": [
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 21,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 34,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 45,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No test files in PR — Stage 5 must add coverage before merge."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 14,
+      "severity": "medium",
+      "category": "standards",
+      "message": "Public function view_my_current_daily_and_per_transaction_payment_limits_in_the_mobile_app lacks a docstring."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 27,
+      "severity": "medium",
+      "category": "standards",
+      "message": "Public function request_an_increase_to_my_daily_or_per_transaction_payment_limit_subject_to_risk_checks lacks a docstring."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 42,
+      "severity": "medium",
+      "category": "standards",
+      "message": "Public function audit_all_payment_limit_changes_made_by_retail_customers_within_the_last_12_months lacks a docstring."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 14,
+      "severity": "high",
+      "category": "security",
+      "message": "No authentication or authorization check on endpoint; any caller can access customer payment limits."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 27,
+      "severity": "high",
+      "category": "security",
+      "message": "State-changing operation exposed as GET; should be POST/PUT. Also missing authn/authz and audit logging."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 27,
+      "severity": "high",
+      "category": "compliance",
+      "message": "Acceptance criteria require immutable audit logging of limit changes but no audit log is emitted."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 42,
+      "severity": "high",
+      "category": "security",
+      "message": "No authentication or role-based authorization to restrict access to compliance officers only."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 42,
+      "severity": "medium",
+      "category": "security",
+      "message": "No input validation on query parameters (date range, customer filter)."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 5,
+      "severity": "low",
+      "category": "standards",
+      "message": "Module imports requests and os but neither is used; remove unused imports."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No unit or integration tests provided for any of the three endpoints."
+    }
+  ],
+  "verdict": "fail"
+}

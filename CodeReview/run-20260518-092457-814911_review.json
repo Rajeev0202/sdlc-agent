@@ -1,0 +1,97 @@
+{
+  "pr_number": 1,
+  "findings": [
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 24,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 28,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 29,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 66,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 71,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 72,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 98,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 99,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 100,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 102,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 152,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 164,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No test files in PR — Stage 5 must add coverage before merge."
+    }
+  ],
+  "verdict": "pass"
+}

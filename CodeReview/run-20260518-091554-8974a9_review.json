@@ -1,0 +1,118 @@
+{
+  "pr_number": 1,
+  "findings": [
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 80,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 83,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 84,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 111,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 112,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 113,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 132,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 176,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 177,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No test files in PR — Stage 5 must add coverage before merge."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 29,
+      "severity": "high",
+      "category": "security",
+      "message": "TLS verification is not explicitly enabled in requests.post() call to SSO validation endpoint. Add verify=True to ensure TLS certificate validation."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 95,
+      "severity": "medium",
+      "category": "logic",
+      "message": "requested_value allows float which could introduce floating-point precision issues for monetary amounts. Consider restricting to int (pence) or Decimal."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 131,
+      "severity": "medium",
+      "category": "logic",
+      "message": "Date range validation does not check that date_from <= date_to, allowing negative ranges."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No unit tests provided for any of the three endpoints or helper functions."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 108,
+      "severity": "medium",
+      "category": "logic",
+      "message": "Audit record is logged but new limit is not actually persisted (TODO). Returning 'approved' with no state change is a logic bug if deployed as-is."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 65,
+      "severity": "info",
+      "category": "standards",
+      "message": "get_payment_limits is a read-only endpoint but does not audit access. Consider audit-logging access to sensitive financial data for compliance."
+    }
+  ],
+  "verdict": "fail"
+}

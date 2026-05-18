@@ -1,0 +1,54 @@
+{
+  "name": "sdlc-copilot-bridge",
+  "displayName": "SDLC Copilot Bridge",
+  "description": "Exposes the VS Code Language Model API on localhost so the SDLC Agent (Python) can use GitHub Copilot for demo/RFP story generation.",
+  "version": "0.2.0",
+  "private": true,
+  "publisher": "natwest-sdlc-demo",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sdlcCopilotBridge.restart",
+        "title": "SDLC Bridge: Restart HTTP server"
+      },
+      {
+        "command": "sdlcCopilotBridge.status",
+        "title": "SDLC Bridge: Show status"
+      },
+      {
+        "command": "sdlcCopilotBridge.authorize",
+        "title": "SDLC Bridge: Authorize Copilot"
+      }
+    ],
+    "configuration": {
+      "title": "SDLC Copilot Bridge",
+      "properties": {
+        "sdlcCopilotBridge.port": {
+          "type": "number",
+          "default": 6789,
+          "description": "Loopback port the bridge listens on."
+        },
+        "sdlcCopilotBridge.modelFamily": {
+          "type": "string",
+          "default": "claude-3.5-sonnet",
+          "description": "Preferred Copilot model family (claude-3.5-sonnet, gpt-4o, etc.)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.4.0"
+  }
+}

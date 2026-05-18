@@ -1,0 +1,132 @@
+{
+  "pr_number": 1,
+  "findings": [
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 17,
+      "severity": "low",
+      "category": "standards",
+      "message": "Use the logger, not print()."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 18,
+      "severity": "high",
+      "category": "security",
+      "message": "TLS verification disabled."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 28,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 40,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 51,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No test files in PR — Stage 5 must add coverage before merge."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 14,
+      "severity": "critical",
+      "category": "security",
+      "message": "Hard-coded credential (DOWNSTREAM_TOKEN). Must be loaded from a secrets manager or environment variable."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 17,
+      "severity": "high",
+      "category": "standards",
+      "message": "Use logging module instead of print()."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 18,
+      "severity": "critical",
+      "category": "security",
+      "message": "TLS verification disabled (verify=False). Must remain enabled."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 16,
+      "severity": "medium",
+      "category": "standards",
+      "message": "Public function 'call_downstream' missing docstring."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 20,
+      "severity": "high",
+      "category": "security",
+      "message": "No authentication or authorisation check at HTTP boundary for freeze endpoint."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 34,
+      "severity": "high",
+      "category": "security",
+      "message": "No authentication or authorisation check at HTTP boundary for unfreeze endpoint."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 47,
+      "severity": "high",
+      "category": "security",
+      "message": "No authentication or authorisation check at HTTP boundary for audit search endpoint."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 20,
+      "severity": "medium",
+      "category": "logic",
+      "message": "State-changing freeze action uses GET method; should be POST/PUT."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 34,
+      "severity": "medium",
+      "category": "logic",
+      "message": "State-changing unfreeze action uses GET method; should be POST/PUT."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 20,
+      "severity": "high",
+      "category": "compliance",
+      "message": "No audit logging of freeze action as required by acceptance criteria."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 34,
+      "severity": "high",
+      "category": "compliance",
+      "message": "No audit logging of unfreeze action as required by acceptance criteria."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No unit tests provided for any of the three endpoints."
+    }
+  ],
+  "verdict": "fail"
+}

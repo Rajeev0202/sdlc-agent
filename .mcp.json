@@ -1,0 +1,30 @@
+{
+  "_comment": "Phase 1 ships with all integrations mocked inside sdlc_agent/integrations/. When you are ready for real systems, uncomment the matching MCP server block and set the env vars. Claude Code reads this file automatically from the project root.",
+  "mcpServers": {
+    "_jira_example": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-jira"],
+      "env": {
+        "JIRA_URL": "https://natwest.atlassian.net",
+        "JIRA_EMAIL": "${JIRA_EMAIL}",
+        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+      }
+    },
+    "_confluence_example": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-confluence"],
+      "env": {
+        "CONFLUENCE_URL": "https://natwest.atlassian.net/wiki",
+        "CONFLUENCE_EMAIL": "${JIRA_EMAIL}",
+        "CONFLUENCE_API_TOKEN": "${JIRA_API_TOKEN}"
+      }
+    },
+    "_github_example": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    }
+  }
+}

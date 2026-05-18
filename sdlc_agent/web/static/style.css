@@ -1,0 +1,94 @@
+:root {
+  --bg: #0f1117;
+  --panel: #1a1d27;
+  --panel-soft: #232735;
+  --text: #e6e8ed;
+  --muted: #8b91a3;
+  --accent: #5b9dff;
+  --ok: #3ecf8e;
+  --warn: #f5a524;
+  --bad: #ff6b6b;
+  --border: #2a2f3e;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  line-height: 1.5;
+}
+header { padding: 20px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+h1 { margin: 0; font-size: 22px; font-weight: 600; }
+.tag { font-size: 12px; padding: 2px 8px; background: var(--panel-soft); border-radius: 4px; color: var(--muted); margin-left: 8px; font-weight: 500; }
+.run-id { font-size: 13px; color: var(--muted); }
+.run-id code { background: var(--panel); padding: 4px 8px; border-radius: 4px; color: var(--text); }
+
+main { max-width: 980px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+
+.stage {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  padding: 20px 24px; transition: opacity .2s;
+}
+.stage.locked { opacity: 0.55; }
+.stage > header { padding: 0; border: none; align-items: center; }
+.stage h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.stage .desc { color: var(--muted); font-size: 14px; margin: 8px 0 14px; }
+
+.status {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 3px 10px; border-radius: 12px; font-weight: 600;
+}
+.status.pending { background: var(--panel-soft); color: var(--muted); }
+.status.running { background: rgba(91,157,255,0.15); color: var(--accent); }
+.status.done    { background: rgba(62,207,142,0.15); color: var(--ok); }
+.status.fail    { background: rgba(255,107,107,0.15); color: var(--bad); }
+
+label { display: block; margin: 8px 0; font-size: 13px; color: var(--muted); }
+select, input[type="text"], input:not([type]), textarea {
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 5px; padding: 7px 10px; font: inherit; width: 100%;
+  margin-top: 4px;
+}
+textarea { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; }
+details summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 6px 0; }
+
+button {
+  background: var(--accent); color: white; border: 0;
+  padding: 9px 18px; border-radius: 5px; font: inherit; font-weight: 600;
+  cursor: pointer; margin-top: 10px;
+}
+button:hover:not(:disabled) { filter: brightness(1.1); }
+button:disabled { background: var(--panel-soft); color: var(--muted); cursor: not-allowed; }
+button.approve { background: var(--ok); }
+
+.output { margin-top: 14px; font-size: 13px; }
+.output:empty { display: none; }
+.output pre {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+  padding: 10px 12px; max-height: 320px; overflow: auto;
+  font-size: 12px; line-height: 1.5;
+}
+.output table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+.output th, .output td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.output th { color: var(--muted); font-weight: 500; }
+.chip { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--panel-soft); margin-right: 4px; }
+.chip.high, .chip.critical { background: rgba(255,107,107,0.2); color: var(--bad); }
+.chip.medium { background: rgba(245,165,36,0.2); color: var(--warn); }
+.chip.low, .chip.info { background: rgba(91,157,255,0.15); color: var(--accent); }
+.chip.chip-ok { background: rgba(91,191,116,0.2); color: #5bbf74; font-weight: 600; }
+.chip.chip-warn { background: rgba(245,165,36,0.2); color: var(--warn); font-weight: 600; }
+.file-link { display: inline-block; margin: 2px 6px 2px 0; font-size: 12px;
+  background: var(--panel-soft); padding: 3px 8px; border-radius: 4px; color: var(--accent); text-decoration: none; }
+.file-link:hover { background: var(--border); }
+
+.gate {
+  margin-top: 18px; padding: 14px 16px; border: 1px dashed var(--warn);
+  background: rgba(245,165,36,0.08); border-radius: 6px;
+}
+.gate strong { color: var(--warn); }
+
+.verdict-go, .verdict-nogo {
+  display: inline-block; font-weight: 700; font-size: 16px;
+  padding: 6px 16px; border-radius: 6px; margin: 6px 0;
+}
+.verdict-go { background: rgba(62,207,142,0.15); color: var(--ok); }
+.verdict-nogo { background: rgba(255,107,107,0.15); color: var(--bad); }

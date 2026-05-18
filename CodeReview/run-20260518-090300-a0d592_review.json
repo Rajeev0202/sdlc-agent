@@ -1,0 +1,125 @@
+{
+  "pr_number": 1,
+  "findings": [
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 20,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 26,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 41,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 71,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 102,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 121,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 122,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 135,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No test files in PR — Stage 5 must add coverage before merge."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 63,
+      "severity": "medium",
+      "category": "logic",
+      "message": "Card ownership not validated — customer_id and card data are taken from request body without verifying the authenticated user owns the card, enabling IDOR."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 61,
+      "severity": "medium",
+      "category": "security",
+      "message": "Input validation missing: card_id and customer_id are not checked for presence or format before use."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 89,
+      "severity": "medium",
+      "category": "security",
+      "message": "Input validation missing: card_id, customer_id, and step_up_token not validated for presence or format."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 113,
+      "severity": "medium",
+      "category": "security",
+      "message": "Input validation missing on query parameters (date_from, date_to) — no format or range validation enforcing the 24-month limit."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 126,
+      "severity": "low",
+      "category": "security",
+      "message": "Running with ssl_context='adhoc' generates a self-signed cert; production should use a proper TLS certificate."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 110,
+      "severity": "medium",
+      "category": "logic",
+      "message": "Compliance officer check is hard-coded to False, meaning the endpoint is permanently inaccessible — ensure RBAC integration is completed before release."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No unit or integration tests provided for any endpoint in this PR."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 44,
+      "severity": "low",
+      "category": "compliance",
+      "message": "Audit log is only written to the application logger; no actual persistence to an immutable, tamper-evident store — 7-year retention AC is unmet."
+    }
+  ],
+  "verdict": "pass"
+}

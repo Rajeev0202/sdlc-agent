@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "claude-sonnet-4-5",
+  "permissions": {
+    "allow": [
+      "Read(./**)",
+      "Write(./runs/**)",
+      "Write(./src/**)",
+      "Write(./tests/**)",
+      "Edit(./src/**)",
+      "Edit(./tests/**)",
+      "Edit(./runs/**)",
+      "Bash(python -m sdlc_agent.cli:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(pytest:*)",
+      "Bash(mkdir:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)"
+    ],
+    "deny": [
+      "Write(./sdlc_agent/models.py)",
+      "Edit(./sdlc_agent/models.py)",
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rm -rf:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)"
+    ]
+  },
+  "env": {
+    "SDLC_AGENT_RUNS_DIR": "./runs"
+  }
+}
