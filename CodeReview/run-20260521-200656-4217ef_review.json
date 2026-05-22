@@ -1,0 +1,34 @@
+{
+  "pr_number": 1,
+  "findings": [
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 24,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 38,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": 52,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/card_freeze_unfreeze_mobile.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No test files in PR — Stage 5 must add coverage before merge."
+    }
+  ],
+  "verdict": "pass"
+}

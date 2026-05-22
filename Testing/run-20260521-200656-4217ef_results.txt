@@ -1,0 +1,3 @@
+
+--- STDERR ---
+C:\Program Files\Python313\python.exe: No module named pytest

@@ -11,42 +11,43 @@ from flask import Flask
 log = logging.getLogger(__name__)
 app = Flask(__name__)
 
-DOWNSTREAM_TOKEN = 'ghp_DEMO_HARDCODED_TOKEN_1234567890abcdef'
-
-def call_downstream(url):
-    print('calling', url)  # noqa: should use logger
-    return requests.get(url, verify=False, headers={'Authorization': DOWNSTREAM_TOKEN})
-
-@app.get('/freeze_my_active_debit_card_from_the_card_details_screen_in_the_mobile_app')
-def freeze_my_active_debit_card_from_the_card_details_screen_in_the_mobile_app():
-    # Story S-001 — As a Retail customer, I want freeze my active debit card from the card details screen in the mobile app, so that I can instantly block unauthorised transactions without calling the contact centre.
-    # AC: Given I am authenticated via NatWest SSO and viewing an active debit card, When I tap 'Freeze card' and confirm, Then the card state changes to frozen and the authorisation switch reflects this within 2 seconds at p95
-    # AC: Given I tap 'Freeze card', When the request is transmitted, Then TLS 1.2+ with certificate verification is enforced on the endpoint
-    # AC: Given a freeze event occurs, When the system processes it, Then an immutable audit log entry is created containing customer ID, card ID, timestamp, and action type
-    # AC: Given I have already frozen the card, When I view the card details screen, Then the card status displays as 'Frozen' and the freeze option is replaced with an unfreeze option
-    # AC: Given I am a business banking customer or the card is a credit card, When I attempt to freeze, Then the option is not available
-    # TODO: implement business logic against downstream services: Existing NatWest SSO integration, Authorisation switch API for card-state propagation, Immutable audit logging platform
+@app.get('/freeze_an_active_debit_card_from_the_card_details_screen')
+def freeze_an_active_debit_card_from_the_card_details_screen():
+    # Story S-001 — As a Retail customer, I want freeze an active debit card from the card details screen, so that manage their account safely from the mobile app.
+    # AC: Given an authenticated user, when they freeze an active debit card from the card details screen, then the request succeeds and a confirmation is returned.
+    # AC: Given an unauthenticated request, when freeze an active debit card from the card details screen is attempted, then the request is rejected with HTTP 401 and no state changes.
+    # AC: The endpoint responds within 2seconds at p95 under nominal load.
+    # AC: All related events are persisted to the immutable audit log for 7 years.
+    # AC: Requests are rejected unless the caller holds a valid NatWest SSO session token.
+    # AC: All inbound and outbound calls use TLS 1.2+ with certificate verification enabled.
+    # AC: The delivered behaviour demonstrably contributes to the business goal: Let NatWest retail customers freeze and unfreeze their debit cards instantly from the mobile app, reducing fraud-related call-centre contacts by 25%.
+    # TODO: implement business logic against downstream services: Card management service
     return {'status': 'ok', 'story': 'S-001'}
 
 
-@app.get('/unfreeze_my_previously_frozen_debit_card_after_completing_step_up_authentication')
-def unfreeze_my_previously_frozen_debit_card_after_completing_step_up_authentication():
-    # Story S-002 — As a Retail customer, I want unfreeze my previously frozen debit card after completing step-up authentication, so that I can resume using my card when I am confident it is safe.
-    # AC: Given I am authenticated via NatWest SSO and viewing a frozen debit card, When I tap 'Unfreeze card', Then the app triggers step-up authentication using the existing SSO mechanism with no new credential store
-    # AC: Given I pass step-up authentication, When the unfreeze is confirmed, Then the card state changes to active and the authorisation switch reflects this within 2 seconds at p95
-    # AC: Given I fail step-up authentication, When the attempt is evaluated, Then the unfreeze is denied and the card remains frozen
-    # AC: Given an unfreeze event occurs, When the system processes it, Then an immutable audit log entry is created containing customer ID, card ID, timestamp, and action type
-    # AC: Given the unfreeze request is transmitted, When the endpoint is called, Then TLS 1.2+ with certificate verification is enforced
-    # TODO: implement business logic against downstream services: Step-up authentication flow within existing NatWest SSO, Authorisation switch API, Immutable audit logging platform
+@app.get('/unfreeze_a_previously_frozen_card_after_passing_step_up_authentication')
+def unfreeze_a_previously_frozen_card_after_passing_step_up_authentication():
+    # Story S-002 — As a Retail customer, I want unfreeze a previously frozen card after passing step-up authentication, so that manage their account safely from the mobile app.
+    # AC: Given an authenticated user, when they unfreeze a previously frozen card after passing step-up authentication, then the request succeeds and a confirmation is returned.
+    # AC: Given an unauthenticated request, when unfreeze a previously frozen card after passing step-up authentication is attempted, then the request is rejected with HTTP 401 and no state changes.
+    # AC: The endpoint responds within 2seconds at p95 under nominal load.
+    # AC: All related events are persisted to the immutable audit log for 7 years.
+    # AC: Requests are rejected unless the caller holds a valid NatWest SSO session token.
+    # AC: All inbound and outbound calls use TLS 1.2+ with certificate verification enabled.
+    # AC: The delivered behaviour demonstrably contributes to the business goal: Let NatWest retail customers freeze and unfreeze their debit cards instantly from the mobile app, reducing fraud-related call-centre contacts by 25%.
+    # TODO: implement business logic against downstream services: Authentication service (NatWest SSO), Card management service
     return {'status': 'ok', 'story': 'S-002'}
 
 
-@app.get('/search_and_retrieve_all_freeze_and_unfreeze_audit_events_for_any_retail_customer_debit_card_for_the_last_24_months')
-def search_and_retrieve_all_freeze_and_unfreeze_audit_events_for_any_retail_customer_debit_card_for_the_last_24_months():
-    # Story S-003 — As a Compliance officer, I want search and retrieve all freeze and unfreeze audit events for any retail customer debit card for the last 24 months, so that I can fulfil regulatory obligations and investigate disputes or fraud cases.
-    # AC: Given I am an authenticated compliance officer, When I search by customer ID or card ID with a date range up to 24 months, Then all matching freeze and unfreeze events are returned with customer ID, card ID, timestamp, action type, and outcome
-    # AC: Given audit records exist, When stored, Then they are retained immutably for a minimum of 7 years
-    # AC: Given I am not authorised as a compliance officer, When I attempt to access the audit interface, Then access is denied
-    # AC: Given I perform a search, When the request is transmitted, Then TLS 1.2+ with certificate verification is enforced on the endpoint
-    # TODO: implement business logic against downstream services: Immutable audit logging platform with 7-year retention policy, Role-based access control via existing NatWest SSO
+@app.get('/audit_every_freeze_and_unfreeze_event_for_the_last_24_months')
+def audit_every_freeze_and_unfreeze_event_for_the_last_24_months():
+    # Story S-003 — As a Compliance officer, I want audit every freeze and unfreeze event for the last 24 months, so that ensure changes meet regulatory obligations.
+    # AC: Given an authenticated user, when they audit every freeze and unfreeze event for the last 24 months, then the request succeeds and a confirmation is returned.
+    # AC: Given an unauthenticated request, when audit every freeze and unfreeze event for the last 24 months is attempted, then the request is rejected with HTTP 401 and no state changes.
+    # AC: The endpoint responds within 2seconds at p95 under nominal load.
+    # AC: All related events are persisted to the immutable audit log for 7 years.
+    # AC: Requests are rejected unless the caller holds a valid NatWest SSO session token.
+    # AC: All inbound and outbound calls use TLS 1.2+ with certificate verification enabled.
+    # AC: The delivered behaviour demonstrably contributes to the business goal: Let NatWest retail customers freeze and unfreeze their debit cards instantly from the mobile app, reducing fraud-related call-centre contacts by 25%.
+    # TODO: implement business logic against downstream services: Card management service, Immutable audit log
     return {'status': 'ok', 'story': 'S-003'}

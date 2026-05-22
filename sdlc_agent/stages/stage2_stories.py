@@ -7,9 +7,10 @@ sign them off without material edits.
 from __future__ import annotations
 
 import logging
+import os
 import re
 
-from ..integrations import MockClaudeClient, MockJiraClient
+from ..integrations import MockClaudeClient, MockJiraClient, JiraClient
 from ..models import RequirementBrief, StoryBacklog, UserStory
 
 logger = logging.getLogger(__name__)
@@ -169,10 +170,21 @@ def _generate_with_llm(
 def run(
     brief: RequirementBrief,
     *,
-    jira: MockJiraClient | None = None,
+    jira: object = None,
     claude: MockClaudeClient | None = None,
 ) -> StoryBacklog:
-    jira = jira or MockJiraClient()
+    # Accept either MockJiraClient or JiraClient
+    if jira is None:
+        if all(os.environ.get(k) for k in ("JIRA_URL", "JIRA_EMAIL", "JIRA_API_TOKEN", "JIRA_PROJECT_KEY")):
+            jira = JiraClient(
+                server_url=os.environ["JIRA_URL"],
+                email=os.environ["JIRA_EMAIL"],
+                api_token=os.environ["JIRA_API_TOKEN"],
+                project_key=os.environ["JIRA_PROJECT_KEY"],
+                auto_transition=os.environ.get("JIRA_AUTO_STATUS", "Ready for QA")  # Default to "Ready for QA"
+            )
+        else:
+            jira = MockJiraClient()
     claude = claude or MockClaudeClient()
     claude.complete("stage2_stories", {"title": brief.title})
 

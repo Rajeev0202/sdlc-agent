@@ -8,6 +8,7 @@ require Stage 3 to consume review findings; this is wired in for Phase 2/3).
 """
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from typing import Callable
 
@@ -16,6 +17,7 @@ from .integrations import (
     MockConfluenceClient,
     MockGitHubClient,
     MockJiraClient,
+    JiraClient,
 )
 from .models import PipelineResult, StoryBacklog
 from .stages import (
@@ -40,13 +42,26 @@ class Orchestrator:
         self,
         *,
         confluence: MockConfluenceClient | None = None,
-        jira: MockJiraClient | None = None,
+        jira: object = None,
         github: MockGitHubClient | None = None,
         claude: MockClaudeClient | None = None,
         max_remediation_attempts: int = 2,
     ) -> None:
         self.confluence = confluence or MockConfluenceClient()
-        self.jira = jira or MockJiraClient()
+        # Prefer real JiraClient if env vars are set, else fallback to mock
+        if jira is not None:
+            self.jira = jira
+        elif all(os.environ.get(k) for k in ("JIRA_URL", "JIRA_EMAIL", "JIRA_API_TOKEN", "JIRA_PROJECT_KEY")):
+            from .integrations import JiraClient
+            self.jira = JiraClient(
+                server_url=os.environ["JIRA_URL"],
+                email=os.environ["JIRA_EMAIL"],
+                api_token=os.environ["JIRA_API_TOKEN"],
+                project_key=os.environ["JIRA_PROJECT_KEY"],
+                auto_transition=os.environ.get("JIRA_AUTO_STATUS", "Ready for QA")
+            )
+        else:
+            self.jira = MockJiraClient()
         self.github = github or MockGitHubClient()
         self.claude = claude or MockClaudeClient()
         self.max_remediation_attempts = max_remediation_attempts

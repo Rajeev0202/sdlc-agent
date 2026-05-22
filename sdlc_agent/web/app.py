@@ -75,30 +75,45 @@ def index():
 @app.post("/api/stage1")
 def api_stage1():
     """Ingest a BRD picked from samples/ or uploaded inline as text."""
-    payload = request.get_json(force=True)
-    run_id = payload.get("run_id") or _new_run_id()
-    rd = _run_dir(run_id)
+    try:
+        payload = request.get_json(force=True)
+        print(f"[Stage 1] Received payload: {payload}")
 
-    if payload.get("brd_filename"):
-        src = SAMPLES_DIR / payload["brd_filename"]
-        if not src.exists():
-            return jsonify({"error": f"Unknown sample: {src.name}"}), 400
-        source_ref = str(src)
-    elif payload.get("brd_text"):
-        src = rd / "input_brd.md"
-        src.write_text(payload["brd_text"], encoding="utf-8")
-        source_ref = str(src)
-    else:
-        return jsonify({"error": "Provide brd_filename or brd_text"}), 400
+        run_id = payload.get("run_id") or _new_run_id()
+        rd = _run_dir(run_id)
+        print(f"[Stage 1] Run ID: {run_id}, Run dir: {rd}")
 
-    brief = stage1_requirement.run(source_ref)
-    out = rd / "01_brief.json"
-    _write_json(out, brief)
-    return jsonify({
-        "run_id": run_id,
-        "artifact": str(out.relative_to(ROOT)),
-        "brief": brief.model_dump(),
-    })
+        if payload.get("brd_filename"):
+            src = SAMPLES_DIR / payload["brd_filename"]
+            print(f"[Stage 1] Looking for sample: {src}")
+            if not src.exists():
+                return jsonify({"error": f"Unknown sample: {src.name}"}), 400
+            source_ref = str(src)
+        elif payload.get("brd_text"):
+            src = rd / "input_brd.md"
+            src.write_text(payload["brd_text"], encoding="utf-8")
+            source_ref = str(src)
+            print(f"[Stage 1] Created BRD from text: {src}")
+        else:
+            return jsonify({"error": "Provide brd_filename or brd_text"}), 400
+
+        print(f"[Stage 1] Running stage1_requirement.run({source_ref})")
+        brief = stage1_requirement.run(source_ref)
+
+        out = rd / "01_brief.json"
+        _write_json(out, brief)
+        print(f"[Stage 1] Success! Brief written to {out}")
+
+        return jsonify({
+            "run_id": run_id,
+            "artifact": str(out.relative_to(ROOT)),
+            "brief": brief.model_dump(),
+        })
+    except Exception as e:
+        import traceback
+        print(f"[Stage 1] ERROR: {e}")
+        traceback.print_exc()
+        return jsonify({"error": f"Stage 1 failed: {str(e)}"}), 500
 
 
 # ---------------------------------------------------------------------------
@@ -124,16 +139,33 @@ def api_stage2():
 
 @app.post("/api/approve")
 def api_approve():
-    payload = request.get_json(force=True)
-    run_id = payload["run_id"]
-    approver = payload.get("approver") or "po@natwest"
-    rd = _run_dir(run_id)
-    backlog = _read_json(rd / "02_backlog.json", StoryBacklog)
-    backlog.approved = True
-    backlog.approver = approver
-    backlog.approved_at = datetime.now(timezone.utc)
-    _write_json(rd / "02_backlog.json", backlog)
-    return jsonify({"run_id": run_id, "approved": True, "approver": approver})
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload.get("run_id")
+
+        if not run_id:
+            return jsonify({"error": "run_id is required"}), 400
+
+        approver = payload.get("approver") or "po@natwest"
+        rd = _run_dir(run_id)
+
+        backlog_path = rd / "02_backlog.json"
+        if not backlog_path.exists():
+            return jsonify({"error": f"Backlog not found at {backlog_path}. Please run Stage 2 first."}), 404
+
+        backlog = _read_json(backlog_path, StoryBacklog)
+        backlog.approved = True
+        backlog.approver = approver
+        backlog.approved_at = datetime.now(timezone.utc)
+        _write_json(backlog_path, backlog)
+
+        return jsonify({"run_id": run_id, "approved": True, "approver": approver})
+
+    except Exception as e:
+        import traceback
+        print(f"ERROR in /api/approve: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +288,7 @@ def api_stage5():
 
     # 3. Execute pytest for the deployment-readiness gate.
     proc = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/", "-q", "--tb=short"],
+        [sys.executable, "-m", "pytest", "tests/", "-v", "--tb=short", "--color=yes"],
         cwd=str(ROOT),
         capture_output=True,
         text=True,
@@ -280,7 +312,7 @@ def api_stage5():
         "playwright_result": playwright_result,
         "pytest_results_path": str(result_path.relative_to(ROOT)),
         "pytest_exit_code": proc.returncode,
-        "pytest_tail": "\n".join((proc.stdout or "").splitlines()[-15:]),
+        "pytest_tail": "\n".join((proc.stdout or "").splitlines()[-25:]),  # Show more lines
     })
 
 
