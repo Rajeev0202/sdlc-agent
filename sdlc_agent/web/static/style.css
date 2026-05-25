@@ -411,6 +411,15 @@ button.approve:hover:not(:disabled) {
   box-shadow: 0 6px 20px rgba(62, 207, 142, 0.4);
 }
 
+button.healing {
+  background: linear-gradient(135deg, #f5a524 0%, #ff6b6b 100%);
+  box-shadow: 0 4px 12px rgba(245, 165, 36, 0.3);
+}
+
+button.healing:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(245, 165, 36, 0.4);
+}
+
 button.primary {
   position: relative;
   z-index: 1;
@@ -599,6 +608,37 @@ button.primary {
   background: var(--accent);
 }
 
+/* Test Workflow Styling */
+.test-workflow-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.test-workflow-buttons button {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.test-workflow-buttons button i {
+  font-size: 16px;
+}
+
+.test-workflow-outputs {
+  margin-top: 16px;
+}
+
+.test-workflow-outputs .output {
+  margin-top: 12px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .header-content {
@@ -627,5 +667,14 @@ button.primary {
 
   .stage .desc {
     max-width: 100%;
+  }
+
+  .test-workflow-buttons {
+    flex-direction: column;
+  }
+
+  .test-workflow-buttons button {
+    width: 100%;
+    min-width: unset;
   }
 }

@@ -1,0 +1,54 @@
+
+--- STDERR ---
+Error: Cannot find module '@playwright/test'
+Require stack:
+- C:\Users\Administrator\sdlc-agent\Testing\playwright\playwright.config.ts
+- C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\transform\transform.js
+- C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\common\esmLoaderHost.js
+- C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\runner\processHost.js
+- C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\runner\loaderHost.js
+- C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\runner\loadUtils.js
+- C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\runner\reporters.js
+- C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\runner\runner.js
+- C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\program.js
+- C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\cli.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1383:15)
+    at Function.resolveFilename [as _resolveFilename] (C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\transform\transform.js:224:36)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16)
+    at Object.<anonymous> (C:\Users\Administrator\sdlc-agent\Testing\playwright\playwright.config.ts:1:1)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Module.f._compile (C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\utilsBundleImpl.js:16:994)
+    at node:internal/modules/cjs/loader:1839:10
+    at Object.i.<computed>.ut._extensions.<computed> [as .ts] (C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\utilsBundleImpl.js:16:1010)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16)
+    at requireOrImport (C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\transform\transform.js:205:18)
+    at loadUserConfig (C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\common\configLoader.js:94:83)
+    at loadConfig (C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\common\configLoader.js:105:28)
+    at loadConfigFromFileRestartIfNeeded (C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\common\configLoader.js:273:10)
+    at runTests (C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\program.js:203:18)
+    at t.<anonymous> (C:\Users\Administrator\AppData\Local\npm-cache\_npx\c828ed9cb5b1a5eb\node_modules\playwright\lib\program.js:55:7) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\Administrator\\sdlc-agent\\Testing\\playwright\\playwright.config.ts',
+    'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_npx\\c828ed9cb5b1a5eb\\node_modules\\playwright\\lib\\transform\\transform.js',
+    'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_npx\\c828ed9cb5b1a5eb\\node_modules\\playwright\\lib\\common\\esmLoaderHost.js',
+    'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_npx\\c828ed9cb5b1a5eb\\node_modules\\playwright\\lib\\runner\\processHost.js',
+    'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_npx\\c828ed9cb5b1a5eb\\node_modules\\playwright\\lib\\runner\\loaderHost.js',
+    'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_npx\\c828ed9cb5b1a5eb\\node_modules\\playwright\\lib\\runner\\loadUtils.js',
+    'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_npx\\c828ed9cb5b1a5eb\\node_modules\\playwright\\lib\\runner\\reporters.js',
+    'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_npx\\c828ed9cb5b1a5eb\\node_modules\\playwright\\lib\\runner\\runner.js',
+    'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_npx\\c828ed9cb5b1a5eb\\node_modules\\playwright\\lib\\program.js',
+    'C:\\Users\\Administrator\\AppData\\Local\\npm-cache\\_npx\\c828ed9cb5b1a5eb\\node_modules\\playwright\\cli.js'
+  ]
+}

@@ -7,3 +7,4 @@ __pycache__/
 .mypy_cache/
 runs/
 *.egg-info/
+.claude/sdlc-state.json

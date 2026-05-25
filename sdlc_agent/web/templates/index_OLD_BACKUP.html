@@ -123,32 +123,40 @@
       <header>
         <div class="stage-header-content">
           <div class="stage-number">05</div>
-          <h2>Test Management Workflow</h2>
+          <h2 style="background:red;color:white;padding:20px;">🔥 UPDATED VERSION - Test Management Workflow 🔥</h2>
         </div>
         <span class="status pending" id="s5-status">Locked</span>
       </header>
       <p class="desc">Complete test workflow: Generate manual test cases → Create automation scripts → Execute tests → Heal failures</p>
 
-      <div class="test-workflow-buttons">
-        <button class="primary" data-action="stage5-manual" disabled>
-          <i class="fas fa-clipboard-list"></i> Manual Test Cases
-        </button>
-        <button class="primary" data-action="stage5-automation" disabled>
-          <i class="fas fa-robot"></i> Generate Scripts
-        </button>
-        <button class="primary" data-action="stage5-execute" disabled>
-          <i class="fas fa-play-circle"></i> Execute Scripts
-        </button>
-        <button class="healing" data-action="stage5-heal" disabled>
-          <i class="fas fa-magic"></i> Heal Test
-        </button>
-      </div>
+      <div class="test-workflow">
+        <div class="workflow-step">
+          <button class="primary" data-action="stage5-manual" disabled>
+            <i class="fas fa-clipboard-list"></i> 1. Generate Manual Test Cases
+          </button>
+          <div class="output" id="s5-manual-out"></div>
+        </div>
 
-      <div class="test-workflow-outputs">
-        <div class="output" id="s5-manual-out"></div>
-        <div class="output" id="s5-automation-out"></div>
-        <div class="output" id="s5-execute-out"></div>
-        <div class="output" id="s5-heal-out"></div>
+        <div class="workflow-step">
+          <button class="primary" data-action="stage5-automation" disabled>
+            <i class="fas fa-robot"></i> 2. Generate Automation Scripts
+          </button>
+          <div class="output" id="s5-automation-out"></div>
+        </div>
+
+        <div class="workflow-step">
+          <button class="primary" data-action="stage5-execute" disabled>
+            <i class="fas fa-play-circle"></i> 3. Execute Tests
+          </button>
+          <div class="output" id="s5-execute-out"></div>
+        </div>
+
+        <div class="workflow-step">
+          <button class="healing" data-action="stage5-heal" disabled>
+            <i class="fas fa-magic"></i> 4. Heal Failed Tests
+          </button>
+          <div class="output" id="s5-heal-out"></div>
+        </div>
       </div>
 
       <div class="output" id="s5-out"></div>

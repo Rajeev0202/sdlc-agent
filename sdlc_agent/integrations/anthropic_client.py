@@ -1,14 +1,16 @@
-"""Claude / Anthropic client.
+"""Claude / Anthropic / Gemini client.
 
-Three modes, picked at construction time:
+Four modes, picked at construction time:
 
 1. **Copilot bridge** — if `SDLC_COPILOT_BRIDGE_URL` is set (or the default
    `http://127.0.0.1:6789` responds to `/health`), requests are POSTed to
    the local VS Code extension which calls GitHub Copilot via the VS Code
    Language Model API. No API key needed.
-2. **Live Anthropic** — if `ANTHROPIC_API_KEY` is set AND the `anthropic`
+2. **Google Gemini** — if `GOOGLE_API_KEY` or `GEMINI_API_KEY` is set AND the
+   `google-generativeai` SDK is installed, calls hit the Gemini API.
+3. **Live Anthropic** — if `ANTHROPIC_API_KEY` is set AND the `anthropic`
    SDK is installed, calls hit the Messages API.
-3. **Stub** — deterministic offline mode (default).
+4. **Stub** — deterministic offline mode (default).
 
 Class name `MockClaudeClient` is preserved for backwards compatibility.
 """
@@ -32,7 +34,13 @@ class MockClaudeClient:
         self.model = model or os.getenv("ANTHROPIC_MODEL") or self.DEFAULT_MODEL
         self.calls: list[dict[str, Any]] = []
         self._client = None
+        self._gemini_model = None
         self._bridge_url: str | None = None
+
+        # Debug: Check environment variables
+        import sys
+        google_key_check = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        print(f"[MockClaudeClient.__init__] GOOGLE_API_KEY present: {bool(google_key_check)}", file=sys.stderr, flush=True)
 
         # Mode 1: Copilot bridge (preferred when reachable).
         candidate = os.getenv("SDLC_COPILOT_BRIDGE_URL", self.DEFAULT_BRIDGE_URL).rstrip("/")
@@ -41,7 +49,27 @@ class MockClaudeClient:
             logger.info("Copilot bridge detected at %s", candidate)
             return
 
-        # Mode 2: direct Anthropic API.
+        # Mode 2: Google Gemini API.
+        google_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        if google_key:
+            try:
+                import sys
+                print(f"[MockClaudeClient] Attempting Gemini init with key: {google_key[:10]}...", file=sys.stderr, flush=True)
+                from google import genai  # type: ignore
+                from google.genai import types  # type: ignore
+
+                client = genai.Client(api_key=google_key)
+                self._gemini_model = client
+                logger.info("Gemini client initialized (model=gemini-1.5-flash).")
+                print(f"[MockClaudeClient] SUCCESS - Gemini initialized!", file=sys.stderr, flush=True)
+                return
+            except Exception as exc:  # pragma: no cover - depends on env
+                import sys
+                print(f"[MockClaudeClient] FAILED - Gemini error: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
+                logger.warning("Failed to initialize Gemini, trying Anthropic: %s", exc)
+                self._gemini_model = None
+
+        # Mode 3: direct Anthropic API.
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if api_key:
             try:
@@ -56,12 +84,14 @@ class MockClaudeClient:
     @property
     def is_live(self) -> bool:
         """True if any real LLM backend is configured."""
-        return self._bridge_url is not None or self._client is not None
+        return self._bridge_url is not None or self._gemini_model is not None or self._client is not None
 
     @property
     def backend(self) -> str:
         if self._bridge_url:
             return f"copilot-bridge ({self._bridge_url})"
+        if self._gemini_model:
+            return "gemini (gemini-1.5-flash)"
         if self._client:
             return f"anthropic ({self.model})"
         return "stub"
@@ -86,6 +116,48 @@ class MockClaudeClient:
             text = _bridge_complete(self._bridge_url, system=system, user=user)
             if text is not None:
                 self.calls.append({"task": "complete_json", "backend": "copilot-bridge"})
+        elif self._gemini_model is not None:
+            # Debug: Log that we're attempting Gemini call
+            from pathlib import Path
+            import datetime
+            debug_file = Path(__file__).resolve().parents[2] / "gemini_debug.log"
+            with open(debug_file, "a") as f:
+                f.write(f"\n[{datetime.datetime.now()}] Attempting Gemini call\n")
+                f.write(f"  Prompt length: {len(system) + len(user)}\n")
+
+            try:
+                # Combine system and user prompts for Gemini
+                prompt = f"{system}\n\n{user}"
+
+                with open(debug_file, "a") as f:
+                    f.write(f"  Calling generate_content...\n")
+
+                response = self._gemini_model.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=prompt,
+                    config={
+                        "temperature": temperature,
+                        "max_output_tokens": max_tokens,
+                    }
+                )
+
+                with open(debug_file, "a") as f:
+                    f.write(f"  Got response object\n")
+
+                text = response.text.strip()
+
+                with open(debug_file, "a") as f:
+                    f.write(f"  Response length: {len(text)}\n")
+                    f.write(f"  Response preview: {text[:300]}\n")
+
+                self.calls.append({"task": "complete_json", "backend": "gemini"})
+            except Exception as exc:  # pragma: no cover - network/SDK errors
+                logger.warning("Gemini call failed, falling back: %s", exc)
+                with open(debug_file, "a") as f:
+                    import traceback
+                    f.write(f"  EXCEPTION: {exc}\n")
+                    f.write(f"  Traceback: {traceback.format_exc()}\n")
+                text = None
         elif self._client is not None:
             try:
                 msg = self._client.messages.create(
@@ -103,7 +175,19 @@ class MockClaudeClient:
 
         if text is None:
             return None
-        return _extract_json(text)
+
+        # Debug: Log JSON extraction
+        from pathlib import Path
+        debug_file = Path(__file__).resolve().parents[2] / "gemini_debug.log"
+        extracted = _extract_json(text)
+        with open(debug_file, "a") as f:
+            import datetime
+            f.write(f"\n[{datetime.datetime.now()}] JSON Extraction\n")
+            f.write(f"  Input text length: {len(text) if text else 0}\n")
+            f.write(f"  Input preview: {text[:200] if text else 'None'}\n")
+            f.write(f"  Extracted result: {extracted}\n")
+
+        return extracted
 
 
 def _bridge_alive(url: str, timeout: float = 1.0) -> bool:

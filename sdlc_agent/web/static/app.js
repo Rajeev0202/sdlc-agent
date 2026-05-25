@@ -1,7 +1,17 @@
 // SDLC Agent — UI driver. Each stage button posts JSON to /api/stageN and
 // renders the response into its card.
 
-const state = { run_id: null, completedStages: 0 };
+const state = {
+  run_id: null,
+  completedStages: 0,
+  // Stage 5 workflow state
+  stage5: {
+    manualTestsGenerated: false,
+    automationScriptsGenerated: false,
+    testsExecuted: false,
+    hasFailures: false
+  }
+};
 
 function updateProgressBar() {
   const progress = (state.completedStages / 6) * 100;
@@ -34,7 +44,16 @@ function unlock(stage) {
     return;
   }
   card.classList.remove("locked");
-  card.querySelectorAll("button[data-action]").forEach(b => b.disabled = false);
+
+  // For Stage 5, only enable the first button (progressive workflow)
+  if (stage === 5) {
+    const manualBtn = document.querySelector('button[data-action="stage5-manual"]');
+    if (manualBtn) manualBtn.disabled = false;
+  } else {
+    // For other stages, enable all buttons
+    card.querySelectorAll("button[data-action]").forEach(b => b.disabled = false);
+  }
+
   setStatus(stage, "Ready", "pending");
 
   // Smooth scroll to next stage
@@ -48,7 +67,11 @@ function fileLink(path) {
   return `<a class="file-link" href="/files/${path.replaceAll('\\\\', '/')}" target="_blank">${path}</a>`;
 }
 function show(stage, html) {
-  const el = document.getElementById(`s${stage}-out`);
+  // Support both old format (stage number) and new format (workflow step name)
+  let el = document.getElementById(`s${stage}-out`);
+  if (!el) {
+    el = document.getElementById(`s5-${stage}-out`);
+  }
   if (el) {
     el.innerHTML = html;
   } else {
@@ -234,6 +257,127 @@ async function stage5() {
   unlock(6);
 }
 
+// ---- Stage 5: New 4-button workflow -----------------------------------
+async function stage5Manual() {
+  if (!state.run_id) {
+    throw new Error('No active run. Please complete earlier stages first.');
+  }
+
+  const res = await post("/api/stage5/manual-tests", { run_id: state.run_id });
+
+  show('manual', `
+    <p><strong>✓ Manual Test Cases Generated</strong></p>
+    <p>📄 File: ${fileLink(res.file_path)}</p>
+    <p>📊 Stories: ${res.story_count} | Test Cases: ${res.test_case_count}</p>
+    <p class="success">${res.message}</p>
+  `);
+
+  state.stage5.manualTestsGenerated = true;
+  disableButton('stage5-manual');
+  enableButton('stage5-automation');
+  showNotification('Manual test cases generated successfully!', 'success');
+}
+
+async function stage5Automation() {
+  if (!state.stage5.manualTestsGenerated) {
+    throw new Error('Generate manual tests first');
+  }
+
+  const res = await post("/api/stage5/automation-scripts", { run_id: state.run_id });
+
+  show('automation', `
+    <p><strong>✓ Automation Scripts Generated</strong></p>
+    <p>🤖 Scripts: ${res.script_count}</p>
+    <p>📁 Directory: ${fileLink(res.playwright_dir)}</p>
+    <details><summary>View generated scripts</summary>
+      <ul>${res.scripts.map(s => `<li>${fileLink(s)}</li>`).join('')}</ul>
+    </details>
+    <p class="success">${res.message}</p>
+  `);
+
+  state.stage5.automationScriptsGenerated = true;
+  disableButton('stage5-automation');
+  enableButton('stage5-execute');
+  showNotification('Automation scripts generated!', 'success');
+}
+
+async function stage5Execute() {
+  if (!state.stage5.automationScriptsGenerated) {
+    throw new Error('Generate automation scripts first');
+  }
+
+  const res = await post("/api/stage5/execute-tests", { run_id: state.run_id });
+
+  const statusCls = res.failed > 0 ? 'fail' : 'done';
+  const statusIcon = res.failed > 0 ? '⚠️' : '✓';
+
+  show('execute', `
+    <p><strong>${statusIcon} Tests Executed</strong></p>
+    <p>Total: ${res.total} | <span class="chip chip-ok">Passed: ${res.passed}</span> | <span class="chip chip-warn">Failed: ${res.failed}</span></p>
+    <p>Exit Code: <code>${res.exit_code}</code></p>
+    <p>Results: ${fileLink(res.result_file)}</p>
+    <p>Log: ${fileLink(res.log_file)}</p>
+    <p class="${statusCls}">${res.message}</p>
+  `);
+
+  state.stage5.testsExecuted = true;
+  state.stage5.hasFailures = res.has_failures;
+  disableButton('stage5-execute');
+
+  if (res.has_failures) {
+    enableButton('stage5-heal');
+    showNotification(`${res.failed} tests failed - healing available`, 'error');
+  } else {
+    showNotification('All tests passed!', 'success');
+    setStatus(5, 'Complete', 'done');
+    unlock(6);
+  }
+}
+
+async function stage5Heal() {
+  if (!state.stage5.hasFailures) {
+    throw new Error('No failures to heal');
+  }
+
+  const res = await post("/api/stage5/heal-tests", { run_id: state.run_id });
+
+  const suggestionsHtml = res.suggestions.map(s => `
+    <div class="healing-suggestion">
+      <strong>🔧 ${s.test}</strong>
+      <p>Issue: ${s.issue}</p>
+      <p class="suggestion">💡 ${s.suggestion}</p>
+    </div>
+  `).join('');
+
+  show('heal', `
+    <p><strong>✨ Test Healing Analysis Complete</strong></p>
+    <p>Failures Analyzed: ${res.failures_found}</p>
+    <p>Report: ${fileLink(res.healing_report)}</p>
+    <details open><summary>Top Healing Suggestions</summary>${suggestionsHtml}</details>
+    <p class="success">${res.message}</p>
+  `);
+
+  disableButton('stage5-heal');
+  showNotification('Test healing suggestions generated!', 'success');
+  setStatus(5, 'Healed', 'done');
+  unlock(6);
+}
+
+// Helper functions for Stage 5 workflow
+function enableButton(action) {
+  const btn = document.querySelector(`button[data-action="${action}"]`);
+  if (btn) {
+    btn.disabled = false;
+  }
+}
+
+function disableButton(action) {
+  const btn = document.querySelector(`button[data-action="${action}"]`);
+  if (btn) {
+    btn.disabled = true;
+  }
+}
+
 async function stage6() {
   setStatus(6, "Running…", "running");
   const res = await post("/api/stage6", { run_id: state.run_id });
@@ -254,7 +398,13 @@ function escapeHtml(s) {
 }
 
 // ---- Wire buttons -----------------------------------------------------
-const handlers = { stage1, stage2, approve, stage3, stage4, stage5, stage6 };
+const handlers = {
+  stage1, stage2, approve, stage3, stage4, stage5, stage6,
+  'stage5-manual': stage5Manual,
+  'stage5-automation': stage5Automation,
+  'stage5-execute': stage5Execute,
+  'stage5-heal': stage5Heal
+};
 
 function initializeApp() {
   console.log('Initializing SDLC Agent UI...');

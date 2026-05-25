@@ -1,0 +1,34 @@
+{
+  "pr_number": 1,
+  "findings": [
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 23,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 36,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": 49,
+      "severity": "info",
+      "category": "standards",
+      "message": "TODO left in code — track in Jira or resolve."
+    },
+    {
+      "file": "src/payment_limits_management.py",
+      "line": null,
+      "severity": "medium",
+      "category": "coverage",
+      "message": "No test files in PR — Stage 5 must add coverage before merge."
+    }
+  ],
+  "verdict": "pass"
+}

@@ -6,6 +6,21 @@ is auditable and refresh-safe.
 """
 from __future__ import annotations
 
+# Load environment variables from .env file
+from pathlib import Path as _Path
+from dotenv import load_dotenv
+import os as _os
+_env_path = _Path(__file__).resolve().parents[2] / ".env"
+if _env_path.exists():
+    load_dotenv(_env_path)
+    # Verify it loaded
+    if _os.getenv('GOOGLE_API_KEY'):
+        print(f"[OK] Loaded GOOGLE_API_KEY from {_env_path}")
+    else:
+        print(f"[WARN] .env file exists but GOOGLE_API_KEY not found")
+else:
+    print(f"[WARN] .env file not found at {_env_path}")
+
 import json
 import subprocess
 import sys
@@ -25,6 +40,12 @@ from ..stages import (
     stage6_deploy,
 )
 from ..testing_assets import write_manual_tests_xlsx, write_playwright_suite
+from .stage5_new_handlers import (
+    generate_manual_tests,
+    generate_automation_scripts,
+    execute_tests,
+    heal_tests,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,9 +54,23 @@ SAMPLES_DIR = ROOT / "samples"
 SRC_DIR = ROOT / "src"
 TESTING_DIR = ROOT / "Testing"
 REVIEW_DIR = ROOT / "CodeReview"
+MANUAL_TESTS_DIR = ROOT / "Manual_Test_Cases"
+AUTOMATION_SCRIPTS_DIR = ROOT / "Automation_Scripts"
+RESULTS_DIR = ROOT / "Results"
 
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+
+# Debug removed - app.py loaded successfully
+
+
+@app.after_request
+def add_no_cache_headers(response):
+    """Disable caching for development to ensure fresh UI updates"""
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 # ---------------------------------------------------------------------------
@@ -66,7 +101,12 @@ def _new_run_id() -> str:
 @app.get("/")
 def index():
     samples = sorted(p.name for p in SAMPLES_DIR.glob("*.md"))
-    return render_template("index.html", samples=samples)
+    # Read template directly from disk to ensure fresh content
+    from pathlib import Path
+    template_path = Path(__file__).parent / "templates" / "index.html"
+    template_content = template_path.read_text(encoding="utf-8")
+    from flask import render_template_string
+    return render_template_string(template_content, samples=samples)
 
 
 # ---------------------------------------------------------------------------
@@ -364,6 +404,81 @@ def _run_playwright(playwright_dir: Path, run_id: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Stage 5 — New 4-button workflow
+# ---------------------------------------------------------------------------
+@app.post("/api/stage5/manual-tests")
+def api_stage5_manual():
+    """Generate manual test cases Excel"""
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload["run_id"]
+        print(f"[Stage 5.1] Generating manual tests for {run_id}")
+
+        result = generate_manual_tests(run_id, ROOT, MANUAL_TESTS_DIR)
+        if isinstance(result, tuple):
+            return jsonify(result[0]), result[1]
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.post("/api/stage5/automation-scripts")
+def api_stage5_automation():
+    """Generate Playwright automation scripts"""
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload["run_id"]
+        print(f"[Stage 5.2] Generating automation scripts for {run_id}")
+
+        result = generate_automation_scripts(run_id, ROOT, AUTOMATION_SCRIPTS_DIR)
+        if isinstance(result, tuple):
+            return jsonify(result[0]), result[1]
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.post("/api/stage5/execute-tests")
+def api_stage5_execute():
+    """Execute Playwright tests"""
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload["run_id"]
+        print(f"[Stage 5.3] Executing tests for {run_id}")
+
+        result = execute_tests(run_id, ROOT, AUTOMATION_SCRIPTS_DIR, RESULTS_DIR)
+        if isinstance(result, tuple):
+            return jsonify(result[0]), result[1]
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.post("/api/stage5/heal-tests")
+def api_stage5_heal():
+    """Analyze failures and heal tests"""
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload["run_id"]
+        print(f"[Stage 5.4] Healing tests for {run_id}")
+
+        result = heal_tests(run_id, ROOT, AUTOMATION_SCRIPTS_DIR, RESULTS_DIR)
+        if isinstance(result, tuple):
+            return jsonify(result[0]), result[1]
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
 # Stage 6 — Deployment readiness
 # ---------------------------------------------------------------------------
 @app.post("/api/stage6")
@@ -408,7 +523,7 @@ def serve_artifact(relpath: str):
 
 def main() -> None:
     """Run the Flask dev server."""
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    app.run(host="127.0.0.1", port=5002, debug=False)
 
 
 if __name__ == "__main__":
