@@ -1,16 +1,18 @@
 """Claude / Anthropic / Gemini client.
 
-Four modes, picked at construction time:
+Five modes, picked at construction time:
 
 1. **Copilot bridge** — if `SDLC_COPILOT_BRIDGE_URL` is set (or the default
    `http://127.0.0.1:6789` responds to `/health`), requests are POSTed to
    the local VS Code extension which calls GitHub Copilot via the VS Code
    Language Model API. No API key needed.
-2. **Google Gemini** — if `GOOGLE_API_KEY` or `GEMINI_API_KEY` is set AND the
+2. **Claude Code CLI** — if `claude` CLI is available, invoke it as a
+   subprocess. Uses your Claude Code subscription. No API key needed.
+3. **Google Gemini** — if `GOOGLE_API_KEY` or `GEMINI_API_KEY` is set AND the
    `google-generativeai` SDK is installed, calls hit the Gemini API.
-3. **Live Anthropic** — if `ANTHROPIC_API_KEY` is set AND the `anthropic`
+4. **Live Anthropic** — if `ANTHROPIC_API_KEY` is set AND the `anthropic`
    SDK is installed, calls hit the Messages API.
-4. **Stub** — deterministic offline mode (default).
+5. **Stub** — deterministic offline mode (default).
 
 Class name `MockClaudeClient` is preserved for backwards compatibility.
 """
@@ -19,11 +21,55 @@ from __future__ import annotations
 import json
 import logging
 import os
+import shutil
+import subprocess
+import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+# Known locations where claude.exe may live on Windows
+_CLAUDE_CLI_HINTS = [
+    "claude",  # PATH
+    str(Path.home() / ".local" / "bin" / "claude.exe"),
+    str(Path.home() / ".local" / "bin" / "claude"),
+    str(Path.home() / ".vscode" / "extensions"),  # walked below
+]
+
+
+def _find_claude_cli() -> str | None:
+    """Locate the claude CLI executable on this system."""
+    # 1. PATH lookup
+    found = shutil.which("claude")
+    if found:
+        return found
+
+    # 2. Common install location
+    local_bin = Path.home() / ".local" / "bin"
+    for name in ("claude.exe", "claude"):
+        candidate = local_bin / name
+        if candidate.exists():
+            return str(candidate)
+
+    # 3. VS Code extension bundle (Windows)
+    ext_root = Path.home() / ".vscode" / "extensions"
+    if ext_root.exists():
+        for ext_dir in ext_root.glob("anthropic.claude-code-*"):
+            for sub in ("resources/native-binary/claude.exe", "resources/native-binary/claude"):
+                candidate = ext_dir / sub
+                if candidate.exists():
+                    return str(candidate)
+
+    # 4. Environment override
+    env_path = os.getenv("CLAUDE_CLI_PATH")
+    if env_path and Path(env_path).exists():
+        return env_path
+
+    return None
 
 
 class MockClaudeClient:
@@ -36,9 +82,9 @@ class MockClaudeClient:
         self._client = None
         self._gemini_model = None
         self._bridge_url: str | None = None
+        self._claude_cli: str | None = None
 
         # Debug: Check environment variables
-        import sys
         google_key_check = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
         print(f"[MockClaudeClient.__init__] GOOGLE_API_KEY present: {bool(google_key_check)}", file=sys.stderr, flush=True)
 
@@ -47,13 +93,23 @@ class MockClaudeClient:
         if _bridge_alive(candidate):
             self._bridge_url = candidate
             logger.info("Copilot bridge detected at %s", candidate)
+            print(f"[MockClaudeClient] Using Copilot bridge at {candidate}", file=sys.stderr, flush=True)
             return
 
-        # Mode 2: Google Gemini API.
+        # Mode 2: Claude Code CLI (uses subscription, no API key needed)
+        # Skip if user explicitly opts out
+        if os.getenv("SDLC_DISABLE_CLAUDE_CLI", "").lower() not in ("1", "true", "yes"):
+            cli_path = _find_claude_cli()
+            if cli_path:
+                self._claude_cli = cli_path
+                logger.info("Claude Code CLI detected at %s", cli_path)
+                print(f"[MockClaudeClient] Using Claude Code CLI: {cli_path}", file=sys.stderr, flush=True)
+                return
+
+        # Mode 3: Google Gemini API.
         google_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
         if google_key:
             try:
-                import sys
                 print(f"[MockClaudeClient] Attempting Gemini init with key: {google_key[:10]}...", file=sys.stderr, flush=True)
                 from google import genai  # type: ignore
                 from google.genai import types  # type: ignore
@@ -64,12 +120,11 @@ class MockClaudeClient:
                 print(f"[MockClaudeClient] SUCCESS - Gemini initialized!", file=sys.stderr, flush=True)
                 return
             except Exception as exc:  # pragma: no cover - depends on env
-                import sys
                 print(f"[MockClaudeClient] FAILED - Gemini error: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
                 logger.warning("Failed to initialize Gemini, trying Anthropic: %s", exc)
                 self._gemini_model = None
 
-        # Mode 3: direct Anthropic API.
+        # Mode 4: direct Anthropic API.
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if api_key:
             try:
@@ -84,12 +139,19 @@ class MockClaudeClient:
     @property
     def is_live(self) -> bool:
         """True if any real LLM backend is configured."""
-        return self._bridge_url is not None or self._gemini_model is not None or self._client is not None
+        return (
+            self._bridge_url is not None
+            or self._claude_cli is not None
+            or self._gemini_model is not None
+            or self._client is not None
+        )
 
     @property
     def backend(self) -> str:
         if self._bridge_url:
             return f"copilot-bridge ({self._bridge_url})"
+        if self._claude_cli:
+            return f"claude-code-cli ({self._claude_cli})"
         if self._gemini_model:
             return "gemini (gemini-1.5-flash)"
         if self._client:
@@ -116,6 +178,13 @@ class MockClaudeClient:
             text = _bridge_complete(self._bridge_url, system=system, user=user)
             if text is not None:
                 self.calls.append({"task": "complete_json", "backend": "copilot-bridge"})
+        elif self._claude_cli is not None:
+            # 90s timeout per call - fail fast to avoid 10-min stalls
+            text = _claude_cli_complete(
+                self._claude_cli, system=system, user=user, timeout=90.0
+            )
+            if text is not None:
+                self.calls.append({"task": "complete_json", "backend": "claude-code-cli"})
         elif self._gemini_model is not None:
             # Debug: Log that we're attempting Gemini call
             from pathlib import Path
@@ -199,6 +268,52 @@ def _bridge_alive(url: str, timeout: float = 1.0) -> bool:
             return bool(data.get("ok"))
     except (urllib.error.URLError, OSError, ValueError, TimeoutError):
         return False
+
+
+def _claude_cli_complete(
+    cli_path: str, *, system: str, user: str, timeout: float = 180.0
+) -> str | None:
+    """Invoke the claude CLI as a subprocess to use the Claude Code subscription.
+
+    Uses `claude -p <prompt>` in print mode (non-interactive) and reads stdout.
+    Combines system and user prompts since the CLI takes a single prompt argument.
+    """
+    # Combine system + user prompts; claude CLI takes a single prompt
+    full_prompt = f"{system}\n\n---\n\n{user}"
+
+    try:
+        # Use --output-format text (default) to get plain response
+        # --no-color to strip ANSI codes
+        result = subprocess.run(
+            [cli_path, "-p", full_prompt],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            encoding="utf-8",
+            errors="replace",
+        )
+
+        if result.returncode != 0:
+            logger.warning(
+                "Claude CLI returned non-zero exit %d: %s",
+                result.returncode,
+                (result.stderr or "")[:500],
+            )
+            return None
+
+        output = (result.stdout or "").strip()
+        if not output:
+            logger.warning("Claude CLI returned empty output")
+            return None
+
+        return output
+
+    except subprocess.TimeoutExpired:
+        logger.warning("Claude CLI timed out after %s seconds", timeout)
+        return None
+    except (OSError, FileNotFoundError) as exc:
+        logger.warning("Claude CLI invocation failed: %s", exc)
+        return None
 
 
 def _bridge_complete(

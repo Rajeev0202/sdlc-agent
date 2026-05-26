@@ -71,9 +71,9 @@ story = UserStory(
 
 # Initialize client (make sure env vars are set)
 client = JiraClient(
-    server_url="https://your-domain.atlassian.net",
-    email="your-email@example.com",
-    api_token="your-api-token",
+    server_url="https://rrjha82.atlassian.net",
+    email="rrjha82@gmail.com",
+    api_token="ATATT3xFfGF0MdHHICnD58KKnIPrGFWRTlMv2DZFl6wo8nNhMoOGZMlGmv8REPY931oEgNs2ENQSA_G16a_ZTf6Yo1GokRCEzp6DLmqbbN8LAT8Uu_vaul8EDjG91yWJVG36AEjHwpTbNy8iqW5twqPGlP9rPzqG89eQZKER08ncoC3ugK1YMVk=B56E2F66",
     project_key="SCRUM"
 )
 

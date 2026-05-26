@@ -14,10 +14,23 @@ const state = {
 };
 
 function updateProgressBar() {
+  // Update new pipeline progress fill
   const progress = (state.completedStages / 6) * 100;
-  const bar = document.getElementById('progress-bar');
-  if (bar) {
-    bar.style.width = `${progress}%`;
+  const fill = document.getElementById('pipeline-progress-fill');
+  if (fill) {
+    fill.style.width = `${progress}%`;
+  }
+
+  // Update completed count
+  const countEl = document.getElementById('completed-count');
+  if (countEl) {
+    countEl.textContent = state.completedStages;
+  }
+
+  // Legacy support (if old progress bar exists)
+  const oldBar = document.getElementById('progress-bar');
+  if (oldBar) {
+    oldBar.style.width = `${progress}%`;
   }
 }
 
@@ -34,6 +47,50 @@ function setStatus(stage, label, cls) {
   if (cls === 'done' && stage > state.completedStages) {
     state.completedStages = stage;
     updateProgressBar();
+  }
+
+  // Update pipeline tracker (new) and legacy cycle legend
+  updatePipelineTracker(stage, cls);
+  updateCycleLegend(stage, cls);
+}
+
+function updatePipelineTracker(stage, status) {
+  const pipelineStage = document.querySelector(`.pipeline-stage[data-stage="${stage}"]`);
+  if (!pipelineStage) return;
+
+  // Remove previous status classes for this stage
+  pipelineStage.classList.remove('active', 'completed');
+
+  if (status === 'done') {
+    // Mark as completed (green light on)
+    pipelineStage.classList.add('completed');
+  } else if (status === 'running' || status === 'pending') {
+    // Mark as active (yellow pulsing light)
+    if (status === 'running') {
+      pipelineStage.classList.add('active');
+    }
+  }
+
+  // Re-apply completed state to all previously completed stages
+  for (let i = 1; i <= state.completedStages; i++) {
+    const stageEl = document.querySelector(`.pipeline-stage[data-stage="${i}"]`);
+    if (stageEl) {
+      stageEl.classList.remove('active');
+      stageEl.classList.add('completed');
+    }
+  }
+}
+
+function updateCycleLegend(stage, status) {
+  // Legacy: Remove active class from all legend items (if old UI elements exist)
+  document.querySelectorAll('.legend-item').forEach(item => {
+    item.classList.remove('active');
+  });
+
+  // Legacy: Add active class to current stage
+  const currentLegendItem = document.querySelector(`.legend-item[data-stage="${stage}"]`);
+  if (currentLegendItem && (status === 'running' || status === 'done')) {
+    currentLegendItem.classList.add('active');
   }
 }
 
@@ -107,43 +164,68 @@ async function post(url, body) {
 async function stage1() {
   setStatus(1, "Running…", "running");
 
-  // Null-safe element access
-  const brdSelectEl = document.getElementById("brd-select");
-  const brdTextEl = document.getElementById("brd-text");
+  // Get the Confluence URL input
+  const confluenceUrlEl = document.getElementById("confluence-url");
   const runIdEl = document.getElementById("run-id");
 
-  if (!brdSelectEl || !brdTextEl || !runIdEl) {
+  if (!confluenceUrlEl || !runIdEl) {
     throw new Error("Required form elements not found. Please refresh the page.");
   }
 
-  const brd_filename = brdSelectEl.value || "";
-  const brd_text = brdTextEl.value || "";
+  // Get input value from text field
+  const inputSource = confluenceUrlEl.value.trim();
 
-  console.log("Stage 1 inputs:", { brd_filename, brd_text: brd_text.substring(0, 50) + "..." });
+  console.log("Stage 1 input:", { inputSource });
 
-  if (!brd_filename && !brd_text.trim()) {
+  if (!inputSource) {
     setStatus(1, "Pending", "pending");
-    showNotification("Please pick a sample BRD or paste requirement text.", "error");
+    showNotification("Please enter a Confluence URL or file path.", "error");
     return;
   }
 
-  const res = await post("/api/stage1", {
-    run_id: state.run_id, brd_filename, brd_text,
-  });
+  const payload = {
+    run_id: state.run_id,
+    source: inputSource,
+  };
+
+  console.log("Sending to /api/stage1:", payload);
+  const res = await post("/api/stage1", payload);
 
   state.run_id = res.run_id;
   runIdEl.textContent = res.run_id;
   const b = res.brief;
+
+  // Show skill automation badge
+  const skillBadge = res.skill_automation ?
+    '<span class="chip chip-ok" title="Automated by /sdlc-ingest skill"><i class="fas fa-magic"></i> Skill Automation</span>' : '';
+
+  // Build skill stats if available
+  let skillStats = '';
+  if (res.skill_automation) {
+    skillStats = `
+      <div style="background: rgba(91, 157, 255, 0.1); border-left: 3px solid var(--accent); padding: 12px; margin: 12px 0; border-radius: 6px;">
+        <strong><i class="fas fa-robot"></i> Skill Analysis:</strong>
+        <ul style="margin: 8px 0 0 20px; font-size: 13px;">
+          <li>User Stories Extracted: <strong>${res.stories_found || 0}</strong></li>
+          <li>Acceptance Criteria Found: <strong>${res.acceptance_criteria_found || 0}</strong></li>
+          <li>Open Questions: <strong>${res.open_questions ? res.open_questions.length : 0}</strong></li>
+        </ul>
+      </div>
+    `;
+  }
+
   show(1, `
-    <p>${fileLink(res.artifact)}</p>
+    <p>${fileLink(res.artifact)} ${skillBadge}</p>
+    ${skillStats}
     <table>
+      <tr><th>Source</th><td><code>${escapeHtml(inputSource)}</code></td></tr>
       <tr><th>Title</th><td>${b.title}</td></tr>
       <tr><th>Business goal</th><td>${b.business_goal}</td></tr>
       <tr><th>Personas (${b.personas.length})</th><td>${b.personas.map(p=>`<span class="chip">${p.name}</span>`).join("")}</td></tr>
       <tr><th>Functional needs (${b.functional_needs.length})</th><td><ul>${b.functional_needs.map(x=>`<li>${x}</li>`).join("")}</ul></td></tr>
       <tr><th>Non-functional (${b.non_functional_constraints.length})</th><td><ul>${b.non_functional_constraints.map(x=>`<li>${x}</li>`).join("")}</ul></td></tr>
       <tr><th>Out of scope</th><td>${b.out_of_scope.map(x=>`<span class="chip">${x}</span>`).join("") || "—"}</td></tr>
-      <tr><th>Open questions</th><td>${b.open_questions.length ? b.open_questions.map(q=>`<li>${q}</li>`).join("") : "<em>none</em>"}</td></tr>
+      <tr><th>Open questions</th><td>${b.open_questions.length ? '<ul>' + b.open_questions.map(q=>`<li>${q}</li>`).join("") + '</ul>' : "<em>none</em>"}</td></tr>
     </table>`);
   setStatus(1, "Complete", "done");
   unlock(2);
@@ -152,20 +234,66 @@ async function stage1() {
 async function stage2() {
   setStatus(2, "Running…", "running");
   const res = await post("/api/stage2", { run_id: state.run_id });
-  const rows = res.backlog.stories.map(s => `
+
+  // Map story ID -> Jira issue key for the table
+  const jiraMap = {};
+  (res.jira_issues || []).forEach(j => { jiraMap[j.story_id] = j; });
+
+  const rows = res.backlog.stories.map(s => {
+    const jira = jiraMap[s.id];
+    let jiraCell = "—";
+    if (jira) {
+      if (jira.url) {
+        jiraCell = `<a href="${jira.url}" target="_blank" rel="noopener" class="jira-link">
+          <i class="fab fa-jira"></i> ${jira.issue_key}
+        </a>`;
+      } else {
+        jiraCell = `<span class="chip">${jira.issue_key}</span>`;
+      }
+    }
+    return `
     <tr>
       <td><strong>${s.id}</strong></td>
+      <td>${jiraCell}</td>
       <td>${s.as_a_statement || `As a ${s.persona}, I want ${s.want}, so that ${s.so_that}.`}</td>
       <td>${s.acceptance_criteria.length}</td>
-      <td>${s.dependencies.map(d=>`<span class="chip">${d}</span>`).join("") || "—"}</td>
-    </tr>`).join("");
+      <td>${(s.dependencies||[]).map(d=>`<span class="chip">${d}</span>`).join("") || "—"}</td>
+    </tr>`;
+  }).join("");
+
+  // Strict LLM detection: only "llm" means Claude was actually used
   const isLLM = res.generation_source === "llm";
+  const badgeLabel = isLLM
+    ? `<i class="fas fa-brain"></i> LLM (Claude)`
+    : `<i class="fas fa-cog"></i> Rules-based`;
   const badge = `<span class="chip ${isLLM ? "chip-ok" : "chip-warn"}" title="${res.generation_backend || ""}">
-      ${isLLM ? "LLM" : "Rules"}: ${res.generation_backend || "stub"}
+      ${badgeLabel}
     </span>`;
+
+  // LLM detail box (shows the actual generation path)
+  const detailBlock = res.generation_detail
+    ? `<p class="generation-detail ${isLLM ? 'is-llm' : 'is-rules'}">
+         <i class="fas fa-${isLLM ? 'check-circle' : 'info-circle'}"></i>
+         <strong>${isLLM ? 'LLM Used' : 'LLM Not Used'}:</strong>
+         ${res.generation_detail}
+         <span class="backend-info">(backend: <code>${res.generation_backend}</code>)</span>
+       </p>`
+    : "";
+
+  // Jira mode badge
+  const isRealJira = res.jira_mode === "JiraClient";
+  const jiraBadge = `<span class="chip ${isRealJira ? "chip-ok" : "chip-warn"}" title="${res.jira_url || ''}">
+      <i class="fab fa-jira"></i> ${isRealJira ? `Real Jira (${res.jira_project_key})` : "Mock Jira"}
+    </span>`;
+  const jiraSummary = res.jira_issues && res.jira_issues.length
+    ? `<p>Created <strong>${res.jira_issues.length}</strong> Jira issue(s) in project <code>${res.jira_project_key}</code></p>`
+    : "";
+
   show(2, `
-    <p>${fileLink(res.artifact)} ${badge}</p>
-    <table><tr><th>ID</th><th>Story</th><th>ACs</th><th>Dependencies</th></tr>${rows}</table>`);
+    <p>${fileLink(res.artifact)} ${badge} ${jiraBadge}</p>
+    ${detailBlock}
+    ${jiraSummary}
+    <table><tr><th>ID</th><th>Jira</th><th>Story</th><th>ACs</th><th>Dependencies</th></tr>${rows}</table>`);
   setStatus(2, "Awaiting PO", "running");
   document.getElementById("po-gate").hidden = false;
 }
@@ -197,14 +325,86 @@ async function stage3() {
   setStatus(3, "Running…", "running");
   const inject_defect = document.getElementById("inject-defect").checked;
   const res = await post("/api/stage3", { run_id: state.run_id, inject_defect });
-  const isLLM = res.generation_source === "llm";
+  const isLLM = res.generation_source === "llm" || res.generation_source === "skill_automation";
   const badge = `<span class="chip ${isLLM ? "chip-ok" : "chip-warn"}" title="${res.generation_backend || ""}">
       ${isLLM ? "LLM" : "Rules"}: ${res.generation_backend || "stub"}
     </span>`;
+
+  const filesWritten = res.files_written || [];
+  const prFiles = (res.pr && res.pr.files) || [];
+
+  const filesBlock = filesWritten.length > 0
+    ? `<p>Files written: ${filesWritten.map(fileLink).join(" ")}</p>`
+    : `<p><em>⚠️ No files generated — backlog had no user stories. Check that Stage 1 ingested real requirements.</em></p>`;
+
+  // Build tabbed file preview - one tab per file
+  let previewBlock = "";
+  if (prFiles.length > 0) {
+    const tabs = prFiles.map((f, i) => {
+      const label = f.path.replace(/^.*\//, "");  // just the filename
+      const dir = f.path.startsWith("tests/") ? "test" : "src";
+      return `<button class="code-tab ${i === 0 ? 'active' : ''}"
+                      data-tab-idx="${i}" data-stage="3"
+                      title="${f.path}">
+                <i class="fas fa-${dir === 'test' ? 'vial' : 'file-code'}"></i> ${label}
+              </button>`;
+    }).join("");
+
+    const panes = prFiles.map((f, i) => `
+      <div class="code-pane ${i === 0 ? 'active' : ''}" data-pane-idx="${i}" data-stage="3">
+        <div class="code-pane-header">
+          <code class="file-path">${f.path}</code>
+          <span class="code-meta">
+            <span class="chip">${f.language}</span>
+            <span class="chip">${f.contents.split("\n").length} lines</span>
+            <button class="copy-btn" data-copy-target="${i}-3" title="Copy to clipboard">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </span>
+        </div>
+        <pre id="code-${i}-3" class="code-block">${escapeHtml(f.contents)}</pre>
+      </div>`).join("");
+
+    previewBlock = `
+      <details open class="code-viewer">
+        <summary><strong>Preview generated code</strong> (${prFiles.length} files)</summary>
+        <div class="code-tabs">${tabs}</div>
+        <div class="code-panes">${panes}</div>
+      </details>`;
+  }
+
   show(3, `
     <p><strong>Draft PR #${res.pr.number}</strong> on <code>${res.pr.branch}</code> · state: <span class="chip">${res.pr.state}</span> ${badge}</p>
-    <p>Files written: ${res.files_written.map(fileLink).join(" ")}</p>
-    <details><summary>Preview generated code</summary><pre>${escapeHtml(res.pr.files[0].contents)}</pre></details>`);
+    ${filesBlock}
+    ${previewBlock}`);
+
+  // Wire up tab switching
+  document.querySelectorAll('.code-tab[data-stage="3"]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const idx = tab.dataset.tabIdx;
+      document.querySelectorAll('.code-tab[data-stage="3"]').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.code-pane[data-stage="3"]').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      const pane = document.querySelector(`.code-pane[data-stage="3"][data-pane-idx="${idx}"]`);
+      if (pane) pane.classList.add('active');
+    });
+  });
+
+  // Wire up copy buttons
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = document.getElementById(`code-${btn.dataset.copyTarget}`);
+      if (target) {
+        try {
+          await navigator.clipboard.writeText(target.textContent);
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+          setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        } catch (e) { console.warn("Copy failed:", e); }
+      }
+    });
+  });
+
   setStatus(3, "Complete", "done");
   unlock(4);
 }

@@ -6,6 +6,15 @@ is auditable and refresh-safe.
 """
 from __future__ import annotations
 
+# Force UTF-8 output so non-ASCII characters (emoji, Unicode from Confluence)
+# don't crash with cp1252 encoding errors on Windows console.
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, OSError):
+    pass  # Python <3.7 or non-standard stream
+
 # Load environment variables from .env file
 from pathlib import Path as _Path
 from dotenv import load_dotenv
@@ -40,6 +49,14 @@ from ..stages import (
     stage6_deploy,
 )
 from ..testing_assets import write_manual_tests_xlsx, write_playwright_suite
+from ..skills.ingest_skill import IngestSkillAutomation
+from ..skills.plan_skill import PlanSkillAutomation
+from ..skills.build_skill import BuildSkillAutomation
+from ..skills.review_skill import ReviewSkillAutomation
+from ..skills.test_manual_skill import TestManualSkillAutomation
+from ..skills.test_automation_skill import TestAutomationSkillAutomation
+from ..skills.test_execute_skill import TestExecuteSkillAutomation
+from ..skills.test_heal_skill import TestHealSkillAutomation
 from .stage5_new_handlers import (
     generate_manual_tests,
     generate_automation_scripts,
@@ -70,6 +87,10 @@ def add_no_cache_headers(response):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
+    # Enable CORS for testing
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     return response
 
 
@@ -109,72 +130,220 @@ def index():
     return render_template_string(template_content, samples=samples)
 
 
+@app.post("/api/test")
+def api_test():
+    """Test endpoint to verify server is receiving requests"""
+    payload = request.get_json(force=True)
+    print(f"[TEST] Received: {payload}")
+    return jsonify({"received": payload, "status": "ok"})
+
+
+@app.get("/api/version")
+def api_version():
+    """Version endpoint to verify which code is running"""
+    return jsonify({
+        "version": "2.0-confluence",
+        "features": [
+            "Confluence URL support",
+            "Skill automation",
+            "SDLC cycle visualization",
+            "Cache-busting enabled"
+        ],
+        "endpoint": "/api/stage1",
+        "expected_params": ["source", "run_id"],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+
+
 # ---------------------------------------------------------------------------
-# Stage 1 — Requirement ingestion
+# Stage 1 — Requirement ingestion (integrated with /sdlc-ingest skill)
 # ---------------------------------------------------------------------------
 @app.post("/api/stage1")
 def api_stage1():
-    """Ingest a BRD picked from samples/ or uploaded inline as text."""
+    """Ingest requirements from Confluence URL, local file, or inline text.
+
+    This endpoint automates the /sdlc-ingest skill logic.
+    """
     try:
         payload = request.get_json(force=True)
-        print(f"[Stage 1] Received payload: {payload}")
+        print(f"[Stage 1 - SKILL AUTOMATION] Received payload: {payload}")
 
         run_id = payload.get("run_id") or _new_run_id()
         rd = _run_dir(run_id)
-        print(f"[Stage 1] Run ID: {run_id}, Run dir: {rd}")
+        print(f"[Stage 1 - SKILL AUTOMATION] Run ID: {run_id}, Run dir: {rd}")
 
-        if payload.get("brd_filename"):
-            src = SAMPLES_DIR / payload["brd_filename"]
-            print(f"[Stage 1] Looking for sample: {src}")
-            if not src.exists():
-                return jsonify({"error": f"Unknown sample: {src.name}"}), 400
-            source_ref = str(src)
-        elif payload.get("brd_text"):
-            src = rd / "input_brd.md"
-            src.write_text(payload["brd_text"], encoding="utf-8")
-            source_ref = str(src)
-            print(f"[Stage 1] Created BRD from text: {src}")
-        else:
-            return jsonify({"error": "Provide brd_filename or brd_text"}), 400
+        # New unified input field
+        source = payload.get("source", "").strip()
 
-        print(f"[Stage 1] Running stage1_requirement.run({source_ref})")
-        brief = stage1_requirement.run(source_ref)
+        # Legacy support for old payload format
+        if not source:
+            if payload.get("brd_filename"):
+                source = payload["brd_filename"]
+            elif payload.get("brd_text"):
+                # Create temp file for inline text
+                src = rd / "input_brd.md"
+                src.write_text(payload["brd_text"], encoding="utf-8")
+                source = str(src)
+                print(f"[Stage 1 - SKILL AUTOMATION] Created BRD from text: {src}")
 
+        if not source:
+            return jsonify({"error": "Provide source URL or file path"}), 400
+
+        # Initialize skill automation
+        skill_automation = IngestSkillAutomation(ROOT)
+
+        print(f"[Stage 1 - SKILL AUTOMATION] Running /sdlc-ingest skill automation on: {source}")
+
+        # Run the automated skill
+        try:
+            skill_state = skill_automation.run(source)
+            print(f"[Stage 1 - SKILL AUTOMATION] Skill completed successfully")
+            skill_used = True
+        except NotImplementedError as e:
+            # Fall back to original implementation for unsupported sources
+            print(f"[Stage 1 - SKILL AUTOMATION] Skill not supported for this source, falling back: {e}")
+            return jsonify({"error": str(e)}), 501
+        except FileNotFoundError as e:
+            return jsonify({"error": str(e)}), 404
+
+        # Convert skill state to RequirementBrief for compatibility
+        brief = _skill_state_to_brief(skill_state)
+
+        # Save in run directory for web UI tracking
         out = rd / "01_brief.json"
         _write_json(out, brief)
-        print(f"[Stage 1] Success! Brief written to {out}")
+        print(f"[Stage 1 - SKILL AUTOMATION] Brief written to {out}")
+
+        # Skill state is already saved to .claude/sdlc-state.json by the automation
+        print(f"[Stage 1 - SKILL AUTOMATION] Skill state saved to .claude/sdlc-state.json")
 
         return jsonify({
             "run_id": run_id,
             "artifact": str(out.relative_to(ROOT)),
             "brief": brief.model_dump(),
+            "skill_used": skill_used,
+            "skill_automation": True,
+            "source_type": "confluence" if "confluence" in source.lower() else "file",
+            "open_questions": skill_state.get("open_questions", []),
+            "stories_found": len(skill_state.get("stories", [])),
+            "acceptance_criteria_found": len(skill_state.get("acceptance_criteria", [])),
         })
     except Exception as e:
         import traceback
-        print(f"[Stage 1] ERROR: {e}")
+        print(f"[Stage 1 - SKILL AUTOMATION] ERROR: {e}")
         traceback.print_exc()
-        return jsonify({"error": f"Stage 1 failed: {str(e)}"}), 500
+        return jsonify({"error": f"Stage 1 skill automation failed: {str(e)}"}), 500
+
+
+def _skill_state_to_brief(skill_state: dict) -> RequirementBrief:
+    """Convert skill state format to RequirementBrief model."""
+    from ..models import Persona
+
+    # Extract personas from stories
+    personas = []
+    seen_personas = set()
+
+    for story in skill_state.get("stories", []):
+        persona_name = story.get("as_a", "").strip()
+        if persona_name and persona_name not in seen_personas:
+            personas.append(Persona(
+                name=persona_name,
+                role=persona_name,  # Use persona name as role
+                goal=story.get("i_want", "").strip() or "Achieve business objectives"
+            ))
+            seen_personas.add(persona_name)
+
+    # If no personas found, create a default one
+    if not personas:
+        personas = [Persona(
+            name="User",
+            role="End User",
+            goal="Access and use the system effectively"
+        )]
+
+    # Build functional needs from stories
+    functional_needs = []
+    for story in skill_state.get("stories", []):
+        need = story.get("i_want", "").strip()
+        if need:
+            functional_needs.append(need)
+
+    # If no functional needs, use acceptance criteria
+    if not functional_needs:
+        functional_needs = skill_state.get("acceptance_criteria", [])[:3]  # Take first 3
+
+    # Build brief
+    brief = RequirementBrief(
+        source=skill_state.get("source", ""),
+        title=skill_state.get("epic", "Requirements"),
+        business_goal=skill_state.get("epic", "Extracted from requirements document"),
+        personas=personas,
+        functional_needs=functional_needs,
+        non_functional_constraints=skill_state.get("nfr", []),
+        out_of_scope=skill_state.get("out_of_scope", []),
+        open_questions=skill_state.get("open_questions", []),
+    )
+
+    return brief
 
 
 # ---------------------------------------------------------------------------
-# Stage 2 — User story generation
+# Stage 2 — User story generation (using /sdlc-plan skill automation)
 # ---------------------------------------------------------------------------
 @app.post("/api/stage2")
 def api_stage2():
-    payload = request.get_json(force=True)
-    run_id = payload["run_id"]
-    rd = _run_dir(run_id)
-    brief = _read_json(rd / "01_brief.json", RequirementBrief)
-    backlog = stage2_stories.run(brief)
-    out = rd / "02_backlog.json"
-    _write_json(out, backlog)
-    return jsonify({
-        "run_id": run_id,
-        "artifact": str(out.relative_to(ROOT)),
-        "backlog": backlog.model_dump(),
-        "generation_source": backlog.__dict__.get("_generation_source", "rules"),
-        "generation_backend": backlog.__dict__.get("_generation_backend", "stub"),
-    })
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload["run_id"]
+        jira_project_key = payload.get("jira_project_key", "SCRUM")
+
+        rd = _run_dir(run_id)
+        brief = _read_json(rd / "01_brief.json", RequirementBrief)
+
+        print(f"[Stage 2] Generating user stories for {run_id} (skill automation)")
+
+        # Use skill automation instead of old stage2_stories
+        skill_automation = PlanSkillAutomation(ROOT)
+        backlog = skill_automation.run(brief, jira_project_key)
+
+        out = rd / "02_backlog.json"
+        _write_json(out, backlog)
+
+        # Get Jira links and mode
+        jira_links = backlog.__dict__.get("_jira_links", {})
+        jira_mode = type(skill_automation.jira).__name__
+        jira_url = _os.environ.get("JIRA_URL", "")
+
+        # Build clickable Jira URLs
+        jira_issues = []
+        for story_id, issue_key in jira_links.items():
+            issue_url = f"{jira_url}/browse/{issue_key}" if jira_url and jira_mode == "JiraClient" else ""
+            jira_issues.append({
+                "story_id": story_id,
+                "issue_key": issue_key,
+                "url": issue_url,
+            })
+
+        return jsonify({
+            "run_id": run_id,
+            "artifact": str(out.relative_to(ROOT)),
+            "backlog": backlog.model_dump(),
+            "skill_automation": True,
+            "stories_count": len(backlog.stories),
+            "total_stories": len(backlog.stories),
+            "jira_mode": jira_mode,
+            "jira_url": jira_url,
+            "jira_project_key": jira_project_key,
+            "jira_issues": jira_issues,
+            "generation_source": backlog.__dict__.get("_generation_source", "rules"),
+            "generation_backend": backlog.__dict__.get("_generation_backend", "stub"),
+            "generation_detail": backlog.__dict__.get("_generation_detail", ""),
+        })
+    except Exception as e:
+        import traceback
+        print(f"[Stage 2 - SKILL AUTOMATION] ERROR: {e}")
+        traceback.print_exc()
+        return jsonify({"error": f"Stage 2 skill automation failed: {str(e)}"}), 500
 
 
 @app.post("/api/approve")
@@ -209,21 +378,32 @@ def api_approve():
 
 
 # ---------------------------------------------------------------------------
-# Stage 3 — Code generation
+# Stage 3 — Code generation (using /sdlc-build skill automation)
 # ---------------------------------------------------------------------------
 @app.post("/api/stage3")
 def api_stage3():
-    payload = request.get_json(force=True)
-    run_id = payload["run_id"]
-    inject = bool(payload.get("inject_defect", False))
-    rd = _run_dir(run_id)
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload["run_id"]
+        inject = bool(payload.get("inject_defect", False))
+        rd = _run_dir(run_id)
 
-    backlog = _read_json(rd / "02_backlog.json", StoryBacklog)
-    if not backlog.approved:
-        return jsonify({"error": "Backlog is not approved. Run /api/approve first."}), 400
+        backlog = _read_json(rd / "02_backlog.json", StoryBacklog)
+        if not backlog.approved:
+            return jsonify({"error": "Backlog is not approved. Run /api/approve first."}), 400
 
-    pr = stage3_code.run(backlog, inject_defect=inject)
-    _write_json(rd / "03_pr.json", pr)
+        print(f"[Stage 3] Generating code for {run_id} (skill automation)")
+
+        # Use skill automation instead of old stage3_code
+        skill_automation = BuildSkillAutomation(ROOT)
+        pr = skill_automation.run(backlog, inject_defect=inject)
+
+        _write_json(rd / "03_pr.json", pr)
+    except Exception as e:
+        import traceback
+        print(f"[Stage 3 - SKILL AUTOMATION] ERROR: {e}")
+        traceback.print_exc()
+        return jsonify({"error": f"Stage 3 skill automation failed: {str(e)}"}), 500
 
     # Materialise generated files to disk under src/.
     SRC_DIR.mkdir(parents=True, exist_ok=True)
@@ -233,46 +413,73 @@ def api_stage3():
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(f.contents, encoding="utf-8")
         written.append(str(target.relative_to(ROOT)))
+        print(f"[Stage 3] Written: {f.path}")
 
     return jsonify({
         "run_id": run_id,
         "pr": pr.model_dump(),
+        "skill_automation": True,
         "files_written": written,
+        "files_generated": len(pr.files),
+        "pr_number": pr.number,
+        "pr_branch": pr.branch,
         "inject_defect": inject,
-        "generation_source": pr.__dict__.get("_generation_source", "rules"),
-        "generation_backend": pr.__dict__.get("_generation_backend", "stub"),
+        "generation_source": pr.__dict__.get("_generation_source", "skill_automation"),
+        "generation_backend": pr.__dict__.get("_generation_backend", "sdlc-build"),
     })
 
 
 # ---------------------------------------------------------------------------
-# Stage 4 — Code review
+# Stage 4 — Code review (using /sdlc-review skill automation)
 # ---------------------------------------------------------------------------
 @app.post("/api/stage4")
 def api_stage4():
-    payload = request.get_json(force=True)
-    run_id = payload["run_id"]
-    rd = _run_dir(run_id)
-    pr = _read_json(rd / "03_pr.json", PullRequest)
-    report = stage4_review.run(pr)
-    _write_json(rd / "04_review.json", report)
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload["run_id"]
+        rd = _run_dir(run_id)
+        pr = _read_json(rd / "03_pr.json", PullRequest)
 
-    # Mirror to the CodeReview folder requested by the brief.
-    REVIEW_DIR.mkdir(parents=True, exist_ok=True)
-    review_copy = REVIEW_DIR / f"{run_id}_review.json"
-    _write_json(review_copy, report)
-    md = REVIEW_DIR / f"{run_id}_review.md"
-    md.write_text(_review_to_markdown(report), encoding="utf-8")
+        print(f"[Stage 4] Reviewing PR #{pr.number} for {run_id} (skill automation)")
 
-    return jsonify({
-        "run_id": run_id,
-        "report": report.model_dump(),
-        "stored": [
-            str(review_copy.relative_to(ROOT)),
-            str(md.relative_to(ROOT)),
-        ],
-        "review_source": report.__dict__.get("_review_source", "rules"),
-        "review_backend": report.__dict__.get("_review_backend", "stub"),
-    })
+        # Use skill automation instead of old stage4_review
+        skill_automation = ReviewSkillAutomation(ROOT)
+        report = skill_automation.run(pr)
+
+        _write_json(rd / "04_review.json", report)
+
+        # Mirror to the CodeReview folder requested by the brief.
+        REVIEW_DIR.mkdir(parents=True, exist_ok=True)
+        review_copy = REVIEW_DIR / f"{run_id}_review.json"
+        _write_json(review_copy, report)
+        md = REVIEW_DIR / f"{run_id}_review.md"
+        md.write_text(_review_to_markdown(report), encoding="utf-8")
+
+        # Determine actual review source for accurate badge
+        llm_findings = sum(1 for f in report.findings if "[LLM]" in f.message)
+        rule_findings = len(report.findings) - llm_findings
+        review_source = "llm" if llm_findings > 0 else "rules"
+
+        return jsonify({
+            "run_id": run_id,
+            "report": report.model_dump(),
+            "skill_automation": True,
+            "verdict": report.verdict,
+            "findings_count": len(report.findings),
+            "llm_findings": llm_findings,
+            "rule_findings": rule_findings,
+            "stored": [
+                str(review_copy.relative_to(ROOT)),
+                str(md.relative_to(ROOT)),
+            ],
+            "review_source": review_source,
+            "review_backend": skill_automation.llm.backend,
+        })
+    except Exception as e:
+        import traceback
+        print(f"[Stage 4 - SKILL AUTOMATION] ERROR: {e}")
+        traceback.print_exc()
+        return jsonify({"error": f"Stage 4 skill automation failed: {str(e)}"}), 500
 
 
 def _review_to_markdown(report: ReviewReport) -> str:
@@ -408,16 +615,23 @@ def _run_playwright(playwright_dir: Path, run_id: str) -> dict:
 # ---------------------------------------------------------------------------
 @app.post("/api/stage5/manual-tests")
 def api_stage5_manual():
-    """Generate manual test cases Excel"""
+    """Generate manual test cases using /sdlc-test-manual skill automation"""
     try:
         payload = request.get_json(force=True)
         run_id = payload["run_id"]
-        print(f"[Stage 5.1] Generating manual tests for {run_id}")
+        print(f"[Stage 5.1] Generating manual tests for {run_id} (skill automation)")
 
-        result = generate_manual_tests(run_id, ROOT, MANUAL_TESTS_DIR)
-        if isinstance(result, tuple):
-            return jsonify(result[0]), result[1]
-        return jsonify(result)
+        # Use skill automation instead of old handler
+        skill_automation = TestManualSkillAutomation(ROOT)
+        result = skill_automation.run(run_id)
+
+        return jsonify({
+            "run_id": run_id,
+            "skill_automation": True,
+            "total_test_cases": result.get("total_test_cases", 0),
+            "output_file": f"runs/{run_id}/manual_test_cases.json",
+            "excel_file": f"runs/{run_id}/manual_test_cases.xlsx"
+        })
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -426,16 +640,23 @@ def api_stage5_manual():
 
 @app.post("/api/stage5/automation-scripts")
 def api_stage5_automation():
-    """Generate Playwright automation scripts"""
+    """Generate Playwright automation scripts using /sdlc-test-automation skill automation"""
     try:
         payload = request.get_json(force=True)
         run_id = payload["run_id"]
-        print(f"[Stage 5.2] Generating automation scripts for {run_id}")
+        print(f"[Stage 5.2] Generating automation scripts for {run_id} (skill automation)")
 
-        result = generate_automation_scripts(run_id, ROOT, AUTOMATION_SCRIPTS_DIR)
-        if isinstance(result, tuple):
-            return jsonify(result[0]), result[1]
-        return jsonify(result)
+        # Use skill automation instead of old handler
+        skill_automation = TestAutomationSkillAutomation(ROOT)
+        result = skill_automation.run(run_id)
+
+        return jsonify({
+            "run_id": run_id,
+            "skill_automation": True,
+            "total_scripts": result.get("total_scripts", 0),
+            "output_dir": f"runs/{run_id}/playwright_tests/",
+            "metadata_file": f"runs/{run_id}/automation_scripts.json"
+        })
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -444,16 +665,26 @@ def api_stage5_automation():
 
 @app.post("/api/stage5/execute-tests")
 def api_stage5_execute():
-    """Execute Playwright tests"""
+    """Execute Playwright tests using /sdlc-test-execute skill automation"""
     try:
         payload = request.get_json(force=True)
         run_id = payload["run_id"]
-        print(f"[Stage 5.3] Executing tests for {run_id}")
+        print(f"[Stage 5.3] Executing tests for {run_id} (skill automation)")
 
-        result = execute_tests(run_id, ROOT, AUTOMATION_SCRIPTS_DIR, RESULTS_DIR)
-        if isinstance(result, tuple):
-            return jsonify(result[0]), result[1]
-        return jsonify(result)
+        # Use skill automation instead of old handler
+        skill_automation = TestExecuteSkillAutomation(ROOT)
+        result = skill_automation.run(run_id)
+
+        return jsonify({
+            "run_id": run_id,
+            "skill_automation": True,
+            "total_tests": result.get("total_tests", 0),
+            "passed": result.get("passed", 0),
+            "failed": result.get("failed", 0),
+            "pass_rate": result.get("pass_rate", 0),
+            "output_file": f"runs/{run_id}/test_execution.json",
+            "html_report": f"runs/{run_id}/test-report.html"
+        })
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -462,16 +693,24 @@ def api_stage5_execute():
 
 @app.post("/api/stage5/heal-tests")
 def api_stage5_heal():
-    """Analyze failures and heal tests"""
+    """Analyze failures and heal tests using /sdlc-test-heal skill automation"""
     try:
         payload = request.get_json(force=True)
         run_id = payload["run_id"]
-        print(f"[Stage 5.4] Healing tests for {run_id}")
+        print(f"[Stage 5.4] Healing tests for {run_id} (skill automation)")
 
-        result = heal_tests(run_id, ROOT, AUTOMATION_SCRIPTS_DIR, RESULTS_DIR)
-        if isinstance(result, tuple):
-            return jsonify(result[0]), result[1]
-        return jsonify(result)
+        # Use skill automation instead of old handler
+        skill_automation = TestHealSkillAutomation(ROOT)
+        result = skill_automation.run(run_id)
+
+        return jsonify({
+            "run_id": run_id,
+            "skill_automation": True,
+            "failures_analyzed": result.get("failures_analyzed", 0),
+            "auto_fixable": result.get("auto_fixable", 0),
+            "manual_review_needed": result.get("manual_review_needed", 0),
+            "output_file": f"runs/{run_id}/test_healing.json"
+        })
     except Exception as e:
         import traceback
         traceback.print_exc()

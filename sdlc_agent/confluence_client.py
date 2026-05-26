@@ -1,0 +1,238 @@
+"""
+Confluence API client for fetching page content.
+
+Supports both Confluence Cloud and Confluence Server/Data Center.
+"""
+from __future__ import annotations
+
+import os
+import re
+from typing import Optional
+from urllib.parse import urlparse
+
+import requests
+
+
+class ConfluenceClient:
+    """Simple Confluence REST API client."""
+
+    def __init__(self, base_url: Optional[str] = None, token: Optional[str] = None):
+        """
+        Initialize Confluence client.
+
+        Args:
+            base_url: Confluence base URL (e.g., https://company.atlassian.net)
+            token: API token for authentication
+        """
+        self.base_url = base_url or os.getenv("CONFLUENCE_BASE_URL")
+        self.token = token or os.getenv("CONFLUENCE_API_TOKEN") or os.getenv("ATLASSIAN_TOKEN")
+        self.email = os.getenv("CONFLUENCE_EMAIL") or os.getenv("ATLASSIAN_EMAIL")
+
+    def extract_page_id(self, url: str) -> str:
+        """
+        Extract page ID from Confluence URL.
+
+        Supports formats:
+        - https://company.atlassian.net/wiki/spaces/SPACE/pages/12345/Page+Title
+        - https://confluence.company.com/display/SPACE/Page+Title?pageId=12345
+        - https://company.atlassian.net/wiki/pages/viewpage.action?pageId=12345
+        """
+        # Try to find pageId parameter
+        if "pageId=" in url:
+            match = re.search(r"pageId=(\d+)", url)
+            if match:
+                return match.group(1)
+
+        # Try to extract from path-style URL
+        match = re.search(r"/pages/(\d+)/", url)
+        if match:
+            return match.group(1)
+
+        raise ValueError(f"Could not extract page ID from URL: {url}")
+
+    def get_page_content(self, page_url: str) -> dict:
+        """
+        Fetch page content from Confluence.
+
+        Args:
+            page_url: Full Confluence page URL
+
+        Returns:
+            dict with 'title', 'content', 'space', 'id'
+        """
+        # Extract base URL if not provided
+        if not self.base_url:
+            parsed = urlparse(page_url)
+            self.base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Extract page ID
+        page_id = self.extract_page_id(page_url)
+
+        # Build API endpoint
+        # Confluence Cloud uses /wiki/api/v2, Server/DC uses /rest/api
+        if "atlassian.net" in self.base_url:
+            # Confluence Cloud
+            api_url = f"{self.base_url}/wiki/api/v2/pages/{page_id}"
+            params = {"body-format": "storage"}
+        else:
+            # Confluence Server/Data Center
+            api_url = f"{self.base_url}/rest/api/content/{page_id}"
+            params = {"expand": "body.storage,space"}
+
+        # Make request
+        headers = {"Accept": "application/json"}
+
+        if self.token and self.email:
+            # Confluence Cloud (email + token)
+            auth = (self.email, self.token)
+        elif self.token:
+            # Server/DC with PAT or API token
+            headers["Authorization"] = f"Bearer {self.token}"
+            auth = None
+        else:
+            raise ValueError(
+                "Confluence credentials not found. Please set:\n"
+                "- CONFLUENCE_API_TOKEN (and CONFLUENCE_EMAIL for Cloud)\n"
+                "- Or ATLASSIAN_TOKEN (and ATLASSIAN_EMAIL)\n"
+                "in your .env file or environment variables."
+            )
+
+        response = requests.get(api_url, headers=headers, auth=auth, params=params)
+        response.raise_for_status()
+
+        data = response.json()
+
+        # Parse response (format differs between Cloud and Server)
+        if "atlassian.net" in self.base_url:
+            # Cloud API v2
+            return {
+                "id": data["id"],
+                "title": data["title"],
+                "content": data.get("body", {}).get("storage", {}).get("value", ""),
+                "space": data.get("spaceId", ""),
+                "url": page_url,
+            }
+        else:
+            # Server/DC API
+            return {
+                "id": data["id"],
+                "title": data["title"],
+                "content": data.get("body", {}).get("storage", {}).get("value", ""),
+                "space": data.get("space", {}).get("key", ""),
+                "url": page_url,
+            }
+
+    def html_to_markdown(self, html: str) -> str:
+        """
+        Convert Confluence HTML storage format to basic markdown.
+
+        This is a simple converter - for production use, consider using
+        a library like html2text or markdownify.
+        """
+        import html as html_lib
+
+        # Decode HTML entities
+        text = html_lib.unescape(html)
+
+        # Confluence macros: EXTRACT content from code blocks (don't strip them).
+        # Users often paste requirements inside code/markdown blocks.
+        # The actual content is in <ac:plain-text-body><![CDATA[...]]></ac:plain-text-body>
+        def _extract_macro_content(match):
+            macro_html = match.group(0)
+            # Try to pull out CDATA content
+            cdata_match = re.search(
+                r"<ac:plain-text-body>\s*<!\[CDATA\[(.*?)\]\]>\s*</ac:plain-text-body>",
+                macro_html,
+                flags=re.DOTALL,
+            )
+            if cdata_match:
+                return "\n" + cdata_match.group(1) + "\n"
+            # Try rich text body (rendered HTML inside macro)
+            rich_match = re.search(
+                r"<ac:rich-text-body>(.*?)</ac:rich-text-body>",
+                macro_html,
+                flags=re.DOTALL,
+            )
+            if rich_match:
+                return "\n" + rich_match.group(1) + "\n"
+            # No extractable body - strip the macro
+            return ""
+
+        text = re.sub(
+            r"<ac:structured-macro[^>]*>.*?</ac:structured-macro>",
+            _extract_macro_content,
+            text,
+            flags=re.DOTALL,
+        )
+
+        # Clean up remaining Confluence-specific tags
+        text = re.sub(r"<ac:[^>]*?/>", "", text)  # self-closing ac tags
+        text = re.sub(r"<ri:[^>]*?/>", "", text)  # resource identifiers
+        text = re.sub(r"<ac:[^>]*>", "", text)    # opening ac tags
+        text = re.sub(r"</ac:[^>]*>", "", text)   # closing ac tags
+
+        # Headings (with optional attributes)
+        text = re.sub(r"<h1[^>]*>(.*?)</h1>", r"\n# \1\n", text, flags=re.DOTALL)
+        text = re.sub(r"<h2[^>]*>(.*?)</h2>", r"\n## \1\n", text, flags=re.DOTALL)
+        text = re.sub(r"<h3[^>]*>(.*?)</h3>", r"\n### \1\n", text, flags=re.DOTALL)
+        text = re.sub(r"<h4[^>]*>(.*?)</h4>", r"\n#### \1\n", text, flags=re.DOTALL)
+        text = re.sub(r"<h5[^>]*>(.*?)</h5>", r"\n##### \1\n", text, flags=re.DOTALL)
+        text = re.sub(r"<h6[^>]*>(.*?)</h6>", r"\n###### \1\n", text, flags=re.DOTALL)
+
+        # Bold/italic (with optional attributes)
+        text = re.sub(r"<strong[^>]*>(.*?)</strong>", r"**\1**", text, flags=re.DOTALL)
+        text = re.sub(r"<b[^>]*>(.*?)</b>", r"**\1**", text, flags=re.DOTALL)
+        text = re.sub(r"<em[^>]*>(.*?)</em>", r"*\1*", text, flags=re.DOTALL)
+        text = re.sub(r"<i[^>]*>(.*?)</i>", r"*\1*", text, flags=re.DOTALL)
+
+        # Lists - process list items, then wrap with newlines
+        text = re.sub(r"<li[^>]*>(.*?)</li>", r"\n- \1", text, flags=re.DOTALL)
+        text = re.sub(r"<ul[^>]*>", "\n", text)
+        text = re.sub(r"</ul>", "\n", text)
+        text = re.sub(r"<ol[^>]*>", "\n", text)
+        text = re.sub(r"</ol>", "\n", text)
+
+        # Paragraphs and breaks
+        text = re.sub(r"<p[^>]*>(.*?)</p>", r"\n\1\n", text, flags=re.DOTALL)
+        text = re.sub(r"<br\s*/?>", "\n", text)
+        text = re.sub(r"<div[^>]*>", "\n", text)
+        text = re.sub(r"</div>", "\n", text)
+
+        # Tables -> convert <tr><td>...</td></tr> to readable form
+        text = re.sub(r"<td[^>]*>(.*?)</td>", r" | \1", text, flags=re.DOTALL)
+        text = re.sub(r"<th[^>]*>(.*?)</th>", r" | \1", text, flags=re.DOTALL)
+        text = re.sub(r"<tr[^>]*>", "\n", text)
+        text = re.sub(r"</tr>", "\n", text)
+
+        # Remove remaining HTML tags
+        text = re.sub(r"<[^>]+>", "", text)
+
+        # Clean up whitespace
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        text = re.sub(r"[ \t]+", " ", text)  # collapse runs of spaces/tabs
+        text = re.sub(r" +\n", "\n", text)    # trailing spaces before newline
+
+        return text.strip()
+
+
+def fetch_confluence_page(page_url: str) -> str:
+    """
+    Fetch and convert a Confluence page to markdown text.
+
+    Args:
+        page_url: Full Confluence page URL
+
+    Returns:
+        Markdown content of the page
+    """
+    client = ConfluenceClient()
+    page_data = client.get_page_content(page_url)
+
+    # Convert HTML to markdown
+    markdown = client.html_to_markdown(page_data["content"])
+
+    # Add title as H1 if not already present
+    if not markdown.startswith("#"):
+        markdown = f"# {page_data['title']}\n\n{markdown}"
+
+    return markdown

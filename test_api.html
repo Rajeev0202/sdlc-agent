@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1f2e; color: #e6e9f0; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; background: #5b9dff; color: white; border: none; border-radius: 5px; }
+        pre { background: #0a0e1a; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .success { color: #3ecf8e; }
+        .error { color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <h1>SDLC API Test</h1>
+
+    <h2>Test 1: Simple Test Endpoint</h2>
+    <button onclick="testSimple()">Test /api/test</button>
+    <pre id="result1">Click button to test...</pre>
+
+    <h2>Test 2: Stage 1 Endpoint</h2>
+    <input type="text" id="source" value="samples/brd_natwest_card_freeze.md" style="width: 400px; padding: 8px;">
+    <button onclick="testStage1()">Test /api/stage1</button>
+    <pre id="result2">Click button to test...</pre>
+
+    <script>
+        async function testSimple() {
+            const result = document.getElementById('result1');
+            result.textContent = 'Testing...';
+
+            try {
+                const response = await fetch('http://localhost:5002/api/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ test: 'hello', timestamp: new Date().toISOString() })
+                });
+
+                const data = await response.json();
+                result.className = 'success';
+                result.textContent = 'SUCCESS:\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.className = 'error';
+                result.textContent = 'ERROR:\n' + error.toString();
+            }
+        }
+
+        async function testStage1() {
+            const result = document.getElementById('result2');
+            const source = document.getElementById('source').value;
+            result.textContent = 'Testing...';
+
+            const payload = {
+                run_id: null,
+                source: source
+            };
+
+            console.log('Sending payload:', payload);
+
+            try {
+                const response = await fetch('http://localhost:5002/api/stage1', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                console.log('Response status:', response.status);
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    result.className = 'success';
+                    result.textContent = 'SUCCESS:\n' + JSON.stringify(data, null, 2);
+                } else {
+                    result.className = 'error';
+                    result.textContent = 'ERROR ' + response.status + ':\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                result.className = 'error';
+                result.textContent = 'ERROR:\n' + error.toString();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Additional dependencies for Stage 5 Test Management Skills
+# Install with: pip install -r requirements-stage5.txt
+
+# Anthropic API client for Claude integration (required for LLM-powered test generation)
+anthropic>=0.40.0
+
+# Excel file generation for manual test cases
+openpyxl>=3.1.0
+
+# Optional: Google Gemini support (alternative to Anthropic)
+google-generativeai>=0.8.0
+
+# Note: Playwright is installed via npm, not pip
+# Run: npm install -D @playwright/test && npx playwright install
