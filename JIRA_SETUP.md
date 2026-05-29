@@ -69,12 +69,14 @@ story = UserStory(
     risks=[]
 )
 
-# Initialize client (make sure env vars are set)
+# Initialize client (using environment variables - NEVER hardcode credentials!)
+import os
+
 client = JiraClient(
-    server_url="https://rrjha82.atlassian.net",
-    email="rrjha82@gmail.com",
-    api_token="ATATT3xFfGF0MdHHICnD58KKnIPrGFWRTlMv2DZFl6wo8nNhMoOGZMlGmv8REPY931oEgNs2ENQSA_G16a_ZTf6Yo1GokRCEzp6DLmqbbN8LAT8Uu_vaul8EDjG91yWJVG36AEjHwpTbNy8iqW5twqPGlP9rPzqG89eQZKER08ncoC3ugK1YMVk=B56E2F66",
-    project_key="SCRUM"
+    server_url=os.getenv("JIRA_URL", "https://your-domain.atlassian.net"),
+    email=os.getenv("JIRA_EMAIL", "your-email@example.com"),
+    api_token=os.getenv("JIRA_API_TOKEN", "your-api-token-here"),
+    project_key=os.getenv("JIRA_PROJECT_KEY", "SCRUM")
 )
 
 # Create the story
