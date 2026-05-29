@@ -1,5 +1,5 @@
 """
-Tests for US-010: view and export audit logs via a compliance dashboard
+Tests for US-010: an immutable audit log storage system with 24-month retention
 
 This file follows TDD approach - tests written first.
 """
@@ -27,33 +27,33 @@ class TestUS010Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_a_compliance_officer(self):
+    def test_ac1_given_any_audit_event(self):
         """
-        AC1: Given a compliance officer logged in, when accessing the audit dashboard, then display freeze/unfreeze events
+        AC1: Given any audit event, when written, then it is stored in an append-only, immutable data store
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_audit_events_displayed(self):
+    def test_ac2_given_audit_events_are(self):
         """
-        AC2: Given audit events displayed, when applying filters (date range, card ID, user), then update results in real-time
+        AC2: Given audit events are stored, when accessed, then they cannot be modified or deleted
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_audit_events_displayed(self):
+    def test_ac3_given_events_older_than(self):
         """
-        AC3: Given audit events displayed, when clicking 'Export', then download events as CSV or JSON
+        AC3: Given events older than 24 months, when the retention policy runs, then they are archived but remain accessible
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_the_dashboard_when(self):
+    def test_ac4_given_the_storage_system(self):
         """
-        AC4: Given the dashboard, when loading events, then display timestamp, user, card, and action in a tabular format
+        AC4: Given the storage system, when queried for integrity, then cryptographic verification confirms no tampering
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()

@@ -1,8 +1,8 @@
 """
-Implementation for US-003: freeze events logged to the audit trail
+Implementation for US-003: receive a push notification when my card is frozen
 
-Persona: Compliance officer
-Goal: I can track when cards were frozen and by whom
+Persona: Customer
+Goal: I have confirmation the freeze was successful
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US003Feature:
-    """Implementation of freeze events logged to the audit trail."""
+    """Implementation of receive a push notification when my card is frozen."""
 
     def __init__(self):
         """Initialize US003Feature."""
@@ -22,10 +22,9 @@ class US003Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a successful freeze operation, when the card status changes to FROZEN, then publish a CARD_FROZEN event
-        - Given a CARD_FROZEN event, when published, then include timestamp, user identifier, card identifier, and action type
-        - Given an audit event, when stored, then it is immediately queryable
-        - Given a freeze operation fails, when an error occurs, then log the failure with error details
+        - Given the card status changes to FROZEN, when the update completes, then a push notification is sent within 1 second
+        - Given the notification service is unavailable, when the freeze completes, then log the failure but do not block the freeze action
+        - Given the notification is sent, when received, then it includes card last 4 digits and timestamp
         """
         logger.info("Executing %s", self.__class__.__name__)
         return {"success": True, "message": "Feature implemented"}

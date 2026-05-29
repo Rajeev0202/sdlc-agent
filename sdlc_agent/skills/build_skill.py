@@ -14,6 +14,7 @@ from typing import Any
 
 from ..integrations.anthropic_client import MockClaudeClient
 from ..models import StoryBacklog, PullRequest, CodeFile
+from ..guardrails import CodeQualityGuardrails, format_guardrail_report
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 class BuildSkillAutomation:
     """Automates the /sdlc-build skill logic with LLM-powered code generation."""
 
-    def __init__(self, root_dir: Path):
+    def __init__(self, root_dir: Path, enable_guardrails: bool = True):
         self.root_dir = root_dir
         self.state_file = root_dir / ".claude" / "sdlc-state.json"
         self.llm = MockClaudeClient()
@@ -29,7 +30,11 @@ class BuildSkillAutomation:
         self._llm_failures = 0
         self._llm_max_failures = 2  # After 2 fails, stop trying LLM
         self._llm_successes = 0
-        logger.info(f"BuildSkillAutomation initialized with backend: {self.llm.backend}")
+        # Initialize guardrails for code quality validation
+        self.guardrails = CodeQualityGuardrails(strict_mode=True) if enable_guardrails else None
+        self._guardrail_rejections = 0  # Track how many times guardrails reject code
+        logger.info(f"BuildSkillAutomation initialized with backend: {self.llm.backend}, "
+                   f"guardrails: {'enabled' if enable_guardrails else 'disabled'}")
 
     def run(self, backlog: StoryBacklog, inject_defect: bool = False) -> PullRequest:
         """
@@ -88,9 +93,13 @@ class BuildSkillAutomation:
             test_file = self._generate_test_file(story)
             files.append(test_file)
 
-        print(f"[Stage 3] Done. LLM successes: {self._llm_successes}, "
-              f"LLM failures: {self._llm_failures}, fallback templates used: "
-              f"{total - self._llm_successes}", flush=True)
+        print(f"\n[Stage 3] Generation Complete:")
+        print(f"  ✓ LLM successes: {self._llm_successes}")
+        print(f"  ✗ LLM failures: {self._llm_failures}")
+        print(f"  📋 Fallback templates used: {total - self._llm_successes}")
+        if self.guardrails:
+            print(f"  🛡️  Guardrail rejections: {self._guardrail_rejections}")
+        print(flush=True)
 
         # Optionally inject a defect for demo
         if inject_defect and files:
@@ -107,12 +116,21 @@ class BuildSkillAutomation:
         if self.llm.is_live and self._llm_failures < self._llm_max_failures:
             llm_code = self._llm_generate_implementation(story)
             if llm_code:
-                self._llm_successes += 1
-                return CodeFile(
+                # Validate with guardrails before accepting
+                code_file = CodeFile(
                     path=f"src/{module_name}.py",
                     contents=llm_code,
                     language="python",
                 )
+
+                if self._validate_with_guardrails(code_file, story):
+                    self._llm_successes += 1
+                    return code_file
+                else:
+                    # Guardrails rejected - treat as LLM failure
+                    logger.warning(f"Guardrails rejected LLM code for {story.id}, falling back to template")
+                    self._guardrail_rejections += 1
+
             self._llm_failures += 1
             logger.warning(
                 f"LLM code generation failed for {story.id} "
@@ -120,7 +138,13 @@ class BuildSkillAutomation:
             )
 
         # Fallback: template-based generation
-        return self._template_implementation(story)
+        template_code = self._template_implementation(story)
+
+        # Validate template code with guardrails too
+        if not self._validate_with_guardrails(template_code, story):
+            logger.error(f"Even template code failed guardrails for {story.id} - this shouldn't happen!")
+
+        return template_code
 
     def _llm_generate_implementation(self, story) -> str:
         """Use Claude LLM to generate production-quality implementation code."""
@@ -141,11 +165,25 @@ CODING STANDARDS (MANDATORY):
 CODE QUALITY:
 - Write REAL working code, not stubs
 - Implement actual business logic for each acceptance criterion
-- Include proper error handling
-- Add input validation
+- Include proper error handling with try-except blocks
+- Add comprehensive input validation (check types, required fields, bounds)
 - Use meaningful variable names
 - Keep functions under 50 lines
 - Use dependency injection where appropriate
+
+SECURITY REQUIREMENTS (CRITICAL - ALL must be present):
+- Authentication: Accept user_id parameter and validate it's not None/empty
+- Authorization: Add ownership/permission checks (e.g., verify user owns the resource)
+- Audit logging: Log all sensitive operations (user_id, action, timestamp, result)
+- Input validation: Validate all inputs (type checking, required fields, sanitization)
+- Error handling: Wrap operations in try-except, don't expose internal errors
+
+IMPLEMENTATION PATTERN:
+1. Validate inputs (raise ValueError if invalid)
+2. Check authorization (raise PermissionError if unauthorized)
+3. Perform operation with try-except
+4. Log audit trail
+5. Return structured response
 
 Return ONLY Python code, no markdown formatting, no explanations."""
 
@@ -158,11 +196,18 @@ Acceptance Criteria:
 {chr(10).join(f"- {ac}" for ac in story.acceptance_criteria)}
 
 Generate complete Python implementation that:
-1. Implements all acceptance criteria
-2. Follows NatWest coding standards
-3. Is production-ready (not a stub)
-4. Has proper logging, error handling, and validation
-5. Is testable (uses dependency injection)
+1. Implements all acceptance criteria with REAL business logic (not stubs)
+2. Follows ALL NatWest coding standards (logging, no print(), TLS enabled)
+3. MUST include security controls:
+   - Accept user_id parameter for authentication
+   - Add authorization checks (verify user owns/can access the resource)
+   - Log all operations with audit trail (user_id, action, timestamp, result)
+   - Validate ALL inputs (type checking, required fields, bounds)
+   - Wrap operations in try-except with proper error handling
+4. Is production-ready and testable (uses dependency injection)
+5. Returns structured responses {{"success": bool, "message": str, "result": dict}}
+
+CRITICAL: Include all 5 security controls above or the code will be rejected.
 
 Return only the Python code."""
 
@@ -212,24 +257,99 @@ logger = logging.getLogger(__name__)
 class {class_name}:
     """Implementation of {story.want}."""
 
-    def __init__(self):
-        """Initialize {class_name}."""
+    def __init__(self, audit_service=None, auth_service=None):
+        """
+        Initialize {class_name}.
+
+        Args:
+            audit_service: Service for audit logging (injected dependency)
+            auth_service: Service for authorization checks (injected dependency)
+        """
+        self.audit_service = audit_service
+        self.auth_service = auth_service
         self.initialized = True
         logger.info("%s initialized", self.__class__.__name__)
 
-    def execute(self, **kwargs):
+    def execute(self, user_id: str = None, **kwargs):
         """
         Execute the main functionality.
 
         Acceptance Criteria:
 {chr(10).join(f"        - {ac}" for ac in story.acceptance_criteria)}
+
+        Args:
+            user_id: Authenticated user ID (required for security)
+            **kwargs: Additional parameters as needed
+
+        Returns:
+            dict: Result with success status and message
+
+        Raises:
+            ValueError: If inputs are invalid
+            PermissionError: If user is not authorized
         """
-        logger.info("Executing %s", self.__class__.__name__)
-        return {{"success": True, "message": "Feature implemented"}}
+        # 1. Input validation
+        if not user_id:
+            logger.error("Missing required parameter: user_id")
+            raise ValueError("user_id is required for authentication")
+
+        # Validate other required parameters based on acceptance criteria
+        required_fields = []  # TODO: Extract from acceptance criteria
+        for field in required_fields:
+            if field not in kwargs or not kwargs[field]:
+                raise ValueError(f"Missing required parameter: {{field}}")
+
+        try:
+            # 2. Authorization check
+            if self.auth_service and not self.auth_service.is_authorized(user_id, kwargs):
+                logger.warning("Authorization failed for user %s", user_id)
+                raise PermissionError(f"User {{user_id}} is not authorized for this operation")
+
+            # 3. Business logic implementation
+            logger.info("Executing %s for user %s", self.__class__.__name__, user_id)
+
+            # TODO: Implement actual business logic based on acceptance criteria
+            # This is a template - replace with real implementation
+            result = self._perform_operation(user_id, **kwargs)
+
+            # 4. Audit logging
+            if self.audit_service:
+                self.audit_service.log_action(
+                    user_id=user_id,
+                    action=self.__class__.__name__,
+                    result="success",
+                    details=kwargs
+                )
+
+            return {{"success": True, "message": "Operation completed successfully", "result": result}}
+
+        except Exception as e:
+            # 5. Error handling and audit logging
+            logger.error("Operation failed for user %s: %s", user_id, str(e), exc_info=True)
+
+            if self.audit_service:
+                self.audit_service.log_action(
+                    user_id=user_id,
+                    action=self.__class__.__name__,
+                    result="failure",
+                    error=str(e)
+                )
+
+            # Don't expose internal errors to caller
+            raise RuntimeError("Operation failed. Please try again or contact support.")
+
+    def _perform_operation(self, user_id: str, **kwargs):
+        """
+        Perform the actual business operation.
+
+        Override this method with specific business logic based on acceptance criteria.
+        """
+        # Template implementation - replace with actual business logic
+        return {{"status": "completed"}}
 
     def validate(self):
         """Validate the implementation meets acceptance criteria."""
-        return True
+        return self.initialized
 '''
 
         return CodeFile(
@@ -387,6 +507,48 @@ class Test{class_name}:
 ''')
 
         return "\n".join(tests)
+
+    def _validate_with_guardrails(self, code_file: CodeFile, story) -> bool:
+        """
+        Validate generated code with quality guardrails.
+
+        Args:
+            code_file: The code file to validate
+            story: The story context for validation
+
+        Returns:
+            True if code passes guardrails, False otherwise
+        """
+        if not self.guardrails:
+            # Guardrails disabled - accept all code
+            return True
+
+        # Prepare context for guardrails
+        context = {
+            "story_id": story.id,
+            "persona": story.persona,
+            "want": story.want,
+        }
+
+        print(f"\n🛡️  Running guardrails on {code_file.path}...")
+
+        # Run guardrail validation
+        result = self.guardrails.validate(code_file.contents, context)
+
+        # Print detailed report
+        report = format_guardrail_report(result)
+        print(report)
+
+        if not result.passed:
+            print(f"❌ Code REJECTED by guardrails (score: {result.score:.1f}/100)")
+            logger.warning(
+                f"Guardrails rejected {code_file.path}: {len(result.blocking_violations())} blocking violations"
+            )
+        else:
+            print(f"✅ Code ACCEPTED by guardrails (score: {result.score:.1f}/100)")
+            logger.info(f"Guardrails passed for {code_file.path} (score: {result.score:.1f})")
+
+        return result.passed
 
     def _inject_defect(self, code_file: CodeFile) -> CodeFile:
         """Inject a defect for demo purposes."""

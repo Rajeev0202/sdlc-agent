@@ -1,8 +1,8 @@
 """
-Implementation for US-009: query freeze and unfreeze events via API
+Implementation for US-009: every card unfreeze action logged with authentication method
 
-Persona: Compliance officer
-Goal: I can retrieve audit logs for investigations and compliance reports
+Persona: Compliance Officer
+Goal: I can audit unfreeze events and verify proper authentication
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US009Feature:
-    """Implementation of query freeze and unfreeze events via API."""
+    """Implementation of every card unfreeze action logged with authentication method."""
 
     def __init__(self):
         """Initialize US009Feature."""
@@ -22,10 +22,10 @@ class US009Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a compliance officer with appropriate permissions, when querying audit API, then return matching events
-        - Given a query with filters (date range, card ID, user ID, action type), when applied, then return filtered results
-        - Given a large result set, when queried, then support pagination (max 100 events per page)
-        - Given an unauthorized user, when querying audit API, then return 403 Forbidden
+        - Given a card is unfrozen, when the status update completes, then an audit event is written with timestamp, user ID, card ID, action type, and authentication method
+        - Given an audit event is written, when stored, then it is immutable and tamper-proof
+        - Given the audit service is unavailable, when an unfreeze occurs, then queue the event for retry
+        - Given multiple unfreeze events, when queried, then all events show which auth method was used
         """
         logger.info("Executing %s", self.__class__.__name__)
         return {"success": True, "message": "Feature implemented"}

@@ -1,8 +1,8 @@
 """
-Implementation for US-004: complete step-up authentication before unfreezing my card
+Implementation for US-004: every card freeze action logged with immutable audit trail
 
-Persona: Customer
-Goal: only I can unfreeze my card with additional security verification
+Persona: Compliance Officer
+Goal: I can track all freeze events for regulatory compliance
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US004Feature:
-    """Implementation of complete step-up authentication before unfreezing my card."""
+    """Implementation of every card freeze action logged with immutable audit trail."""
 
     def __init__(self):
         """Initialize US004Feature."""
@@ -22,10 +22,10 @@ class US004Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given an unfreeze attempt, when initiated, then prompt for step-up authentication (e.g., biometric, OTP)
-        - Given step-up authentication succeeds, when verified, then return authentication token for unfreeze operation
-        - Given step-up authentication fails, when verification is unsuccessful, then block unfreeze and display error
-        - Given step-up authentication times out, when no response within 60 seconds, then cancel unfreeze operation
+        - Given a card is frozen, when the status update completes, then an audit event is written with timestamp, user ID, card ID, and action type
+        - Given an audit event is written, when stored, then it is immutable and tamper-proof
+        - Given multiple freeze events, when queried, then all events are retained for minimum 24 months
+        - Given the audit service is unavailable, when a freeze occurs, then queue the event for retry
         """
         logger.info("Executing %s", self.__class__.__name__)
         return {"success": True, "message": "Feature implemented"}

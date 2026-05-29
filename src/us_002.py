@@ -1,8 +1,8 @@
 """
-Implementation for US-002: see a freeze button on the card details screen
+Implementation for US-002: the card freeze API to change my card status to FROZEN
 
 Persona: Customer
-Goal: I can freeze my card immediately without calling the contact centre
+Goal: my card cannot be used for transactions
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US002Feature:
-    """Implementation of see a freeze button on the card details screen."""
+    """Implementation of the card freeze API to change my card status to FROZEN."""
 
     def __init__(self):
         """Initialize US002Feature."""
@@ -22,10 +22,10 @@ class US002Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given I am viewing card details for an active debit card, when the screen loads, then a 'Freeze Card' button is visible
-        - Given I am viewing a frozen card, when the screen loads, then the 'Freeze Card' button is disabled or hidden
-        - Given I click 'Freeze Card', when the API call succeeds, then the UI updates to show FROZEN status
-        - Given the freeze operation fails, when the API returns an error, then display an error message to the user
+        - Given a valid freeze request, when the API receives it, then the card status is updated to FROZEN in under 2 seconds
+        - Given an already frozen card, when a freeze request is received, then return 400 with appropriate error message
+        - Given an invalid card ID, when a freeze request is received, then return 404
+        - Given the status update fails, when the error occurs, then rollback and return 500 with logged error
         """
         logger.info("Executing %s", self.__class__.__name__)
         return {"success": True, "message": "Feature implemented"}

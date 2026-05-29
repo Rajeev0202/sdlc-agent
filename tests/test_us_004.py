@@ -1,5 +1,5 @@
 """
-Tests for US-004: complete step-up authentication before unfreezing my card
+Tests for US-004: every card freeze action logged with immutable audit trail
 
 This file follows TDD approach - tests written first.
 """
@@ -27,33 +27,33 @@ class TestUS004Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_an_unfreeze_attempt(self):
+    def test_ac1_given_a_card_is(self):
         """
-        AC1: Given an unfreeze attempt, when initiated, then prompt for step-up authentication (e.g., biometric, OTP)
+        AC1: Given a card is frozen, when the status update completes, then an audit event is written with timestamp, user ID, card ID, and action type
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_step-up_authentication_succeeds(self):
+    def test_ac2_given_an_audit_event(self):
         """
-        AC2: Given step-up authentication succeeds, when verified, then return authentication token for unfreeze operation
+        AC2: Given an audit event is written, when stored, then it is immutable and tamper-proof
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_step-up_authentication_fails(self):
+    def test_ac3_given_multiple_freeze_events(self):
         """
-        AC3: Given step-up authentication fails, when verification is unsuccessful, then block unfreeze and display error
+        AC3: Given multiple freeze events, when queried, then all events are retained for minimum 24 months
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_step-up_authentication_times(self):
+    def test_ac4_given_the_audit_service(self):
         """
-        AC4: Given step-up authentication times out, when no response within 60 seconds, then cancel unfreeze operation
+        AC4: Given the audit service is unavailable, when a freeze occurs, then queue the event for retry
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()

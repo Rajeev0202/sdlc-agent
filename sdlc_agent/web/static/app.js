@@ -59,11 +59,14 @@ function updatePipelineTracker(stage, status) {
   if (!pipelineStage) return;
 
   // Remove previous status classes for this stage
-  pipelineStage.classList.remove('active', 'completed');
+  pipelineStage.classList.remove('active', 'completed', 'failed');
 
   if (status === 'done') {
     // Mark as completed (green light on)
     pipelineStage.classList.add('completed');
+  } else if (status === 'fail') {
+    // Mark as failed (red light on)
+    pipelineStage.classList.add('failed');
   } else if (status === 'running' || status === 'pending') {
     // Mark as active (yellow pulsing light)
     if (status === 'running') {
@@ -75,7 +78,7 @@ function updatePipelineTracker(stage, status) {
   for (let i = 1; i <= state.completedStages; i++) {
     const stageEl = document.querySelector(`.pipeline-stage[data-stage="${i}"]`);
     if (stageEl) {
-      stageEl.classList.remove('active');
+      stageEl.classList.remove('active', 'failed');
       stageEl.classList.add('completed');
     }
   }

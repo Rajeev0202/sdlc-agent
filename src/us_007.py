@@ -1,8 +1,8 @@
 """
-Implementation for US-007: unfreeze events logged to the audit trail
+Implementation for US-007: the unfreeze API to change my card status to ACTIVE after authentication
 
-Persona: Compliance officer
-Goal: I can track when cards were unfrozen and by whom
+Persona: Customer
+Goal: I can resume using my card for transactions
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US007Feature:
-    """Implementation of unfreeze events logged to the audit trail."""
+    """Implementation of the unfreeze API to change my card status to ACTIVE after authentication."""
 
     def __init__(self):
         """Initialize US007Feature."""
@@ -22,10 +22,10 @@ class US007Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a successful unfreeze operation, when the card status changes to ACTIVE, then publish a CARD_UNFROZEN event
-        - Given a CARD_UNFROZEN event, when published, then include timestamp, user identifier, card identifier, action type, and auth method
-        - Given an audit event, when stored, then it is immediately queryable
-        - Given an unfreeze operation fails, when an error occurs, then log the failure with error details
+        - Given a valid unfreeze request with auth token, when the API receives it, then verify the auth token before processing
+        - Given valid authentication, when the API processes the request, then the card status is updated to ACTIVE in under 2 seconds
+        - Given an already active card, when an unfreeze request is received, then return 400 with appropriate error message
+        - Given an invalid or expired auth token, when the request is received, then return 401 unauthorized
         """
         logger.info("Executing %s", self.__class__.__name__)
         return {"success": True, "message": "Feature implemented"}

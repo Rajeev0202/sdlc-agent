@@ -44,15 +44,30 @@ class ReviewSkillAutomation:
         Returns:
             ReviewReport with findings and verdict
         """
+        # Terminal header
+        print(f"\n{'='*70}")
+        print(f"🔍 Stage 4: Code Review Started (Skill Automation)")
+        print(f"{'='*70}")
+        print(f"PR Number: #{pr.number}")
+        print(f"Files to review: {len(pr.files)}")
+        print(f"Review backend: {self.llm.backend} {'(Live LLM)' if self.llm.is_live else '(Rules-based)'}")
+        print(f"{'='*70}\n")
+
         # Step 1-4: Rule-based static analysis (always run)
+        print("📋 Running rule-based static analysis...")
         quality_findings = self._review_code_quality(pr)
+        print(f"  ✓ Code quality: {len(quality_findings)} finding(s)")
         security_findings = self._check_security(pr)
+        print(f"  ✓ Security: {len(security_findings)} finding(s)")
         test_findings = self._check_test_coverage(pr)
+        print(f"  ✓ Test coverage: {len(test_findings)} finding(s)")
         standards_findings = self._check_standards(pr)
+        print(f"  ✓ Standards: {len(standards_findings)} finding(s)")
 
         rule_based_findings = (
             quality_findings + security_findings + test_findings + standards_findings
         )
+        print(f"\n📊 Rule-based analysis complete: {len(rule_based_findings)} total finding(s)\n")
 
         # Step 5: LLM-based semantic review (if LLM available)
         llm_findings = []
@@ -72,6 +87,28 @@ class ReviewSkillAutomation:
 
         # Step 9: Update state
         self._update_state(report)
+
+        # Print final summary
+        blocking = [f for f in all_findings if f.severity in (Severity.HIGH, Severity.CRITICAL)]
+        print(f"\n{'='*70}")
+        print(f"📋 Review Summary")
+        print(f"{'='*70}")
+        print(f"Total findings: {len(all_findings)} ({len(rule_based_findings)} rules + {len(llm_findings)} LLM)")
+        print(f"  🔴 Critical: {sum(1 for f in all_findings if f.severity == Severity.CRITICAL)}")
+        print(f"  🟠 High:     {sum(1 for f in all_findings if f.severity == Severity.HIGH)}")
+        print(f"  🟡 Medium:   {sum(1 for f in all_findings if f.severity == Severity.MEDIUM)}")
+        print(f"  🔵 Low:      {sum(1 for f in all_findings if f.severity == Severity.LOW)}")
+        print(f"  ℹ️  Info:     {sum(1 for f in all_findings if f.severity == Severity.INFO)}")
+        print(f"\nBlocking issues: {len(blocking)}")
+        if verdict == "pass":
+            print(f"\n✅ VERDICT: PASS - Ready to proceed to testing")
+        else:
+            print(f"\n❌ VERDICT: FAIL - Fix blocking issues before proceeding")
+            if blocking:
+                print(f"\nBlocking issues that must be fixed:")
+                for i, finding in enumerate(blocking, 1):
+                    print(f"  {i}. {finding.file}:{finding.line or '?'} - {finding.message}")
+        print(f"{'='*70}\n")
 
         logger.info(
             f"Review completed for PR #{pr.number}: "

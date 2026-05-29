@@ -1,8 +1,8 @@
 """
-Implementation for US-001: trigger a freeze action on my active debit card via backend API
+Implementation for US-001: see a freeze button on my card details screen
 
 Persona: Customer
-Goal: the card status changes to FROZEN and prevents unauthorized transactions
+Goal: I can initiate a card freeze when needed
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US001Feature:
-    """Implementation of trigger a freeze action on my active debit card via backend API."""
+    """Implementation of see a freeze button on my card details screen."""
 
     def __init__(self):
         """Initialize US001Feature."""
@@ -22,10 +22,10 @@ class US001Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given an active debit card, when freeze API is called, then card status changes to FROZEN
-        - Given a non-active card (e.g., already frozen, closed), when freeze API is called, then return 400 Bad Request
-        - Given a valid freeze request, when processing, then operation completes within 2 seconds
-        - Given a freeze operation, when successful, then return 200 OK with updated card status
+        - Given I am viewing my active card details, when the screen loads, then a 'Freeze Card' button is visible
+        - Given my card is already frozen, when I view card details, then the 'Freeze Card' button is replaced with 'Unfreeze Card'
+        - Given I tap 'Freeze Card', when the action is triggered, then a confirmation dialog appears
+        - Given the confirmation dialog, when I cancel, then no freeze action is sent
         """
         logger.info("Executing %s", self.__class__.__name__)
         return {"success": True, "message": "Feature implemented"}

@@ -1,5 +1,5 @@
 """
-Tests for US-005: trigger an unfreeze action on my frozen debit card via backend API
+Tests for US-005: complete step-up authentication before unfreezing my card
 
 This file follows TDD approach - tests written first.
 """
@@ -27,33 +27,33 @@ class TestUS005Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_a_frozen_debit(self):
+    def test_ac1_given_i_tap_'unfreeze(self):
         """
-        AC1: Given a frozen debit card and valid auth token, when unfreeze API is called, then card status changes to ACTIVE
+        AC1: Given I tap 'Unfreeze Card', when the action is initiated, then a step-up authentication challenge is presented
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_a_non-frozen_card(self):
+    def test_ac2_given_the_auth_challenge(self):
         """
-        AC2: Given a non-frozen card, when unfreeze API is called, then return 400 Bad Request
+        AC2: Given the auth challenge, when I successfully authenticate, then the unfreeze request is sent to the API
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_a_valid_unfreeze(self):
+    def test_ac3_given_the_auth_challenge(self):
         """
-        AC3: Given a valid unfreeze request, when processing, then operation completes within 2 seconds
+        AC3: Given the auth challenge, when I fail authentication 3 times, then the unfreeze is blocked and an alert is raised
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_an_unfreeze_operation(self):
+    def test_ac4_given_the_auth_challenge(self):
         """
-        AC4: Given an unfreeze operation without valid auth token, when called, then return 401 Unauthorized
+        AC4: Given the auth challenge, when I cancel, then no unfreeze action is sent
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()

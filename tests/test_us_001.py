@@ -1,5 +1,5 @@
 """
-Tests for US-001: trigger a freeze action on my active debit card via backend API
+Tests for US-001: see a freeze button on my card details screen
 
 This file follows TDD approach - tests written first.
 """
@@ -27,33 +27,33 @@ class TestUS001Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_an_active_debit(self):
+    def test_ac1_given_i_am_viewing(self):
         """
-        AC1: Given an active debit card, when freeze API is called, then card status changes to FROZEN
+        AC1: Given I am viewing my active card details, when the screen loads, then a 'Freeze Card' button is visible
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_a_non-active_card(self):
+    def test_ac2_given_my_card_is(self):
         """
-        AC2: Given a non-active card (e.g., already frozen, closed), when freeze API is called, then return 400 Bad Request
+        AC2: Given my card is already frozen, when I view card details, then the 'Freeze Card' button is replaced with 'Unfreeze Card'
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_a_valid_freeze(self):
+    def test_ac3_given_i_tap_'freeze(self):
         """
-        AC3: Given a valid freeze request, when processing, then operation completes within 2 seconds
+        AC3: Given I tap 'Freeze Card', when the action is triggered, then a confirmation dialog appears
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_a_freeze_operation(self):
+    def test_ac4_given_the_confirmation_dialog(self):
         """
-        AC4: Given a freeze operation, when successful, then return 200 OK with updated card status
+        AC4: Given the confirmation dialog, when I cancel, then no freeze action is sent
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()

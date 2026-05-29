@@ -1,5 +1,5 @@
 """
-Tests for US-002: see a freeze button on the card details screen
+Tests for US-002: the card freeze API to change my card status to FROZEN
 
 This file follows TDD approach - tests written first.
 """
@@ -27,33 +27,33 @@ class TestUS002Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_i_am_viewing(self):
+    def test_ac1_given_a_valid_freeze(self):
         """
-        AC1: Given I am viewing card details for an active debit card, when the screen loads, then a 'Freeze Card' button is visible
+        AC1: Given a valid freeze request, when the API receives it, then the card status is updated to FROZEN in under 2 seconds
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_i_am_viewing(self):
+    def test_ac2_given_an_already_frozen(self):
         """
-        AC2: Given I am viewing a frozen card, when the screen loads, then the 'Freeze Card' button is disabled or hidden
+        AC2: Given an already frozen card, when a freeze request is received, then return 400 with appropriate error message
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_i_click_'freeze(self):
+    def test_ac3_given_an_invalid_card(self):
         """
-        AC3: Given I click 'Freeze Card', when the API call succeeds, then the UI updates to show FROZEN status
+        AC3: Given an invalid card ID, when a freeze request is received, then return 404
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_the_freeze_operation(self):
+    def test_ac4_given_the_status_update(self):
         """
-        AC4: Given the freeze operation fails, when the API returns an error, then display an error message to the user
+        AC4: Given the status update fails, when the error occurs, then rollback and return 500 with logged error
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()

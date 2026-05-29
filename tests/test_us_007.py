@@ -1,5 +1,5 @@
 """
-Tests for US-007: unfreeze events logged to the audit trail
+Tests for US-007: the unfreeze API to change my card status to ACTIVE after authentication
 
 This file follows TDD approach - tests written first.
 """
@@ -27,33 +27,33 @@ class TestUS007Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_a_successful_unfreeze(self):
+    def test_ac1_given_a_valid_unfreeze(self):
         """
-        AC1: Given a successful unfreeze operation, when the card status changes to ACTIVE, then publish a CARD_UNFROZEN event
+        AC1: Given a valid unfreeze request with auth token, when the API receives it, then verify the auth token before processing
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_a_card_unfrozen_event(self):
+    def test_ac2_given_valid_authentication_when(self):
         """
-        AC2: Given a CARD_UNFROZEN event, when published, then include timestamp, user identifier, card identifier, action type, and auth method
+        AC2: Given valid authentication, when the API processes the request, then the card status is updated to ACTIVE in under 2 seconds
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_an_audit_event(self):
+    def test_ac3_given_an_already_active(self):
         """
-        AC3: Given an audit event, when stored, then it is immediately queryable
+        AC3: Given an already active card, when an unfreeze request is received, then return 400 with appropriate error message
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_an_unfreeze_operation(self):
+    def test_ac4_given_an_invalid_or(self):
         """
-        AC4: Given an unfreeze operation fails, when an error occurs, then log the failure with error details
+        AC4: Given an invalid or expired auth token, when the request is received, then return 401 unauthorized
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()

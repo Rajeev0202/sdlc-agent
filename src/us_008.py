@@ -1,8 +1,8 @@
 """
-Implementation for US-008: audit events stored with 24-month retention policy
+Implementation for US-008: receive a push notification when my card is unfrozen
 
-Persona: Compliance officer
-Goal: I can meet regulatory requirements and query historical freeze/unfreeze events
+Persona: Customer
+Goal: I have confirmation the unfreeze was successful
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US008Feature:
-    """Implementation of audit events stored with 24-month retention policy."""
+    """Implementation of receive a push notification when my card is unfrozen."""
 
     def __init__(self):
         """Initialize US008Feature."""
@@ -22,10 +22,9 @@ class US008Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a CARD_FROZEN or CARD_UNFROZEN event, when published, then persist to audit event store
-        - Given an audit event, when stored, then it is retained for at least 24 months
-        - Given an audit event older than 24 months, when retention period expires, then archive or delete per data policy
-        - Given the audit event store, when queried, then return events with sub-second latency
+        - Given the card status changes to ACTIVE, when the update completes, then a push notification is sent within 1 second
+        - Given the notification is sent, when received, then it includes card last 4 digits, timestamp, and authentication method used
+        - Given the notification service is unavailable, when the unfreeze completes, then log the failure but do not block the unfreeze action
         """
         logger.info("Executing %s", self.__class__.__name__)
         return {"success": True, "message": "Feature implemented"}

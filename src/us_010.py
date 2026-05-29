@@ -1,8 +1,8 @@
 """
-Implementation for US-010: view and export audit logs via a compliance dashboard
+Implementation for US-010: an immutable audit log storage system with 24-month retention
 
-Persona: Compliance officer
-Goal: I can review freeze/unfreeze activity and generate reports for audits
+Persona: Compliance Officer
+Goal: all freeze/unfreeze events are stored securely for regulatory compliance
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US010Feature:
-    """Implementation of view and export audit logs via a compliance dashboard."""
+    """Implementation of an immutable audit log storage system with 24-month retention."""
 
     def __init__(self):
         """Initialize US010Feature."""
@@ -22,10 +22,10 @@ class US010Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a compliance officer logged in, when accessing the audit dashboard, then display freeze/unfreeze events
-        - Given audit events displayed, when applying filters (date range, card ID, user), then update results in real-time
-        - Given audit events displayed, when clicking 'Export', then download events as CSV or JSON
-        - Given the dashboard, when loading events, then display timestamp, user, card, and action in a tabular format
+        - Given any audit event, when written, then it is stored in an append-only, immutable data store
+        - Given audit events are stored, when accessed, then they cannot be modified or deleted
+        - Given events older than 24 months, when the retention policy runs, then they are archived but remain accessible
+        - Given the storage system, when queried for integrity, then cryptographic verification confirms no tampering
         """
         logger.info("Executing %s", self.__class__.__name__)
         return {"success": True, "message": "Feature implemented"}

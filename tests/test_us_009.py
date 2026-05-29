@@ -1,5 +1,5 @@
 """
-Tests for US-009: query freeze and unfreeze events via API
+Tests for US-009: every card unfreeze action logged with authentication method
 
 This file follows TDD approach - tests written first.
 """
@@ -27,33 +27,33 @@ class TestUS009Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_a_compliance_officer(self):
+    def test_ac1_given_a_card_is(self):
         """
-        AC1: Given a compliance officer with appropriate permissions, when querying audit API, then return matching events
+        AC1: Given a card is unfrozen, when the status update completes, then an audit event is written with timestamp, user ID, card ID, action type, and authentication method
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_a_query_with(self):
+    def test_ac2_given_an_audit_event(self):
         """
-        AC2: Given a query with filters (date range, card ID, user ID, action type), when applied, then return filtered results
+        AC2: Given an audit event is written, when stored, then it is immutable and tamper-proof
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_a_large_result(self):
+    def test_ac3_given_the_audit_service(self):
         """
-        AC3: Given a large result set, when queried, then support pagination (max 100 events per page)
+        AC3: Given the audit service is unavailable, when an unfreeze occurs, then queue the event for retry
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_an_unauthorized_user(self):
+    def test_ac4_given_multiple_unfreeze_events(self):
         """
-        AC4: Given an unauthorized user, when querying audit API, then return 403 Forbidden
+        AC4: Given multiple unfreeze events, when queried, then all events show which auth method was used
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()

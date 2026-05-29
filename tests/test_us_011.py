@@ -1,21 +1,21 @@
 """
-Tests for US-006: see the step-up authentication UI when I attempt to unfreeze
+Tests for US-011: an audit query API with date range and filter capabilities
 
 This file follows TDD approach - tests written first.
 """
 import pytest
-from src.us_006 import US006Feature
+from src.us_011 import US011Feature
 
 
-class TestUS006Feature:
-    """Test suite for US006Feature."""
+class TestUS011Feature:
+    """Test suite for US011Feature."""
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.instance = US006Feature()
+        self.instance = US011Feature()
 
     def test_initialization(self):
-        """Test that US006Feature initializes correctly."""
+        """Test that US011Feature initializes correctly."""
         assert self.instance.initialized is True
 
     def test_execute_returns_success(self):
@@ -27,35 +27,43 @@ class TestUS006Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_i_tap_'unfreeze(self):
+    def test_ac1_given_a_date_range(self):
         """
-        AC1: Given I tap 'Unfreeze Card', when the UI loads, then the step-up auth screen is displayed with biometric or PIN challenge
+        AC1: Given a date range, when I query the API, then all events within that range are returned
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_successful_authentication_when(self):
+    def test_ac2_given_a_customer_id(self):
         """
-        AC2: Given successful authentication, when completed, then the UI shows a loading state while the unfreeze processes
+        AC2: Given a customer ID filter, when I query the API, then only events for that customer are returned
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_failed_authentication_when(self):
+    def test_ac3_given_a_card_id(self):
         """
-        AC3: Given failed authentication, when the challenge fails, then an error message is displayed and I can retry
+        AC3: Given a card ID filter, when I query the API, then only events for that card are returned
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_the_unfreeze_completes(self):
+    def test_ac4_given_combined_filters_when(self):
         """
-        AC4: Given the unfreeze completes, when successful, then the card details screen refreshes showing ACTIVE status
+        AC4: Given combined filters, when I query the API, then results match all filter criteria
         """
         # TODO: Implement test for acceptance criterion 4
+        result = self.instance.execute()
+        assert result["success"] is True
+
+    def test_ac5_given_a_query_when(self):
+        """
+        AC5: Given a query, when executed, then results are paginated with max 100 records per page
+        """
+        # TODO: Implement test for acceptance criterion 5
         result = self.instance.execute()
         assert result["success"] is True
 

@@ -320,6 +320,29 @@ h1 {
   font-weight: 700;
 }
 
+/* Failed stage (red light ON) */
+.pipeline-stage.failed .stage-indicator {
+  background: rgba(255, 107, 107, 0.12);
+  border-color: #ff6b6b;
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.35);
+}
+
+.pipeline-stage.failed .stage-number-badge {
+  color: #ff6b6b;
+}
+
+.pipeline-stage.failed .stage-light {
+  background: #ff6b6b;
+  box-shadow: 0 0 16px rgba(255, 107, 107, 0.9),
+              0 0 32px rgba(255, 107, 107, 0.4);
+  animation: glow-red 2s ease-in-out infinite;
+}
+
+.pipeline-stage.failed .stage-label {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
 .stage-label {
   font-size: 13px;
   font-weight: 600;
@@ -361,6 +384,17 @@ h1 {
   50% {
     box-shadow: 0 0 20px rgba(74, 222, 128, 1),
                 0 0 40px rgba(74, 222, 128, 0.6);
+  }
+}
+
+@keyframes glow-red {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(255, 107, 107, 0.9),
+                0 0 32px rgba(255, 107, 107, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 107, 107, 1),
+                0 0 40px rgba(255, 107, 107, 0.6);
   }
 }
 

@@ -1,5 +1,5 @@
 """
-Tests for US-003: freeze events logged to the audit trail
+Tests for US-003: receive a push notification when my card is frozen
 
 This file follows TDD approach - tests written first.
 """
@@ -27,35 +27,27 @@ class TestUS003Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_a_successful_freeze(self):
+    def test_ac1_given_the_card_status(self):
         """
-        AC1: Given a successful freeze operation, when the card status changes to FROZEN, then publish a CARD_FROZEN event
+        AC1: Given the card status changes to FROZEN, when the update completes, then a push notification is sent within 1 second
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_a_card_frozen_event(self):
+    def test_ac2_given_the_notification_service(self):
         """
-        AC2: Given a CARD_FROZEN event, when published, then include timestamp, user identifier, card identifier, and action type
+        AC2: Given the notification service is unavailable, when the freeze completes, then log the failure but do not block the freeze action
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_an_audit_event(self):
+    def test_ac3_given_the_notification_is(self):
         """
-        AC3: Given an audit event, when stored, then it is immediately queryable
+        AC3: Given the notification is sent, when received, then it includes card last 4 digits and timestamp
         """
         # TODO: Implement test for acceptance criterion 3
-        result = self.instance.execute()
-        assert result["success"] is True
-
-    def test_ac4_given_a_freeze_operation(self):
-        """
-        AC4: Given a freeze operation fails, when an error occurs, then log the failure with error details
-        """
-        # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()
         assert result["success"] is True
 

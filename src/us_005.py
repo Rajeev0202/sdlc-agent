@@ -1,8 +1,8 @@
 """
-Implementation for US-005: trigger an unfreeze action on my frozen debit card via backend API
+Implementation for US-005: complete step-up authentication before unfreezing my card
 
 Persona: Customer
-Goal: the card status changes to ACTIVE and I can resume transactions
+Goal: unauthorized users cannot unfreeze my card
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US005Feature:
-    """Implementation of trigger an unfreeze action on my frozen debit card via backend API."""
+    """Implementation of complete step-up authentication before unfreezing my card."""
 
     def __init__(self):
         """Initialize US005Feature."""
@@ -22,10 +22,10 @@ class US005Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a frozen debit card and valid auth token, when unfreeze API is called, then card status changes to ACTIVE
-        - Given a non-frozen card, when unfreeze API is called, then return 400 Bad Request
-        - Given a valid unfreeze request, when processing, then operation completes within 2 seconds
-        - Given an unfreeze operation without valid auth token, when called, then return 401 Unauthorized
+        - Given I tap 'Unfreeze Card', when the action is initiated, then a step-up authentication challenge is presented
+        - Given the auth challenge, when I successfully authenticate, then the unfreeze request is sent to the API
+        - Given the auth challenge, when I fail authentication 3 times, then the unfreeze is blocked and an alert is raised
+        - Given the auth challenge, when I cancel, then no unfreeze action is sent
         """
         logger.info("Executing %s", self.__class__.__name__)
         return {"success": True, "message": "Feature implemented"}

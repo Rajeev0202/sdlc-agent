@@ -1,21 +1,21 @@
 """
-Tests for US-006: see the step-up authentication UI when I attempt to unfreeze
+Tests for US-012: a compliance dashboard UI to view and search audit events
 
 This file follows TDD approach - tests written first.
 """
 import pytest
-from src.us_006 import US006Feature
+from src.us_012 import US012Feature
 
 
-class TestUS006Feature:
-    """Test suite for US006Feature."""
+class TestUS012Feature:
+    """Test suite for US012Feature."""
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.instance = US006Feature()
+        self.instance = US012Feature()
 
     def test_initialization(self):
-        """Test that US006Feature initializes correctly."""
+        """Test that US012Feature initializes correctly."""
         assert self.instance.initialized is True
 
     def test_execute_returns_success(self):
@@ -27,33 +27,33 @@ class TestUS006Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_i_tap_'unfreeze(self):
+    def test_ac1_given_i_access_the(self):
         """
-        AC1: Given I tap 'Unfreeze Card', when the UI loads, then the step-up auth screen is displayed with biometric or PIN challenge
+        AC1: Given I access the compliance dashboard, when it loads, then I see filters for date range, customer ID, card ID, and action type
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_successful_authentication_when(self):
+    def test_ac2_given_i_apply_filters(self):
         """
-        AC2: Given successful authentication, when completed, then the UI shows a loading state while the unfreeze processes
+        AC2: Given I apply filters, when I submit, then the audit events are displayed in a table with pagination
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_failed_authentication_when(self):
+    def test_ac3_given_the_results_table(self):
         """
-        AC3: Given failed authentication, when the challenge fails, then an error message is displayed and I can retry
+        AC3: Given the results table, when displayed, then each row shows timestamp, customer ID, card ID, action type, and authentication method
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_the_unfreeze_completes(self):
+    def test_ac4_given_a_long_list(self):
         """
-        AC4: Given the unfreeze completes, when successful, then the card details screen refreshes showing ACTIVE status
+        AC4: Given a long list of results, when I scroll, then pagination loads next page automatically
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()
