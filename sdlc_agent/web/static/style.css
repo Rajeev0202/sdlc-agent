@@ -745,6 +745,8 @@ button:disabled {
   color: var(--muted);
   cursor: not-allowed;
   box-shadow: none;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 button.approve {

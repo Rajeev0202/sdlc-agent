@@ -368,7 +368,7 @@ class {class_name}:
             if llm_tests:
                 self._llm_successes += 1
                 return CodeFile(
-                    path=f"tests/test_{module_name}.py",
+                    path=f"Testing/tests/test_{module_name}.py",
                     contents=llm_tests,
                     language="python",
                 )
@@ -486,7 +486,7 @@ class Test{class_name}:
 '''
 
         return CodeFile(
-            path=f"tests/test_{module_name}.py",
+            path=f"Testing/tests/test_{module_name}.py",
             contents=code,
             language="python",
         )

@@ -1,8 +1,8 @@
 """
-Implementation for US-010: an immutable audit log storage system with 24-month retention
+Implementation for US-010: query freeze and unfreeze audit events via API
 
 Persona: Compliance Officer
-Goal: all freeze/unfreeze events are stored securely for regulatory compliance
+Goal: I can retrieve historical data for compliance reporting
 """
 import logging
 
@@ -10,26 +10,102 @@ logger = logging.getLogger(__name__)
 
 
 class US010Feature:
-    """Implementation of an immutable audit log storage system with 24-month retention."""
+    """Implementation of query freeze and unfreeze audit events via API."""
 
-    def __init__(self):
-        """Initialize US010Feature."""
+    def __init__(self, audit_service=None, auth_service=None):
+        """
+        Initialize US010Feature.
+
+        Args:
+            audit_service: Service for audit logging (injected dependency)
+            auth_service: Service for authorization checks (injected dependency)
+        """
+        self.audit_service = audit_service
+        self.auth_service = auth_service
         self.initialized = True
         logger.info("%s initialized", self.__class__.__name__)
 
-    def execute(self, **kwargs):
+    def execute(self, user_id: str = None, **kwargs):
         """
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given any audit event, when written, then it is stored in an append-only, immutable data store
-        - Given audit events are stored, when accessed, then they cannot be modified or deleted
-        - Given events older than 24 months, when the retention policy runs, then they are archived but remain accessible
-        - Given the storage system, when queried for integrity, then cryptographic verification confirms no tampering
+        - Given date range filter, when I query audit API, then results include all freeze/unfreeze events in that range
+        - Given card ID filter, when I query audit API, then results include all events for that card
+        - Given user ID filter, when I query audit API, then results include all events by that user
+        - Given query spans 24 months, when executed, then results are returned within acceptable time
+        - Given audit data exists, when queried, then results include event type, timestamp, user ID, card ID, and outcome
+
+        Args:
+            user_id: Authenticated user ID (required for security)
+            **kwargs: Additional parameters as needed
+
+        Returns:
+            dict: Result with success status and message
+
+        Raises:
+            ValueError: If inputs are invalid
+            PermissionError: If user is not authorized
         """
-        logger.info("Executing %s", self.__class__.__name__)
-        return {"success": True, "message": "Feature implemented"}
+        # 1. Input validation
+        if not user_id:
+            logger.error("Missing required parameter: user_id")
+            raise ValueError("user_id is required for authentication")
+
+        # Validate other required parameters based on acceptance criteria
+        required_fields = []  # TODO: Extract from acceptance criteria
+        for field in required_fields:
+            if field not in kwargs or not kwargs[field]:
+                raise ValueError(f"Missing required parameter: {field}")
+
+        try:
+            # 2. Authorization check
+            if self.auth_service and not self.auth_service.is_authorized(user_id, kwargs):
+                logger.warning("Authorization failed for user %s", user_id)
+                raise PermissionError(f"User {user_id} is not authorized for this operation")
+
+            # 3. Business logic implementation
+            logger.info("Executing %s for user %s", self.__class__.__name__, user_id)
+
+            # TODO: Implement actual business logic based on acceptance criteria
+            # This is a template - replace with real implementation
+            result = self._perform_operation(user_id, **kwargs)
+
+            # 4. Audit logging
+            if self.audit_service:
+                self.audit_service.log_action(
+                    user_id=user_id,
+                    action=self.__class__.__name__,
+                    result="success",
+                    details=kwargs
+                )
+
+            return {"success": True, "message": "Operation completed successfully", "result": result}
+
+        except Exception as e:
+            # 5. Error handling and audit logging
+            logger.error("Operation failed for user %s: %s", user_id, str(e), exc_info=True)
+
+            if self.audit_service:
+                self.audit_service.log_action(
+                    user_id=user_id,
+                    action=self.__class__.__name__,
+                    result="failure",
+                    error=str(e)
+                )
+
+            # Don't expose internal errors to caller
+            raise RuntimeError("Operation failed. Please try again or contact support.")
+
+    def _perform_operation(self, user_id: str, **kwargs):
+        """
+        Perform the actual business operation.
+
+        Override this method with specific business logic based on acceptance criteria.
+        """
+        # Template implementation - replace with actual business logic
+        return {"status": "completed"}
 
     def validate(self):
         """Validate the implementation meets acceptance criteria."""
-        return True
+        return self.initialized

@@ -51,10 +51,18 @@ class JiraClient:
             'project': {'key': self.project_key},
             'summary': story.want,
             'description': story.as_a_statement + "\n\nAcceptance Criteria:\n" + "\n".join(story.acceptance_criteria),
-            'issuetype': {'name': 'Story'},
+            'issuetype': {'name': 'Task'},  # Changed from 'Story' to 'Task' for broader compatibility
         }
-        issue = self.jira.create_issue(fields=issue_dict)
-        logger.info("Real Jira: created issue %s for story %s", issue.key, story.id)
+
+        try:
+            issue = self.jira.create_issue(fields=issue_dict)
+            logger.info("Real Jira: created issue %s for story %s", issue.key, story.id)
+        except Exception as e:
+            # Log the full error details for debugging
+            logger.error("Failed to create Jira issue for %s: %s", story.id, str(e))
+            if hasattr(e, 'response'):
+                logger.error("Response: %s", e.response.text if hasattr(e.response, 'text') else e.response)
+            raise
 
         # Auto-transition to specified status if configured
         if self.auto_transition:
@@ -75,10 +83,15 @@ class JiraClient:
         """Transition issue to target status."""
         transitions = self.jira.transitions(issue)
 
+        # Normalize target: remove spaces, hyphens, lowercase for fuzzy matching
+        target_normalized = target_status.lower().replace(" ", "").replace("-", "")
+
         # Find transition that leads to target status
         target_transition = None
         for t in transitions:
-            if target_status.lower() in t['name'].lower() or target_status.lower() in t['to']['name'].lower():
+            name_normalized = t['name'].lower().replace(" ", "").replace("-", "")
+            to_normalized = t['to']['name'].lower().replace(" ", "").replace("-", "")
+            if target_normalized == name_normalized or target_normalized == to_normalized:
                 target_transition = t
                 break
 

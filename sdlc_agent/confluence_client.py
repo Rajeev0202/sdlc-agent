@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -28,6 +29,13 @@ class ConfluenceClient:
         self.token = token or os.getenv("CONFLUENCE_API_TOKEN") or os.getenv("ATLASSIAN_TOKEN")
         self.email = os.getenv("CONFLUENCE_EMAIL") or os.getenv("ATLASSIAN_EMAIL")
 
+        # Debug: log what credentials we got
+        import sys
+        print(f"[DEBUG] ConfluenceClient initialized:", file=sys.stderr)
+        print(f"  Email: {'SET' if self.email else 'MISSING'} ({self.email})", file=sys.stderr)
+        print(f"  Token: {'SET' if self.token else 'MISSING'} ({'...' + self.token[-10:] if self.token else 'None'})", file=sys.stderr)
+        print(f"  Base URL: {self.base_url or 'Will be extracted from page URL'}", file=sys.stderr)
+
     def extract_page_id(self, url: str) -> str:
         """
         Extract page ID from Confluence URL.
@@ -43,8 +51,8 @@ class ConfluenceClient:
             if match:
                 return match.group(1)
 
-        # Try to extract from path-style URL
-        match = re.search(r"/pages/(\d+)/", url)
+        # Try to extract from path-style URL (with or without trailing slash)
+        match = re.search(r"/pages/(\d+)", url)
         if match:
             return match.group(1)
 
@@ -97,8 +105,30 @@ class ConfluenceClient:
                 "in your .env file or environment variables."
             )
 
+        print(f"[DEBUG] Confluence API Request:", file=sys.stderr)
+        print(f"  URL: {api_url}", file=sys.stderr)
+        print(f"  Params: {params}", file=sys.stderr)
+        print(f"  Auth: {'email+token' if auth else 'bearer token'}", file=sys.stderr)
+
         response = requests.get(api_url, headers=headers, auth=auth, params=params)
-        response.raise_for_status()
+
+        if response.status_code != 200:
+            print(f"[ERROR] Confluence API returned {response.status_code}", file=sys.stderr)
+            print(f"  Response: {response.text[:500]}", file=sys.stderr)
+
+            if response.status_code == 404:
+                raise ValueError(
+                    f"Confluence page not found (404).\n"
+                    f"URL: {api_url}\n"
+                    f"Page ID: {page_id}\n\n"
+                    f"Possible reasons:\n"
+                    f"1. Page doesn't exist or was deleted\n"
+                    f"2. You don't have permission to view this page\n"
+                    f"3. Page ID extraction failed\n\n"
+                    f"Please verify the page URL in your browser and check permissions."
+                )
+
+            response.raise_for_status()
 
         data = response.json()
 

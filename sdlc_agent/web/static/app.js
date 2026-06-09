@@ -124,6 +124,9 @@ function unlock(stage) {
   }, 300);
 }
 function fileLink(path) {
+  if (!path || path === 'N/A') {
+    return '<span class="text-muted">N/A</span>';
+  }
   return `<a class="file-link" href="/files/${path.replaceAll('\\\\', '/')}" target="_blank">${path}</a>`;
 }
 function show(stage, html) {
@@ -232,6 +235,9 @@ async function stage1() {
     </table>`);
   setStatus(1, "Complete", "done");
   unlock(2);
+
+  // Disable Stage 1 button after requirements are ingested
+  disableButton('stage1');
 }
 
 async function stage2() {
@@ -299,6 +305,9 @@ async function stage2() {
     <table><tr><th>ID</th><th>Jira</th><th>Story</th><th>ACs</th><th>Dependencies</th></tr>${rows}</table>`);
   setStatus(2, "Awaiting PO", "running");
   document.getElementById("po-gate").hidden = false;
+
+  // Disable Stage 2 button after stories are generated
+  disableButton('stage2');
 }
 
 async function approve() {
@@ -410,6 +419,9 @@ async function stage3() {
 
   setStatus(3, "Complete", "done");
   unlock(4);
+
+  // Disable Stage 3 button after code generation
+  disableButton('stage3');
 }
 
 async function stage4() {
@@ -433,8 +445,13 @@ async function stage4() {
     <p>Stored: ${res.stored.map(fileLink).join(" ")}</p>
     <table><tr><th>Severity</th><th>Category</th><th>Location</th><th>Message</th></tr>${rows}</table>`);
   setStatus(4, r.verdict === "pass" ? "Pass" : "Fail", r.verdict === "pass" ? "done" : "fail");
-  if (r.verdict === "pass") unlock(5);
-  else alert("Stage 4 failed — re-run Stage 3 without the seeded defect, then re-run Stage 4.");
+  if (r.verdict === "pass") {
+    unlock(5);
+    // Disable Stage 4 button after successful review
+    disableButton('stage4');
+  } else {
+    alert("Stage 4 failed — re-run Stage 3 without the seeded defect, then re-run Stage 4.");
+  }
 }
 
 async function stage5() {
@@ -470,9 +487,10 @@ async function stage5Manual() {
 
   show('manual', `
     <p><strong>✓ Manual Test Cases Generated</strong></p>
-    <p>📄 File: ${fileLink(res.file_path)}</p>
-    <p>📊 Stories: ${res.story_count} | Test Cases: ${res.test_case_count}</p>
-    <p class="success">${res.message}</p>
+    <p>📄 Excel: ${fileLink(res.excel_file || 'N/A')}</p>
+    <p>📄 JSON: ${fileLink(res.output_file || 'N/A')}</p>
+    <p>📊 Test Cases: ${res.total_test_cases || 0}</p>
+    <p class="success">Manual test cases generated successfully!</p>
   `);
 
   state.stage5.manualTestsGenerated = true;
@@ -490,12 +508,10 @@ async function stage5Automation() {
 
   show('automation', `
     <p><strong>✓ Automation Scripts Generated</strong></p>
-    <p>🤖 Scripts: ${res.script_count}</p>
-    <p>📁 Directory: ${fileLink(res.playwright_dir)}</p>
-    <details><summary>View generated scripts</summary>
-      <ul>${res.scripts.map(s => `<li>${fileLink(s)}</li>`).join('')}</ul>
-    </details>
-    <p class="success">${res.message}</p>
+    <p>🤖 Scripts: ${res.total_scripts || 0}</p>
+    <p>📁 Directory: ${fileLink(res.output_dir || 'N/A')}</p>
+    <p>📄 Metadata: ${fileLink(res.metadata_file || 'N/A')}</p>
+    <p class="success">Automation scripts generated successfully!</p>
   `);
 
   state.stage5.automationScriptsGenerated = true;
@@ -511,25 +527,29 @@ async function stage5Execute() {
 
   const res = await post("/api/stage5/execute-tests", { run_id: state.run_id });
 
-  const statusCls = res.failed > 0 ? 'fail' : 'done';
-  const statusIcon = res.failed > 0 ? '⚠️' : '✓';
+  const failed = res.failed || 0;
+  const passed = res.passed || 0;
+  const total = res.total_tests || res.total || 0;  // Use total_tests from API
+  const hasFailures = failed > 0;
+  const statusCls = hasFailures ? 'fail' : 'done';
+  const statusIcon = hasFailures ? '⚠️' : '✓';
 
   show('execute', `
     <p><strong>${statusIcon} Tests Executed</strong></p>
-    <p>Total: ${res.total} | <span class="chip chip-ok">Passed: ${res.passed}</span> | <span class="chip chip-warn">Failed: ${res.failed}</span></p>
-    <p>Exit Code: <code>${res.exit_code}</code></p>
-    <p>Results: ${fileLink(res.result_file)}</p>
-    <p>Log: ${fileLink(res.log_file)}</p>
-    <p class="${statusCls}">${res.message}</p>
+    <p>Total: ${total} | <span class="chip chip-ok">Passed: ${passed}</span> | <span class="chip chip-warn">Failed: ${failed}</span></p>
+    <p>Pass Rate: ${res.pass_rate || 0}%</p>
+    <p>Results: ${res.output_file ? fileLink(res.output_file) : 'N/A'}</p>
+    <p>Report: ${res.html_report ? fileLink(res.html_report) : 'N/A'}</p>
+    <p class="${statusCls}">Tests executed successfully</p>
   `);
 
   state.stage5.testsExecuted = true;
-  state.stage5.hasFailures = res.has_failures;
+  state.stage5.hasFailures = hasFailures;
   disableButton('stage5-execute');
 
-  if (res.has_failures) {
+  if (hasFailures) {
     enableButton('stage5-heal');
-    showNotification(`${res.failed} tests failed - healing available`, 'error');
+    showNotification(`${failed} tests failed - healing available`, 'error');
   } else {
     showNotification('All tests passed!', 'success');
     setStatus(5, 'Complete', 'done');
@@ -544,26 +564,43 @@ async function stage5Heal() {
 
   const res = await post("/api/stage5/heal-tests", { run_id: state.run_id });
 
-  const suggestionsHtml = res.suggestions.map(s => `
-    <div class="healing-suggestion">
-      <strong>🔧 ${s.test}</strong>
-      <p>Issue: ${s.issue}</p>
-      <p class="suggestion">💡 ${s.suggestion}</p>
-    </div>
-  `).join('');
+  const fixesApplied = res.fixes_applied || 0;
+  const suggestions = res.healing_suggestions || [];
+
+  const suggestionsHtml = suggestions.length > 0
+    ? suggestions.map(s => `
+        <div class="healing-suggestion">
+          <strong>🔧 ${s.test_id || 'Unknown test'}</strong>
+          <p>Category: ${s.failure_category || 'Unknown'}</p>
+          <p>Root Cause: ${s.root_cause || 'No analysis'}</p>
+          <p>Confidence: ${s.confidence_score || 0}%</p>
+          ${s.fix_applied ? '<span class="chip chip-ok">✓ Fix Applied</span>' : '<span class="chip chip-warn">Manual Review Needed</span>'}
+        </div>
+      `).join('')
+    : '<p class="text-muted">No specific suggestions generated</p>';
 
   show('heal', `
-    <p><strong>✨ Test Healing Analysis Complete</strong></p>
-    <p>Failures Analyzed: ${res.failures_found}</p>
-    <p>Report: ${fileLink(res.healing_report)}</p>
-    <details open><summary>Top Healing Suggestions</summary>${suggestionsHtml}</details>
-    <p class="success">${res.message}</p>
+    <p><strong>✨ Test Healing Complete</strong></p>
+    <p>Failures Analyzed: ${res.failures_analyzed || 0}</p>
+    <p>Auto-Fixable: ${res.auto_fixable || 0}</p>
+    <p>Fixes Applied: <strong>${fixesApplied}</strong></p>
+    <p>Manual Review Needed: ${res.manual_review_needed || 0}</p>
+    <p>Report: ${res.output_file ? fileLink(res.output_file) : 'N/A'}</p>
+    <details ${suggestions.length > 0 ? 'open' : ''}><summary>Healing Details</summary>${suggestionsHtml}</details>
+    ${fixesApplied > 0 ? '<p class="info">💡 Fixes have been applied. Re-run tests to verify.</p>' : ''}
   `);
 
   disableButton('stage5-heal');
-  showNotification('Test healing suggestions generated!', 'success');
-  setStatus(5, 'Healed', 'done');
-  unlock(6);
+
+  if (fixesApplied > 0) {
+    showNotification(`${fixesApplied} fixes applied - re-run tests to verify`, 'success');
+    // Re-enable execute button so user can re-run tests
+    enableButton('stage5-execute');
+  } else {
+    showNotification('No auto-fixes available - manual review required', 'warning');
+    setStatus(5, 'Manual Review Required', 'warn');
+    unlock(6);
+  }
 }
 
 // Helper functions for Stage 5 workflow
@@ -571,6 +608,7 @@ function enableButton(action) {
   const btn = document.querySelector(`button[data-action="${action}"]`);
   if (btn) {
     btn.disabled = false;
+    delete btn.dataset.completed;  // Clear completed flag so button can be clicked again
   }
 }
 
@@ -578,6 +616,7 @@ function disableButton(action) {
   const btn = document.querySelector(`button[data-action="${action}"]`);
   if (btn) {
     btn.disabled = true;
+    btn.dataset.completed = "true";  // Mark as completed so finally block won't re-enable
   }
 }
 
@@ -594,6 +633,9 @@ async function stage6() {
     ${d.blocking_reasons.length ? `<ul>${d.blocking_reasons.map(r=>`<li>${r}</li>`).join("")}</ul>` : ""}
     <details open><summary>Draft release note</summary><pre>${escapeHtml(d.release_note)}</pre></details>`);
   setStatus(6, d.go ? "GO" : "NO-GO", d.go ? "done" : "fail");
+
+  // Disable Stage 6 button after deployment check
+  disableButton('stage6');
 }
 
 function escapeHtml(s) {
@@ -650,7 +692,10 @@ function initializeApp() {
         }
       }
       finally {
-        btn.disabled = false;
+        // Only re-enable if button wasn't marked as completed by stage handler
+        if (btn.dataset.completed !== "true") {
+          btn.disabled = false;
+        }
         btn.textContent = originalText;
       }
     });

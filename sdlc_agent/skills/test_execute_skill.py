@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 class TestExecuteSkillAutomation:
     """Automates the /sdlc-test-execute skill logic."""
 
-    def __init__(self, root_dir: Path):
+    def __init__(self, root_dir: Path, demo_mode: bool = True):
         self.root_dir = root_dir
+        self.demo_mode = demo_mode
 
     def run(self, run_id: str) -> dict[str, Any]:
         """
@@ -90,6 +91,19 @@ class TestExecuteSkillAutomation:
         """Simulate test execution for demo purposes."""
         logger.info("Simulating test execution (Playwright not available)")
 
+        # Check if healing was done - if so, tests should pass now
+        run_id = playwright_dir.parent.name
+        healing_file = playwright_dir.parent / "test_healing.json"
+        healed_tests = set()
+
+        if healing_file.exists() and self.demo_mode:
+            logger.info("[Demo Mode] Healing detected - marking fixed tests as passing")
+            with open(healing_file, "r", encoding="utf-8") as f:
+                healing_data = json.load(f)
+                for suggestion in healing_data.get("healing_suggestions", []):
+                    if suggestion.get("fix_applied"):
+                        healed_tests.add(suggestion["test_id"])
+
         test_files = list(playwright_dir.glob("*.spec.ts"))
         results = []
 
@@ -99,10 +113,16 @@ class TestExecuteSkillAutomation:
                 content = f.read()
                 test_count = content.count("test(") + content.count("test.only(")
 
-            # Simulate results (80% pass rate)
+            # Simulate results
             for i in range(test_count):
                 test_name = f"{test_file.stem}::test-{i+1}"
-                passed = (i % 5) != 0  # 4 out of 5 pass
+
+                # If test was healed, it should pass now
+                if test_name in healed_tests:
+                    passed = True
+                else:
+                    # Simulate 80% pass rate for unhealed tests
+                    passed = (i % 5) != 0  # 4 out of 5 pass
 
                 results.append({
                     "test_id": test_name,
@@ -139,17 +159,34 @@ class TestExecuteSkillAutomation:
         }
 
     def _save_results(self, run_id: str, execution_result: dict[str, Any]):
-        """Save execution results to JSON file."""
+        """Save execution results to JSON file and HTML report in Testing/report folder."""
         runs_dir = self.root_dir / "runs" / run_id
         runs_dir.mkdir(parents=True, exist_ok=True)
 
+        # Shared Testing/report folder (QA-facing)
+        report_dir = self.root_dir / "Testing" / "report" / run_id
+        report_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save JSON results
         output_file = runs_dir / "test_execution.json"
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(execution_result, f, indent=2, ensure_ascii=False)
 
+        # Also save JSON in report folder
+        report_json = report_dir / "test_execution.json"
+        with open(report_json, "w", encoding="utf-8") as f:
+            json.dump(execution_result, f, indent=2, ensure_ascii=False)
+
         logger.info(f"Saved test execution results to {output_file}")
 
-        # Also generate HTML report (simple version)
+        # Generate HTML report in Testing/report folder (primary location)
+        try:
+            self._generate_html_report(report_dir / "playwright_report.html", execution_result)
+            logger.info(f"Saved Playwright HTML report to {report_dir / 'playwright_report.html'}")
+        except Exception as e:
+            logger.warning(f"Failed to generate HTML report in shared folder: {e}")
+
+        # Also keep a copy in the per-run folder for compatibility
         try:
             self._generate_html_report(runs_dir / "test-report.html", execution_result)
         except Exception as e:

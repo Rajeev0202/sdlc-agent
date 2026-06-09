@@ -1,8 +1,8 @@
 """
-Implementation for US-006: see the step-up authentication UI when I attempt to unfreeze
+Implementation for US-006: complete step-up authentication before unfreezing card
 
 Persona: Customer
-Goal: I can prove my identity before unfreezing
+Goal: my card security is protected from unauthorized unfreeze
 """
 import logging
 
@@ -10,26 +10,101 @@ logger = logging.getLogger(__name__)
 
 
 class US006Feature:
-    """Implementation of see the step-up authentication UI when I attempt to unfreeze."""
+    """Implementation of complete step-up authentication before unfreezing card."""
 
-    def __init__(self):
-        """Initialize US006Feature."""
+    def __init__(self, audit_service=None, auth_service=None):
+        """
+        Initialize US006Feature.
+
+        Args:
+            audit_service: Service for audit logging (injected dependency)
+            auth_service: Service for authorization checks (injected dependency)
+        """
+        self.audit_service = audit_service
+        self.auth_service = auth_service
         self.initialized = True
         logger.info("%s initialized", self.__class__.__name__)
 
-    def execute(self, **kwargs):
+    def execute(self, user_id: str = None, **kwargs):
         """
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given I tap 'Unfreeze Card', when the UI loads, then the step-up auth screen is displayed with biometric or PIN challenge
-        - Given successful authentication, when completed, then the UI shows a loading state while the unfreeze processes
-        - Given failed authentication, when the challenge fails, then an error message is displayed and I can retry
-        - Given the unfreeze completes, when successful, then the card details screen refreshes showing ACTIVE status
+        - Given I request unfreeze, when step-up auth starts, then I am prompted for biometric or PIN
+        - Given step-up auth fails, when max attempts reached, then unfreeze is blocked and user is notified
+        - Given step-up auth succeeds, when validated, then unfreeze confirmation is shown
+        - Given step-up auth in progress, when timeout occurs, then session expires and user must restart
+
+        Args:
+            user_id: Authenticated user ID (required for security)
+            **kwargs: Additional parameters as needed
+
+        Returns:
+            dict: Result with success status and message
+
+        Raises:
+            ValueError: If inputs are invalid
+            PermissionError: If user is not authorized
         """
-        logger.info("Executing %s", self.__class__.__name__)
-        return {"success": True, "message": "Feature implemented"}
+        # 1. Input validation
+        if not user_id:
+            logger.error("Missing required parameter: user_id")
+            raise ValueError("user_id is required for authentication")
+
+        # Validate other required parameters based on acceptance criteria
+        required_fields = []  # TODO: Extract from acceptance criteria
+        for field in required_fields:
+            if field not in kwargs or not kwargs[field]:
+                raise ValueError(f"Missing required parameter: {field}")
+
+        try:
+            # 2. Authorization check
+            if self.auth_service and not self.auth_service.is_authorized(user_id, kwargs):
+                logger.warning("Authorization failed for user %s", user_id)
+                raise PermissionError(f"User {user_id} is not authorized for this operation")
+
+            # 3. Business logic implementation
+            logger.info("Executing %s for user %s", self.__class__.__name__, user_id)
+
+            # TODO: Implement actual business logic based on acceptance criteria
+            # This is a template - replace with real implementation
+            result = self._perform_operation(user_id, **kwargs)
+
+            # 4. Audit logging
+            if self.audit_service:
+                self.audit_service.log_action(
+                    user_id=user_id,
+                    action=self.__class__.__name__,
+                    result="success",
+                    details=kwargs
+                )
+
+            return {"success": True, "message": "Operation completed successfully", "result": result}
+
+        except Exception as e:
+            # 5. Error handling and audit logging
+            logger.error("Operation failed for user %s: %s", user_id, str(e), exc_info=True)
+
+            if self.audit_service:
+                self.audit_service.log_action(
+                    user_id=user_id,
+                    action=self.__class__.__name__,
+                    result="failure",
+                    error=str(e)
+                )
+
+            # Don't expose internal errors to caller
+            raise RuntimeError("Operation failed. Please try again or contact support.")
+
+    def _perform_operation(self, user_id: str, **kwargs):
+        """
+        Perform the actual business operation.
+
+        Override this method with specific business logic based on acceptance criteria.
+        """
+        # Template implementation - replace with actual business logic
+        return {"status": "completed"}
 
     def validate(self):
         """Validate the implementation meets acceptance criteria."""
-        return True
+        return self.initialized
