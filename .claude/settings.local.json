@@ -1,8 +1,64 @@
 {
   "permissions": {
     "allow": [
-      "Bash(netstat -ano)",
-      "Bash(findstr \":5002\")"
+      "Bash(git remote *)",
+      "Bash(powershell -Command \"curl.exe --version 2>&1 | Select-Object -First 1\")",
+      "mcp__claude_ai_Atlassian_Rovo__addCommentToJiraIssue",
+      "mcp__claude_ai_Atlassian_Rovo__getJiraIssue",
+      "mcp__claude_ai_Atlassian_Rovo__createJiraIssue"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/on-agent-stop.js"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/on-tool-use.js"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__claude_ai_Atlassian_Rovo__createJiraIssue",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/on-jira-create.js"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/on-tool-start.js"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git push*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/pre-push-gate.js"
+          }
+        ]
+      }
     ]
   }
 }

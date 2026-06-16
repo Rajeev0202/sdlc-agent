@@ -1,0 +1,67 @@
+{
+  "totals": {
+    "tool_calls": 103,
+    "errors": 49,
+    "error_rate_pct": 47.57,
+    "agents_stopped": 12
+  },
+  "by_stage": {
+    "ingest": {
+      "tool_calls": 40,
+      "errors": 17,
+      "error_rate_pct": 42.5,
+      "total_duration_ms": 7184,
+      "avg_tool_duration_ms": 180,
+      "runs": 5,
+      "last_wall_ms": 908909
+    },
+    "plan": {
+      "tool_calls": 63,
+      "errors": 32,
+      "error_rate_pct": 50.79,
+      "total_duration_ms": 48569,
+      "avg_tool_duration_ms": 783,
+      "runs": 7,
+      "last_wall_ms": 91635062
+    }
+  },
+  "by_tool": {
+    "Glob": {
+      "calls": 5,
+      "errors": 0,
+      "total_duration_ms": 915,
+      "avg_duration_ms": 229
+    },
+    "Read": {
+      "calls": 29,
+      "errors": 14,
+      "total_duration_ms": 4580,
+      "avg_duration_ms": 158
+    },
+    "Write": {
+      "calls": 24,
+      "errors": 14,
+      "total_duration_ms": 4203,
+      "avg_duration_ms": 175
+    },
+    "Edit": {
+      "calls": 29,
+      "errors": 21,
+      "total_duration_ms": 4278,
+      "avg_duration_ms": 148
+    },
+    "Bash": {
+      "calls": 12,
+      "errors": 0,
+      "total_duration_ms": 41251,
+      "avg_duration_ms": 3438
+    },
+    "Grep": {
+      "calls": 4,
+      "errors": 0,
+      "total_duration_ms": 526,
+      "avg_duration_ms": 175
+    }
+  },
+  "last_updated": "2026-06-16T16:04:46.827Z"
+}
