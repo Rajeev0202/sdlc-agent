@@ -1,8 +1,8 @@
 """
-Implementation for US-001: see a freeze option on my card details screen
+Implementation for US-001: see a freeze button on my card details screen
 
 Persona: Customer
-Goal: I can quickly access card freeze functionality
+Goal: I can quickly initiate a card freeze when needed
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US001Feature:
-    """Implementation of see a freeze option on my card details screen."""
+    """Implementation of see a freeze button on my card details screen."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,10 @@ class US001Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given I am viewing my active card details, when the screen loads, then I see a 'Freeze Card' button
-        - Given my card is already frozen, when I view card details, then the 'Freeze Card' button is hidden
-        - Given I tap 'Freeze Card', when the confirmation dialog appears, then I see clear warning about freeze consequences
+        - Given I am viewing an active debit card details screen, when the screen loads, then I see a 'Freeze Card' button
+        - Given I am viewing a credit card or already-frozen card, when the screen loads, then the freeze button is not displayed
+        - Given I tap the freeze button, when processing, then I see a loading indicator
+        - Given the freeze succeeds, when the response returns, then I see a success message and the button changes to 'Unfreeze Card'
 
         Args:
             user_id: Authenticated user ID (required for security)

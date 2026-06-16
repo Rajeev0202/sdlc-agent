@@ -1,8 +1,8 @@
 """
-Implementation for US-004: synchronize freeze status with core banking system
+Implementation for US-004: unfreeze my card with step-up authentication
 
-Persona: System
-Goal: card authorization checks reflect current freeze state
+Persona: Customer
+Goal: I can securely resume card usage
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US004Feature:
-    """Implementation of synchronize freeze status with core banking system."""
+    """Implementation of unfreeze my card with step-up authentication."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,10 @@ class US004Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given card freeze API succeeds, when sync starts, then core banking system receives freeze notification
-        - Given core banking sync fails, when retry limit reached, then freeze action is rolled back
-        - Given sync message sent, when acknowledged, then transaction is marked complete
+        - Given I am viewing a frozen card, when the screen loads, then I see an 'Unfreeze Card' button
+        - Given I tap unfreeze, when the button is pressed, then I am prompted for step-up authentication (PIN or biometric)
+        - Given authentication succeeds, when I confirm, then the unfreeze request is sent to the API
+        - Given authentication fails, when I retry 3 times, then the action is blocked and I see an error message
 
         Args:
             user_id: Authenticated user ID (required for security)

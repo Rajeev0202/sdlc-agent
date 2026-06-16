@@ -18,6 +18,7 @@ Class name `MockClaudeClient` is preserved for backwards compatibility.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -29,7 +30,19 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from .llm_cache import get_cache
+
 logger = logging.getLogger(__name__)
+
+
+def _make_cache_key(system: str, user: str, model: str = "default") -> str:
+    """Build a deterministic cache key — delegates to LLMCache.make_key."""
+    return get_cache().make_key(system, user, model)
+
+
+def get_cache_stats() -> dict[str, Any]:
+    """Return cache stats from the active backend (Redis or memory)."""
+    return get_cache().stats()
 
 
 # Known locations where claude.exe may live on Windows
@@ -228,19 +241,52 @@ class MockClaudeClient:
                     f.write(f"  Traceback: {traceback.format_exc()}\n")
                 text = None
         elif self._client is not None:
-            try:
-                msg = self._client.messages.create(
-                    model=self.model,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    system=system,
-                    messages=[{"role": "user", "content": user}],
+            # Result cache (Redis or in-memory): avoid re-calling LLM with identical prompts
+            cache = get_cache()
+            cache_key = cache.make_key(system, user, self.model)
+            cached_text = cache.get(cache_key)
+            if cached_text is not None:
+                logger.info(
+                    f"[Cost Save] LLM cache HIT ({cache.stats()['backend']}) for {self.model} "
+                    f"(saved ~{(len(system) + len(user)) // 4} tokens)"
                 )
-                text = "".join(getattr(b, "text", "") for b in msg.content).strip()
-                self.calls.append({"task": "complete_json", "backend": "anthropic"})
-            except Exception as exc:  # pragma: no cover - network/SDK errors
-                logger.warning("Claude live call failed, falling back: %s", exc)
-                text = None
+                text = cached_text
+                self.calls.append({"task": "complete_json", "backend": f"anthropic-cached-{cache.stats()['backend']}"})
+            else:
+                try:
+                    # Prompt caching: mark system prompt for ephemeral 5-min cache.
+                    # Reduces input token cost by ~90% on repeated calls with same system.
+                    msg = self._client.messages.create(
+                        model=self.model,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        system=[
+                            {
+                                "type": "text",
+                                "text": system,
+                                "cache_control": {"type": "ephemeral"},
+                            }
+                        ],
+                        messages=[{"role": "user", "content": user}],
+                    )
+                    text = "".join(getattr(b, "text", "") for b in msg.content).strip()
+
+                    # Log cache stats from API response when available
+                    if hasattr(msg, "usage") and msg.usage:
+                        usage = msg.usage
+                        cache_read = getattr(usage, "cache_read_input_tokens", 0) or 0
+                        cache_write = getattr(usage, "cache_creation_input_tokens", 0) or 0
+                        if cache_read or cache_write:
+                            logger.info(
+                                f"[Prompt Cache] read={cache_read} write={cache_write} tokens"
+                            )
+
+                    if text:
+                        cache.set(cache_key, text)
+                    self.calls.append({"task": "complete_json", "backend": "anthropic"})
+                except Exception as exc:  # pragma: no cover - network/SDK errors
+                    logger.warning("Claude live call failed, falling back: %s", exc)
+                    text = None
 
         if text is None:
             return None

@@ -73,6 +73,7 @@ from ..skills.test_manual_skill import TestManualSkillAutomation
 from ..skills.test_automation_skill import TestAutomationSkillAutomation
 from ..skills.test_execute_skill import TestExecuteSkillAutomation
 from ..skills.test_heal_skill import TestHealSkillAutomation
+from ..loops import AutonomousPipelineLoop
 from .stage5_new_handlers import (
     generate_manual_tests,
     generate_automation_scripts,
@@ -174,6 +175,162 @@ def api_version():
 # ---------------------------------------------------------------------------
 # Stage 1 — Requirement ingestion (integrated with /sdlc-ingest skill)
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Autonomous Pipeline — runs all stages end-to-end with loops
+# ---------------------------------------------------------------------------
+@app.post("/api/autonomous-pipeline")
+def api_autonomous_pipeline():
+    """Run the full SDLC pipeline autonomously with feedback loops.
+
+    POST body: { "source": "<confluence-url-or-file-path>", "auto_approve": true }
+    """
+    try:
+        payload = request.get_json(force=True)
+        source = payload.get("source", "samples/brd_natwest_card_freeze.md")
+        auto_approve = payload.get("auto_approve", True)
+
+        print(f"[Autonomous Pipeline] Starting with source: {source}")
+
+        # Build stage function dispatcher (uses Flask test client to call our own routes)
+        client = app.test_client()
+
+        def call_endpoint(path, payload):
+            resp = client.post(path, json=payload)
+            if resp.status_code >= 400:
+                raise RuntimeError(f"{path} failed: {resp.get_json()}")
+            return resp.get_json()
+
+        stage_fns = {
+            "stage1": lambda source: call_endpoint("/api/stage1", {"source": source}),
+            "stage2": lambda run_id: call_endpoint("/api/stage2", {"run_id": run_id}),
+            "approve": lambda run_id, approver: call_endpoint(
+                "/api/approve", {"run_id": run_id, "approver": approver}
+            ),
+            "stage3": lambda run_id: call_endpoint(
+                "/api/stage3", {"run_id": run_id, "inject_defect": False}
+            ),
+            "stage4": lambda run_id: call_endpoint("/api/stage4", {"run_id": run_id}),
+            "stage5_manual": lambda run_id: call_endpoint(
+                "/api/stage5/manual-tests", {"run_id": run_id}
+            ),
+            "stage5_automation": lambda run_id: call_endpoint(
+                "/api/stage5/automation-scripts", {"run_id": run_id}
+            ),
+            "stage5_execute": lambda run_id: call_endpoint(
+                "/api/stage5/execute-tests", {"run_id": run_id}
+            ),
+            "stage5_heal": lambda run_id: call_endpoint(
+                "/api/stage5/heal-tests", {"run_id": run_id}
+            ),
+            "stage6": lambda run_id: call_endpoint("/api/stage6", {"run_id": run_id}),
+        }
+
+        # Run the autonomous loop
+        pipeline = AutonomousPipelineLoop()
+        result = pipeline.execute(
+            source=source,
+            stage_fns=stage_fns,
+            auto_approve=auto_approve,
+        )
+
+        # Persist loop result for auditing
+        run_id = result.final_output.get("run_id") if result.final_output else None
+        brief_data = None
+        backlog_data = None
+
+        if run_id:
+            rd = _run_dir(run_id)
+            (rd / "autonomous_pipeline.json").write_text(
+                json.dumps(result.to_dict(), indent=2),
+                encoding="utf-8",
+            )
+
+            # Include brief and backlog data so UI can render Stage 1 & 2 panels
+            brief_path = rd / "01_brief.json"
+            backlog_path = rd / "02_backlog.json"
+            if brief_path.exists():
+                brief_data = json.loads(brief_path.read_text(encoding="utf-8"))
+            if backlog_path.exists():
+                backlog_data = json.loads(backlog_path.read_text(encoding="utf-8"))
+
+        return jsonify({
+            "status": result.status,
+            "iterations": result.iterations,
+            "duration_ms": result.duration_ms,
+            "final_output": result.final_output,
+            "history": result.history,
+            "error": result.error,
+            "brief": brief_data,
+            "backlog": backlog_data,
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.post("/api/autonomous-pipeline-resume")
+def api_autonomous_pipeline_resume():
+    """Resume autonomous pipeline at Phase 2 (Stages 3-6) after PO approval."""
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload["run_id"]
+
+        print(f"[Autonomous Pipeline Resume] Phase 2 for {run_id}")
+
+        client = app.test_client()
+
+        def call_endpoint(path, payload):
+            resp = client.post(path, json=payload)
+            if resp.status_code >= 400:
+                raise RuntimeError(f"{path} failed: {resp.get_json()}")
+            return resp.get_json()
+
+        stage_fns = {
+            "stage3": lambda run_id: call_endpoint(
+                "/api/stage3", {"run_id": run_id, "inject_defect": False}
+            ),
+            "stage4": lambda run_id: call_endpoint("/api/stage4", {"run_id": run_id}),
+            "stage5_manual": lambda run_id: call_endpoint(
+                "/api/stage5/manual-tests", {"run_id": run_id}
+            ),
+            "stage5_automation": lambda run_id: call_endpoint(
+                "/api/stage5/automation-scripts", {"run_id": run_id}
+            ),
+            "stage5_execute": lambda run_id: call_endpoint(
+                "/api/stage5/execute-tests", {"run_id": run_id}
+            ),
+            "stage5_heal": lambda run_id: call_endpoint(
+                "/api/stage5/heal-tests", {"run_id": run_id}
+            ),
+            "stage6": lambda run_id: call_endpoint("/api/stage6", {"run_id": run_id}),
+        }
+
+        pipeline = AutonomousPipelineLoop()
+        result = pipeline.execute_phase2(run_id, stage_fns)
+
+        rd = _run_dir(run_id)
+        (rd / "autonomous_pipeline_phase2.json").write_text(
+            json.dumps(result.to_dict(), indent=2),
+            encoding="utf-8",
+        )
+
+        return jsonify({
+            "status": result.status,
+            "iterations": result.iterations,
+            "duration_ms": result.duration_ms,
+            "final_output": result.final_output,
+            "history": result.history,
+            "error": result.error,
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.post("/api/stage1")
 def api_stage1():
     """Ingest requirements from Confluence URL, local file, or inline text.
@@ -327,6 +484,13 @@ def api_stage2():
 
         # Get Jira links and mode
         jira_links = backlog.__dict__.get("_jira_links", {})
+
+        # Persist jira_links separately so Stage 6 can transition them later
+        if jira_links:
+            (rd / "jira_links.json").write_text(
+                json.dumps(jira_links, indent=2),
+                encoding="utf-8",
+            )
         jira_mode = type(skill_automation.jira).__name__
         jira_url = _os.environ.get("JIRA_URL", "")
 
@@ -479,6 +643,11 @@ def api_stage4():
         rule_findings = len(report.findings) - llm_findings
         review_source = "llm" if llm_findings > 0 else "rules"
 
+        # If review passed, transition Jira cards to "Ready for QA"
+        jira_transitions = []
+        if report.verdict == "pass":
+            jira_transitions = _transition_jira_cards(run_id, "Ready for QA")
+
         return jsonify({
             "run_id": run_id,
             "report": report.model_dump(),
@@ -493,12 +662,60 @@ def api_stage4():
             ],
             "review_source": review_source,
             "review_backend": skill_automation.llm.backend,
+            "jira_transitions": jira_transitions,
         })
     except Exception as e:
         import traceback
         print(f"[Stage 4 - SKILL AUTOMATION] ERROR: {e}")
         traceback.print_exc()
         return jsonify({"error": f"Stage 4 skill automation failed: {str(e)}"}), 500
+
+
+def _transition_jira_cards(run_id: str, target_status: str) -> list[dict]:
+    """Generic helper: transition all Jira cards for a run to the target status."""
+    transitions = []
+    required = ("JIRA_URL", "JIRA_EMAIL", "JIRA_API_TOKEN", "JIRA_PROJECT_KEY")
+    if not all(_os.environ.get(k) for k in required):
+        print(f"[Jira Transition] Credentials missing - skipping transition to '{target_status}'")
+        return transitions
+
+    try:
+        from ..integrations.jira_client import JiraClient
+
+        rd = _run_dir(run_id)
+        jira_links_file = rd / "jira_links.json"
+        if not jira_links_file.exists():
+            print(f"[Jira Transition] No jira_links.json found in {run_id}")
+            return transitions
+
+        jira_links = json.loads(jira_links_file.read_text(encoding="utf-8"))
+        if not jira_links:
+            return transitions
+
+        client = JiraClient(
+            server_url=_os.environ["JIRA_URL"],
+            email=_os.environ["JIRA_EMAIL"],
+            api_token=_os.environ["JIRA_API_TOKEN"],
+            project_key=_os.environ["JIRA_PROJECT_KEY"],
+        )
+
+        print(f"[Jira Transition] Moving {len(jira_links)} cards to '{target_status}'...")
+        for story_id, issue_key in jira_links.items():
+            success = client.transition_to_status(issue_key, target_status)
+            transitions.append({
+                "story_id": story_id,
+                "issue_key": issue_key,
+                "transitioned": success,
+                "status": target_status if success else "failed",
+            })
+            print(f"[Jira Transition] {issue_key} ({story_id}): {'✓ ' + target_status if success else '✗ failed'}")
+
+        return transitions
+    except Exception as e:
+        print(f"[Jira Transition] Failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return transitions
 
 
 def _review_to_markdown(report: ReviewReport) -> str:
@@ -840,7 +1057,18 @@ def api_stage6():
     decision = stage6_deploy.run(pr, review, tests, backlog)
     _write_json(rd / "06_decision.json", decision)
     (rd / "RELEASE_NOTES.md").write_text(decision.release_note, encoding="utf-8")
-    return jsonify({"run_id": run_id, "decision": decision.model_dump()})
+
+    # If deployment is GO, transition Jira cards to DONE
+    jira_transitions = []
+    if decision.go:
+        target_status = _os.environ.get("JIRA_DONE_STATUS", "DONE")
+        jira_transitions = _transition_jira_cards(run_id, target_status)
+
+    return jsonify({
+        "run_id": run_id,
+        "decision": decision.model_dump(),
+        "jira_transitions": jira_transitions,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -866,6 +1094,43 @@ def serve_artifact(relpath: str):
             {"Content-Type": "text/html; charset=utf-8"},
         )
     return send_from_directory(str(safe.parent), safe.name, as_attachment=False)
+
+
+@app.get("/api/cost-stats")
+def api_cost_stats():
+    """Return LLM cost-saving statistics (cache hits, backend, etc.)."""
+    from ..integrations.anthropic_client import get_cache_stats
+    stats = get_cache_stats()
+
+    hits = stats.get("hits", 0)
+    misses = stats.get("misses", 0)
+    total = hits + misses
+    hit_rate = (hits / total * 100) if total else 0
+
+    # Estimate savings: cache hit saves ~3000 tokens at $3/1M (Sonnet input)
+    estimated_savings_usd = hits * 3000 * 3 / 1_000_000
+
+    return jsonify({
+        "cache_backend": stats.get("backend", "unknown"),
+        "cache_size": stats.get("size", 0),
+        "cache_ttl_seconds": stats.get("ttl_seconds", 0),
+        "cache_hits": hits,
+        "cache_misses": misses,
+        "cache_writes": stats.get("writes", 0),
+        "total_calls": total,
+        "hit_rate_pct": round(hit_rate, 1),
+        "estimated_savings_usd": round(estimated_savings_usd, 4),
+        "batch_mode_enabled": _os.environ.get("STAGE3_BATCH_MODE", "1") == "1",
+        "redis_configured": bool(_os.environ.get("REDIS_URL")),
+    })
+
+
+@app.post("/api/cost-stats/clear")
+def api_cost_stats_clear():
+    """Clear the LLM response cache (useful for testing)."""
+    from ..integrations.llm_cache import get_cache
+    get_cache().clear()
+    return jsonify({"status": "cleared"})
 
 
 def main() -> None:

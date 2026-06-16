@@ -1,8 +1,8 @@
 """
-Implementation for US-009: synchronize unfreeze status with core banking system
+Implementation for US-009: view an audit trail of freeze and unfreeze events
 
-Persona: System
-Goal: card authorization checks reflect active state
+Persona: Compliance officer
+Goal: I can investigate fraud patterns and generate compliance reports
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US009Feature:
-    """Implementation of synchronize unfreeze status with core banking system."""
+    """Implementation of view an audit trail of freeze and unfreeze events."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,10 @@ class US009Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given card unfreeze API succeeds, when sync starts, then core banking system receives unfreeze notification
-        - Given core banking sync fails, when retry limit reached, then unfreeze action is rolled back
-        - Given sync message sent, when acknowledged, then transaction is marked complete
+        - Given I access the audit dashboard, when I select a date range, then I see a table of all freeze and unfreeze events with timestamp, user, card ID, and action type
+        - Given the event list, when I search by card ID or user ID, then the table filters accordingly
+        - Given the filtered results, when I click export, then a CSV file is downloaded with all visible events
+        - Given the dashboard, when I access it, then I am authenticated and authorized as a compliance officer
 
         Args:
             user_id: Authenticated user ID (required for security)

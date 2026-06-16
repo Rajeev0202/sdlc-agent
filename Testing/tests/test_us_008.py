@@ -1,5 +1,5 @@
 """
-Tests for US-008: log all card unfreeze events to audit trail
+Tests for US-008: an API to query freeze and unfreeze events for the last 24 months
 
 This file follows TDD approach - tests written first.
 """
@@ -27,27 +27,35 @@ class TestUS008Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_an_unfreeze_action(self):
+    def test_ac1_given_a_date_range(self):
         """
-        AC1: Given an unfreeze action occurs, when it completes, then audit log contains timestamp, user ID, card ID, auth method, and outcome
+        AC1: Given a date range within 24 months, when GET /audit/card-events is called, then it returns all freeze and unfreeze events in that range
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_audit_log_entry(self):
+    def test_ac2_given_the_result_set(self):
         """
-        AC2: Given audit log entry is created, when stored, then it is immutable and tamper-proof
+        AC2: Given the result set is large, when the API is called, then it supports pagination with offset and limit parameters
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_failed_auth_attempts(self):
+    def test_ac3_given_a_specific_card(self):
         """
-        AC3: Given failed auth attempts, when logged, then audit trail captures all attempts
+        AC3: Given a specific card ID filter, when applied, then only events for that card are returned
         """
         # TODO: Implement test for acceptance criterion 3
+        result = self.instance.execute()
+        assert result["success"] is True
+
+    def test_ac4_given_the_api_is(self):
+        """
+        AC4: Given the API is called, when processing, then TLS 1.2+ with certificate verification is enforced and the caller has compliance officer role
+        """
+        # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()
         assert result["success"] is True
 

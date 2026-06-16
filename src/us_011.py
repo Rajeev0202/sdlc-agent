@@ -1,8 +1,8 @@
 """
-Implementation for US-011: view freeze/unfreeze audit dashboard with filtering options
+Implementation for US-011: view and search freeze/unfreeze audit events in a dashboard
 
 Persona: Compliance Officer
-Goal: I can investigate fraud patterns and meet regulatory requirements
+Goal: I can investigate suspicious activities efficiently
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US011Feature:
-    """Implementation of view freeze/unfreeze audit dashboard with filtering options."""
+    """Implementation of view and search freeze/unfreeze audit events in a dashboard."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,11 +30,11 @@ class US011Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given I access compliance dashboard, when it loads, then I see filters for date range, card ID, and user ID
-        - Given I apply filters, when I submit, then audit events matching criteria are displayed in table
-        - Given audit events displayed, when I view details, then I see full event metadata including auth method and IP address
-        - Given large result set, when displayed, then pagination is available
-        - Given audit data, when exported, then CSV download is available
+        - Given I access the compliance dashboard, when the page loads, then I see a date range picker defaulting to last 30 days
+        - Given I select a date range, when I apply filters, then events within that range are displayed in a table
+        - Given I enter a card ID or user ID, when I search, then results are filtered accordingly
+        - Given the results are displayed, when I click export, then a CSV file with all filtered events is downloaded
+        - Given there are many results, when I scroll, then pagination controls allow me to navigate through pages
 
         Args:
             user_id: Authenticated user ID (required for security)

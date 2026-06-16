@@ -1,8 +1,8 @@
 """
-Implementation for US-008: log all card unfreeze events to audit trail
+Implementation for US-008: an API to query freeze and unfreeze events for the last 24 months
 
-Persona: System
-Goal: compliance requirements are met for unfreeze actions
+Persona: Compliance officer
+Goal: I can audit card state changes and investigate fraud patterns
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US008Feature:
-    """Implementation of log all card unfreeze events to audit trail."""
+    """Implementation of an API to query freeze and unfreeze events for the last 24 months."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,10 @@ class US008Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given an unfreeze action occurs, when it completes, then audit log contains timestamp, user ID, card ID, auth method, and outcome
-        - Given audit log entry is created, when stored, then it is immutable and tamper-proof
-        - Given failed auth attempts, when logged, then audit trail captures all attempts
+        - Given a date range within 24 months, when GET /audit/card-events is called, then it returns all freeze and unfreeze events in that range
+        - Given the result set is large, when the API is called, then it supports pagination with offset and limit parameters
+        - Given a specific card ID filter, when applied, then only events for that card are returned
+        - Given the API is called, when processing, then TLS 1.2+ with certificate verification is enforced and the caller has compliance officer role
 
         Args:
             user_id: Authenticated user ID (required for security)

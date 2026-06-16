@@ -117,6 +117,13 @@
       <button class="primary" data-action="stage1">
         <i class="fas fa-download"></i> Ingest Requirements
       </button>
+      <button class="primary" data-action="autonomous" style="background: linear-gradient(135deg, #8e44ad 0%, #5b9dff 100%);">
+        <i class="fas fa-robot"></i> Run Autonomous Pipeline (All Stages)
+      </button>
+      <p class="input-hint" style="margin-top: 8px;">
+        <i class="fas fa-magic"></i>
+        Autonomous mode runs ALL 6 stages end-to-end with feedback loops (no manual clicks).
+      </p>
       <div class="output" id="s1-out"></div>
     </section>
 
@@ -236,6 +243,6 @@
     </section>
   </main>
 
-  <script src="{{ url_for('static', filename='app.js') }}?v=5.1"></script>
+  <script src="{{ url_for('static', filename='app.js') }}?v=6.5"></script>
 </body>
 </html>

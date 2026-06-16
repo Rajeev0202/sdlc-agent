@@ -1,5 +1,5 @@
 """
-Tests for US-004: synchronize freeze status with core banking system
+Tests for US-004: unfreeze my card with step-up authentication
 
 This file follows TDD approach - tests written first.
 """
@@ -27,27 +27,35 @@ class TestUS004Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_card_freeze_api(self):
+    def test_ac1_given_i_am_viewing(self):
         """
-        AC1: Given card freeze API succeeds, when sync starts, then core banking system receives freeze notification
+        AC1: Given I am viewing a frozen card, when the screen loads, then I see an 'Unfreeze Card' button
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_core_banking_sync(self):
+    def test_ac2_given_i_tap_unfreeze(self):
         """
-        AC2: Given core banking sync fails, when retry limit reached, then freeze action is rolled back
+        AC2: Given I tap unfreeze, when the button is pressed, then I am prompted for step-up authentication (PIN or biometric)
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_sync_message_sent(self):
+    def test_ac3_given_authentication_succeeds_when(self):
         """
-        AC3: Given sync message sent, when acknowledged, then transaction is marked complete
+        AC3: Given authentication succeeds, when I confirm, then the unfreeze request is sent to the API
         """
         # TODO: Implement test for acceptance criterion 3
+        result = self.instance.execute()
+        assert result["success"] is True
+
+    def test_ac4_given_authentication_fails_when(self):
+        """
+        AC4: Given authentication fails, when I retry 3 times, then the action is blocked and I see an error message
+        """
+        # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()
         assert result["success"] is True
 

@@ -1,5 +1,5 @@
 """
-Tests for US-001: see a freeze option on my card details screen
+Tests for US-001: see a freeze button on my card details screen
 
 This file follows TDD approach - tests written first.
 """
@@ -29,25 +29,33 @@ class TestUS001Feature:
 
     def test_ac1_given_i_am_viewing(self):
         """
-        AC1: Given I am viewing my active card details, when the screen loads, then I see a 'Freeze Card' button
+        AC1: Given I am viewing an active debit card details screen, when the screen loads, then I see a 'Freeze Card' button
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_my_card_is(self):
+    def test_ac2_given_i_am_viewing(self):
         """
-        AC2: Given my card is already frozen, when I view card details, then the 'Freeze Card' button is hidden
+        AC2: Given I am viewing a credit card or already-frozen card, when the screen loads, then the freeze button is not displayed
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_i_tap_'freeze(self):
+    def test_ac3_given_i_tap_the(self):
         """
-        AC3: Given I tap 'Freeze Card', when the confirmation dialog appears, then I see clear warning about freeze consequences
+        AC3: Given I tap the freeze button, when processing, then I see a loading indicator
         """
         # TODO: Implement test for acceptance criterion 3
+        result = self.instance.execute()
+        assert result["success"] is True
+
+    def test_ac4_given_the_freeze_succeeds(self):
+        """
+        AC4: Given the freeze succeeds, when the response returns, then I see a success message and the button changes to 'Unfreeze Card'
+        """
+        # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()
         assert result["success"] is True
 

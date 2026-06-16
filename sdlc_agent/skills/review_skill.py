@@ -22,9 +22,16 @@ class ReviewSkillAutomation:
     """Automates the /sdlc-review skill logic with LLM-powered semantic review."""
 
     def __init__(self, root_dir: Path, demo_mode: bool = False):
+        import os as _os
         self.root_dir = root_dir
         self.state_file = root_dir / ".claude" / "sdlc-state.json"
-        self.llm = MockClaudeClient()
+
+        # COST OPTIMIZATION: Use Claude Haiku for Stage 4 (review)
+        # Haiku is ~12x cheaper than Sonnet ($0.25/1M vs $3/1M input)
+        # Configurable via ANTHROPIC_REVIEW_MODEL env var
+        review_model = _os.getenv("ANTHROPIC_REVIEW_MODEL", "claude-3-5-haiku-latest")
+        self.llm = MockClaudeClient(model=review_model)
+        logger.info(f"[Stage 4] Using model: {review_model} (Haiku for cost reduction)")
         # Fast-fail tracking (same pattern as Stage 3)
         self._llm_failures = 0
         self._llm_max_failures = 2  # After 2 fails, stop trying LLM

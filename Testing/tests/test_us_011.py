@@ -1,5 +1,5 @@
 """
-Tests for US-011: view freeze/unfreeze audit dashboard with filtering options
+Tests for US-011: view and search freeze/unfreeze audit events in a dashboard
 
 This file follows TDD approach - tests written first.
 """
@@ -27,41 +27,41 @@ class TestUS011Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_i_access_compliance(self):
+    def test_ac1_given_i_access_the(self):
         """
-        AC1: Given I access compliance dashboard, when it loads, then I see filters for date range, card ID, and user ID
+        AC1: Given I access the compliance dashboard, when the page loads, then I see a date range picker defaulting to last 30 days
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_i_apply_filters(self):
+    def test_ac2_given_i_select_a(self):
         """
-        AC2: Given I apply filters, when I submit, then audit events matching criteria are displayed in table
+        AC2: Given I select a date range, when I apply filters, then events within that range are displayed in a table
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_audit_events_displayed(self):
+    def test_ac3_given_i_enter_a(self):
         """
-        AC3: Given audit events displayed, when I view details, then I see full event metadata including auth method and IP address
+        AC3: Given I enter a card ID or user ID, when I search, then results are filtered accordingly
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_large_result_set(self):
+    def test_ac4_given_the_results_are(self):
         """
-        AC4: Given large result set, when displayed, then pagination is available
+        AC4: Given the results are displayed, when I click export, then a CSV file with all filtered events is downloaded
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac5_given_audit_data_when(self):
+    def test_ac5_given_there_are_many(self):
         """
-        AC5: Given audit data, when exported, then CSV download is available
+        AC5: Given there are many results, when I scroll, then pagination controls allow me to navigate through pages
         """
         # TODO: Implement test for acceptance criterion 5
         result = self.instance.execute()

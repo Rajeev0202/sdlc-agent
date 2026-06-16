@@ -1,8 +1,8 @@
 """
-Implementation for US-002: process card freeze requests via API
+Implementation for US-002: an API endpoint to freeze my card
 
-Persona: System
-Goal: card status can be updated securely and reliably
+Persona: Customer
+Goal: the mobile app can process my freeze request securely
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US002Feature:
-    """Implementation of process card freeze requests via API."""
+    """Implementation of an API endpoint to freeze my card."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,10 +30,10 @@ class US002Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a valid freeze request, when API receives it, then card status changes to FROZEN in database
-        - Given an invalid card ID, when API receives freeze request, then return 404 error
-        - Given card is already frozen, when API receives freeze request, then return 409 conflict
-        - Given freeze request, when processing completes, then response time is under 2 seconds
+        - Given a valid card ID and user token, when POST /cards/{id}/freeze is called, then the card status changes to FROZEN
+        - Given an already-frozen or non-existent card, when the endpoint is called, then it returns HTTP 400 with error details
+        - Given the request lacks authentication, when the endpoint is called, then it returns HTTP 401
+        - Given the endpoint is called, when processing, then TLS 1.2+ with certificate verification is enforced
 
         Args:
             user_id: Authenticated user ID (required for security)

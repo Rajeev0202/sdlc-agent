@@ -1,8 +1,8 @@
 """
-Implementation for US-013: receive confirmation after unfreezing my card
+Implementation for US-013: audit access restricted to authorized compliance officers only
 
-Persona: Customer
-Goal: I know my card is ready to use again
+Persona: Compliance Officer
+Goal: sensitive audit data is protected from unauthorized access
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US013Feature:
-    """Implementation of receive confirmation after unfreezing my card."""
+    """Implementation of audit access restricted to authorized compliance officers only."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,10 +30,10 @@ class US013Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given unfreeze succeeds, when completed, then success message is displayed in app
-        - Given unfreeze succeeds, when completed, then push notification is sent to device
-        - Given unfreeze succeeds, when card details screen reloads, then card status shows ACTIVE
-        - Given unfreeze fails, when error occurs, then clear error message explains what went wrong
+        - Given a user has 'COMPLIANCE_OFFICER' role, when they access audit endpoints, then access is granted
+        - Given a user lacks 'COMPLIANCE_OFFICER' role, when they access audit endpoints, then 403 error is returned
+        - Given an audit access attempt occurs, when it happens, then the access attempt itself is logged in security audit trail
+        - Given role assignments change, when they are updated, then access control is enforced immediately (no cache delay)
 
         Args:
             user_id: Authenticated user ID (required for security)

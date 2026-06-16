@@ -1,8 +1,8 @@
 """
-Implementation for US-003: log all card freeze events to audit trail
+Implementation for US-003: my card freeze propagated to the authorization switch
 
-Persona: System
-Goal: compliance requirements are met
+Persona: Customer
+Goal: transactions are blocked within 2 seconds
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US003Feature:
-    """Implementation of log all card freeze events to audit trail."""
+    """Implementation of my card freeze propagated to the authorization switch."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,10 @@ class US003Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a freeze action occurs, when it completes, then audit log contains timestamp, user ID, card ID, and outcome
-        - Given audit log entry is created, when stored, then it is immutable and tamper-proof
-        - Given multiple freeze events, when querying audit log, then events are retrievable for 24+ months
+        - Given a card is frozen via API, when the freeze event is published, then it reaches the authorization switch within 2 seconds at p95
+        - Given the switch is temporarily unavailable, when the publish fails, then the system retries with exponential backoff
+        - Given duplicate freeze events, when they are sent to the switch, then the operation is idempotent
+        - Given the propagation fails after retries, when the error occurs, then the user sees an error and the freeze is rolled back
 
         Args:
             user_id: Authenticated user ID (required for security)

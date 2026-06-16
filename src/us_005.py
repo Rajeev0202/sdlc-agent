@@ -1,8 +1,8 @@
 """
-Implementation for US-005: see unfreeze option for my frozen card
+Implementation for US-005: an API endpoint to unfreeze my card
 
 Persona: Customer
-Goal: I can restore card functionality when ready
+Goal: the mobile app can process my unfreeze request after authentication
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US005Feature:
-    """Implementation of see unfreeze option for my frozen card."""
+    """Implementation of an API endpoint to unfreeze my card."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,10 @@ class US005Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given my card is frozen, when I view card details, then I see 'Unfreeze Card' button
-        - Given my card is active, when I view card details, then 'Unfreeze Card' button is hidden
-        - Given I tap 'Unfreeze Card', when confirmation dialog appears, then I am informed step-up auth is required
+        - Given a valid card ID, user token, and step-up auth token, when POST /cards/{id}/unfreeze is called, then the card status changes to ACTIVE
+        - Given an already-active or non-existent card, when the endpoint is called, then it returns HTTP 400
+        - Given the step-up auth token is invalid or expired, when the endpoint is called, then it returns HTTP 401
+        - Given the endpoint is called, when processing, then TLS 1.2+ with certificate verification is enforced
 
         Args:
             user_id: Authenticated user ID (required for security)

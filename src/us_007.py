@@ -1,8 +1,8 @@
 """
-Implementation for US-007: process card unfreeze requests via API
+Implementation for US-007: all freeze and unfreeze events logged immutably
 
-Persona: System
-Goal: card status can be restored securely after authentication
+Persona: Compliance officer
+Goal: we maintain regulatory compliance for 7 years
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US007Feature:
-    """Implementation of process card unfreeze requests via API."""
+    """Implementation of all freeze and unfreeze events logged immutably."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,10 +30,10 @@ class US007Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given valid unfreeze request with auth token, when API receives it, then card status changes to ACTIVE
-        - Given unfreeze request without valid auth token, when API receives it, then return 401 unauthorized
-        - Given card is already active, when API receives unfreeze request, then return 409 conflict
-        - Given unfreeze request, when processing completes, then response time is under 2 seconds
+        - Given a freeze or unfreeze event occurs, when the API processes it, then the event is written to an append-only log with timestamp, user ID, card ID, and action type
+        - Given an event is logged, when 7 years have not passed, then the event is retained in tamper-proof storage
+        - Given a logged event, when queried, then it cannot be modified or deleted (append-only guarantee)
+        - Given the logging system, when tested, then it complies with NatWest retention and security policies
 
         Args:
             user_id: Authenticated user ID (required for security)

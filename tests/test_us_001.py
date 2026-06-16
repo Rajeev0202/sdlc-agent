@@ -1,16 +1,17 @@
 """
-Pytest test suite for US-001: Card Freeze Button Feature
+Pytest test suite for US-001: Card freeze button on card details screen
 
-Story: As a Customer, I want to see a freeze option on my card details screen
-So that I can quickly access card freeze functionality
+Story: As a Customer, I want to see a freeze button on my card details screen
+so that I can quickly initiate a card freeze when needed
 
 Acceptance Criteria:
-- Given I am viewing my active card details, when the screen loads, then I see a 'Freeze Card' button
-- Given my card is already frozen, when I view card details, then the 'Freeze Card' button is hidden
-- Given I tap 'Freeze Card', when the confirmation dialog appears, then I see clear warning about freeze consequences
+- Given I am viewing an active debit card details screen, when the screen loads, then I see a 'Freeze Card' button
+- Given I am viewing a credit card or already-frozen card, when the screen loads, then the freeze button is not displayed
+- Given I tap the freeze button, when processing, then I see a loading indicator
+- Given the freeze succeeds, when the response returns, then I see a success message and the button changes to 'Unfreeze Card'
 """
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, MagicMock
 from src.us_001 import US001Feature
 
 
@@ -32,7 +33,7 @@ def mock_auth_service():
 
 @pytest.fixture
 def feature(mock_audit_service, mock_auth_service):
-    """Fixture providing a configured US001Feature instance."""
+    """Fixture providing initialized US001Feature instance."""
     return US001Feature(
         audit_service=mock_audit_service,
         auth_service=mock_auth_service
@@ -41,7 +42,7 @@ def feature(mock_audit_service, mock_auth_service):
 
 @pytest.fixture
 def feature_no_services():
-    """Fixture providing US001Feature with no injected services."""
+    """Fixture providing US001Feature without injected services."""
     return US001Feature()
 
 

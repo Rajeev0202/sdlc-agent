@@ -1,5 +1,5 @@
 """
-Tests for US-009: synchronize unfreeze status with core banking system
+Tests for US-009: view an audit trail of freeze and unfreeze events
 
 This file follows TDD approach - tests written first.
 """
@@ -27,27 +27,35 @@ class TestUS009Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_card_unfreeze_api(self):
+    def test_ac1_given_i_access_the(self):
         """
-        AC1: Given card unfreeze API succeeds, when sync starts, then core banking system receives unfreeze notification
+        AC1: Given I access the audit dashboard, when I select a date range, then I see a table of all freeze and unfreeze events with timestamp, user, card ID, and action type
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_core_banking_sync(self):
+    def test_ac2_given_the_event_list(self):
         """
-        AC2: Given core banking sync fails, when retry limit reached, then unfreeze action is rolled back
+        AC2: Given the event list, when I search by card ID or user ID, then the table filters accordingly
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_sync_message_sent(self):
+    def test_ac3_given_the_filtered_results(self):
         """
-        AC3: Given sync message sent, when acknowledged, then transaction is marked complete
+        AC3: Given the filtered results, when I click export, then a CSV file is downloaded with all visible events
         """
         # TODO: Implement test for acceptance criterion 3
+        result = self.instance.execute()
+        assert result["success"] is True
+
+    def test_ac4_given_the_dashboard_when(self):
+        """
+        AC4: Given the dashboard, when I access it, then I am authenticated and authorized as a compliance officer
+        """
+        # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()
         assert result["success"] is True
 

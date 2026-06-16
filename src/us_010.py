@@ -1,8 +1,8 @@
 """
-Implementation for US-010: query freeze and unfreeze audit events via API
+Implementation for US-010: retrieve all freeze and unfreeze events for the last 24 months via API
 
 Persona: Compliance Officer
-Goal: I can retrieve historical data for compliance reporting
+Goal: I can perform compliance audits and investigations
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US010Feature:
-    """Implementation of query freeze and unfreeze audit events via API."""
+    """Implementation of retrieve all freeze and unfreeze events for the last 24 months via API."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,11 +30,11 @@ class US010Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given date range filter, when I query audit API, then results include all freeze/unfreeze events in that range
-        - Given card ID filter, when I query audit API, then results include all events for that card
-        - Given user ID filter, when I query audit API, then results include all events by that user
-        - Given query spans 24 months, when executed, then results are returned within acceptable time
-        - Given audit data exists, when queried, then results include event type, timestamp, user ID, card ID, and outcome
+        - Given I request audit events, when I specify a date range within the last 24 months, then all freeze and unfreeze events in that range are returned
+        - Given I filter by card ID, when the query is executed, then only events for that card are returned
+        - Given I filter by user ID, when the query is executed, then only events for that user are returned
+        - Given the result set is large, when the query completes, then results are paginated with configurable page size
+        - Given each event in the response, when I inspect the data, then it includes timestamp, user ID, card ID, and action type
 
         Args:
             user_id: Authenticated user ID (required for security)

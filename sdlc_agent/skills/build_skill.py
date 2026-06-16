@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -71,6 +72,25 @@ class BuildSkillAutomation:
         total = len(backlog.stories)
 
         print(f"[Stage 3] Generating code for {total} stories (backend: {self.llm.backend})", flush=True)
+
+        # OPTIMIZATION: Try batch generation first (1 LLM call for all stories)
+        # Falls back to per-story generation if batch fails
+        batch_enabled = os.environ.get("STAGE3_BATCH_MODE", "1") == "1"
+        if batch_enabled and self.llm.is_live and total > 1:
+            print(f"[Stage 3] 💰 Attempting BATCH generation (1 LLM call for {total} stories)...", flush=True)
+            batch_files = self._llm_generate_batch(backlog.stories)
+            if batch_files:
+                self._llm_successes += len(batch_files)
+                files.extend(batch_files)
+                print(f"[Stage 3] 💰 Batch SUCCESS: saved ~{total * 2 - 1} LLM calls!", flush=True)
+
+                if inject_defect and files:
+                    files[0] = self._inject_defect(files[0])
+                    logger.info(f"Injected defect in {files[0].path} for demo purposes")
+
+                return files
+            else:
+                print(f"[Stage 3] Batch failed, falling back to per-story generation", flush=True)
 
         for idx, story in enumerate(backlog.stories, 1):
             # Decide whether to use LLM based on past failures
@@ -145,6 +165,116 @@ class BuildSkillAutomation:
             logger.error(f"Even template code failed guardrails for {story.id} - this shouldn't happen!")
 
         return template_code
+
+    def _llm_generate_batch(self, stories: list) -> list[CodeFile]:
+        """Generate implementation + test code for ALL stories in ONE LLM call.
+
+        Returns list of CodeFile objects (impl + test for each story) or empty list on failure.
+        This saves significant cost — 2N calls becomes 1 call.
+        """
+        if not stories:
+            return []
+
+        system_prompt = """You are a senior Python engineer at NatWest writing production code for MULTIPLE user stories.
+
+CODING STANDARDS (MANDATORY):
+- Use logging.getLogger(__name__) NEVER print()
+- TLS verification enabled (verify=True)
+- NO hardcoded credentials, tokens, or PII
+- NO eval, exec, or subprocess(shell=True)
+- Every public function/class must have a docstring
+- Type hints on all function signatures
+
+SECURITY REQUIREMENTS:
+- Authentication: Accept user_id parameter and validate it
+- Authorization: Add ownership/permission checks
+- Audit logging: Log all sensitive operations
+- Input validation: Validate all inputs
+- Error handling: Wrap operations in try-except
+
+OUTPUT FORMAT — Return a single JSON object with this exact structure:
+{
+  "files": [
+    {"story_id": "US-001", "type": "impl", "code": "...python code..."},
+    {"story_id": "US-001", "type": "test", "code": "...pytest code..."},
+    {"story_id": "US-002", "type": "impl", "code": "..."},
+    {"story_id": "US-002", "type": "test", "code": "..."}
+  ]
+}
+
+For each story, generate:
+1. An implementation class named <UpperCamelCase(id)>Feature with execute() method
+2. A pytest test file importing from src/<lowercase_id>.py
+
+Return ONLY the JSON, no markdown."""
+
+        # Build user prompt with ALL stories
+        stories_brief = []
+        for s in stories:
+            ac_text = "\n  ".join(s.acceptance_criteria) if s.acceptance_criteria else "N/A"
+            stories_brief.append(
+                f"- {s.id}: As {s.persona}, I want {s.want}, so that {s.so_that}.\n"
+                f"  Acceptance criteria:\n  {ac_text}"
+            )
+        user_prompt = (
+            f"Generate code for these {len(stories)} user stories:\n\n"
+            + "\n\n".join(stories_brief)
+        )
+
+        try:
+            # Allow large output for many stories
+            result = self.llm.complete_json(
+                system=system_prompt,
+                user=user_prompt,
+                max_tokens=8192,
+                temperature=0.2,
+            )
+        except Exception as exc:
+            logger.warning(f"Batch generation crashed: {exc}")
+            return []
+
+        if not result or not isinstance(result, dict) or "files" not in result:
+            logger.warning("Batch LLM did not return expected JSON structure")
+            return []
+
+        # Convert response to CodeFile objects
+        code_files: list[CodeFile] = []
+        files_data = result.get("files", [])
+        for entry in files_data:
+            if not isinstance(entry, dict):
+                continue
+            story_id = entry.get("story_id", "")
+            file_type = entry.get("type", "")
+            code = entry.get("code", "")
+            if not story_id or not code:
+                continue
+
+            module_name = story_id.lower().replace("-", "_")
+            if file_type == "test":
+                path = f"Testing/tests/test_{module_name}.py"
+            else:
+                path = f"src/{module_name}.py"
+
+            cf = CodeFile(path=path, contents=code, language="python")
+
+            # Run guardrails on each generated file
+            story = next((s for s in stories if s.id == story_id), None)
+            if story and not self._validate_with_guardrails(cf, story):
+                logger.warning(f"Batch file {path} rejected by guardrails")
+                self._guardrail_rejections += 1
+                continue
+
+            code_files.append(cf)
+
+        # Verify we got both impl + test for each story
+        expected = len(stories) * 2
+        if len(code_files) < expected * 0.7:  # Allow some guardrail rejections
+            logger.warning(
+                f"Batch returned only {len(code_files)}/{expected} files; will retry per-story"
+            )
+            return []
+
+        return code_files
 
     def _llm_generate_implementation(self, story) -> str:
         """Use Claude LLM to generate production-quality implementation code."""

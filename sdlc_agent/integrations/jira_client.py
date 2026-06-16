@@ -79,6 +79,81 @@ class JiraClient:
 
         return issue.key
 
+    def transition_to_status(self, issue_key: str, target_status: str, max_hops: int = 4) -> bool:
+        """Transition an issue (by key) to the target status.
+
+        Handles multi-step workflows automatically (e.g., To-Do -> In Progress -> Done).
+        Returns True on success, False if no path found.
+        """
+        try:
+            target_normalized = target_status.lower().replace(" ", "").replace("-", "")
+
+            for hop in range(max_hops):
+                issue = self.jira.issue(issue_key)
+                current_status = issue.fields.status.name
+                current_normalized = current_status.lower().replace(" ", "").replace("-", "")
+
+                # Already at target?
+                if current_normalized == target_normalized:
+                    logger.info(f"{issue_key} reached '{target_status}' in {hop} hop(s)")
+                    return True
+
+                # Try direct transition first
+                transitions = self.jira.transitions(issue)
+                direct = self._find_transition(transitions, target_status)
+
+                if direct:
+                    self.jira.transition_issue(issue, direct['id'])
+                    logger.info(f"{issue_key}: '{current_status}' -> '{direct['to']['name']}'")
+                    continue
+
+                # Find best intermediate step (prefer "In Progress" over "Blocked")
+                preferred_order = ["in progress", "review", "ready"]
+                intermediate = None
+                for pref in preferred_order:
+                    for t in transitions:
+                        to_name = t['to']['name'].lower()
+                        if pref in to_name:
+                            intermediate = t
+                            break
+                    if intermediate:
+                        break
+
+                if not intermediate:
+                    # Fallback: take any forward transition (skip "Blocked")
+                    for t in transitions:
+                        if "block" not in t['to']['name'].lower() and \
+                           t['to']['name'].lower() != current_status.lower():
+                            intermediate = t
+                            break
+
+                if not intermediate:
+                    available = [t['to']['name'] for t in transitions]
+                    logger.warning(f"{issue_key}: no forward transition. Available: {available}")
+                    return False
+
+                self.jira.transition_issue(issue, intermediate['id'])
+                logger.info(f"{issue_key}: '{current_status}' -> '{intermediate['to']['name']}' (intermediate)")
+
+            # Verify final status
+            issue = self.jira.issue(issue_key)
+            final_normalized = issue.fields.status.name.lower().replace(" ", "").replace("-", "")
+            return final_normalized == target_normalized
+
+        except Exception as e:
+            logger.error("Failed to transition %s to %s: %s", issue_key, target_status, e)
+            return False
+
+    def _find_transition(self, transitions, target_status: str):
+        """Find a transition that leads to target_status (case/space/hyphen-insensitive)."""
+        target_normalized = target_status.lower().replace(" ", "").replace("-", "")
+        for t in transitions:
+            name_normalized = t['name'].lower().replace(" ", "").replace("-", "")
+            to_normalized = t['to']['name'].lower().replace(" ", "").replace("-", "")
+            if target_normalized == name_normalized or target_normalized == to_normalized:
+                return t
+        return None
+
     def _transition_issue(self, issue, target_status: str) -> None:
         """Transition issue to target status."""
         transitions = self.jira.transitions(issue)

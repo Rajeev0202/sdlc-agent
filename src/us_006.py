@@ -1,8 +1,8 @@
 """
-Implementation for US-006: complete step-up authentication before unfreezing card
+Implementation for US-006: my card unfreeze propagated to the authorization switch
 
 Persona: Customer
-Goal: my card security is protected from unauthorized unfreeze
+Goal: I can use my card within 2 seconds
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US006Feature:
-    """Implementation of complete step-up authentication before unfreezing card."""
+    """Implementation of my card unfreeze propagated to the authorization switch."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,10 +30,10 @@ class US006Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given I request unfreeze, when step-up auth starts, then I am prompted for biometric or PIN
-        - Given step-up auth fails, when max attempts reached, then unfreeze is blocked and user is notified
-        - Given step-up auth succeeds, when validated, then unfreeze confirmation is shown
-        - Given step-up auth in progress, when timeout occurs, then session expires and user must restart
+        - Given a card is unfrozen via API, when the unfreeze event is published, then it reaches the authorization switch within 2 seconds at p95
+        - Given the switch is temporarily unavailable, when the publish fails, then the system retries with exponential backoff
+        - Given duplicate unfreeze events, when they are sent to the switch, then the operation is idempotent
+        - Given the propagation fails after retries, when the error occurs, then the user sees an error and the unfreeze is rolled back
 
         Args:
             user_id: Authenticated user ID (required for security)

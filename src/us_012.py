@@ -1,8 +1,8 @@
 """
-Implementation for US-012: receive confirmation after freezing my card
+Implementation for US-012: export audit results in CSV and JSON formats
 
-Persona: Customer
-Goal: I have proof the freeze was successful
+Persona: Compliance Officer
+Goal: I can analyze data in external tools or provide it to regulators
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US012Feature:
-    """Implementation of receive confirmation after freezing my card."""
+    """Implementation of export audit results in CSV and JSON formats."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,10 +30,10 @@ class US012Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given freeze succeeds, when completed, then success message is displayed in app
-        - Given freeze succeeds, when completed, then push notification is sent to device
-        - Given freeze succeeds, when card details screen reloads, then card status shows FROZEN
-        - Given freeze fails, when error occurs, then clear error message explains what went wrong
+        - Given I have audit search results, when I click 'Export CSV', then a CSV file is downloaded with all matching records
+        - Given I have audit search results, when I click 'Export JSON', then a JSON file is downloaded with all matching records
+        - Given the export includes sensitive data, when the file is generated, then it includes a watermark with my user ID and export timestamp
+        - Given the export is large (>10,000 records), when I request it, then it is processed asynchronously and I receive a download link via email
 
         Args:
             user_id: Authenticated user ID (required for security)
