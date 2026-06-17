@@ -10,6 +10,7 @@ import logging
 import os
 import re
 
+from ..bootstrap import ensure_harness
 from ..integrations import MockClaudeClient, MockJiraClient, JiraClient
 from ..models import RequirementBrief, StoryBacklog, UserStory
 
@@ -173,6 +174,9 @@ def run(
     jira: object = None,
     claude: MockClaudeClient | None = None,
 ) -> StoryBacklog:
+    # Ensure harness is initialized (with hooks)
+    ensure_harness()
+
     # Accept either MockJiraClient or JiraClient
     if jira is None:
         if all(os.environ.get(k) for k in ("JIRA_URL", "JIRA_EMAIL", "JIRA_API_TOKEN", "JIRA_PROJECT_KEY")):

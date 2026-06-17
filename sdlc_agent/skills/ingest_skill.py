@@ -281,8 +281,20 @@ Return only the JSON object."""
                 temperature=0.2,
             )
 
-            if not result or not isinstance(result, dict):
+            if not result:
+                print("[Ingest Parser] LLM returned None/empty result")
                 return None
+
+            if not isinstance(result, dict):
+                print(f"[Ingest Parser] LLM returned non-dict: {type(result)} - {str(result)[:200]}")
+                return None
+
+            # Debug: show what the LLM returned
+            stories_count = len(result.get("stories", []))
+            ac_count = len(result.get("acceptance_criteria", []))
+            print(f"[Ingest Parser] LLM raw result: {stories_count} stories, {ac_count} ACs")
+            if stories_count == 0:
+                print(f"[Ingest Parser] LLM full result: {json.dumps(result, indent=2)[:500]}")
 
             # Validate structure
             return {
