@@ -1,8 +1,8 @@
 """
-Implementation for US-002: process card freeze requests via API
+Implementation for US-002: the freeze action to be processed by a secure backend API
 
-Persona: System
-Goal: card status can be updated securely and reliably
+Persona: Customer
+Goal: card state changes are reliably persisted and audited
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US002Feature:
-    """Implementation of process card freeze requests via API."""
+    """Implementation of the freeze action to be processed by a secure backend API."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,10 +30,11 @@ class US002Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a valid freeze request, when API receives it, then card status changes to FROZEN in database
-        - Given an invalid card ID, when API receives freeze request, then return 404 error
-        - Given card is already frozen, when API receives freeze request, then return 409 conflict
-        - Given freeze request, when processing completes, then response time is under 2 seconds
+        - Given a valid freeze request, when the API receives it, then the card status is updated to 'Frozen' in the database
+        - Given a freeze request for an already frozen card, when the API processes it, then it returns a 409 Conflict status
+        - Given a freeze request, when it is processed, then an immutable audit log entry is created with timestamp, user ID, and action type
+        - Given a freeze request, when the API processes it, then the response time is under 2 seconds
+        - Given an invalid card ID, when a freeze request is made, then the API returns a 404 Not Found
 
         Args:
             user_id: Authenticated user ID (required for security)

@@ -1,5 +1,5 @@
 """
-Tests for US-005: see unfreeze option for my frozen card
+Tests for US-005: an immutable audit log service for all card state changes
 
 This file follows TDD approach - tests written first.
 """
@@ -27,27 +27,43 @@ class TestUS005Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_my_card_is(self):
+    def test_ac1_given_a_card_freeze(self):
         """
-        AC1: Given my card is frozen, when I view card details, then I see 'Unfreeze Card' button
+        AC1: Given a card freeze or unfreeze event, when it occurs, then an audit log entry is created with: timestamp, user ID, card ID, action type, IP address, device ID
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_my_card_is(self):
+    def test_ac2_given_an_audit_log(self):
         """
-        AC2: Given my card is active, when I view card details, then 'Unfreeze Card' button is hidden
+        AC2: Given an audit log entry is created, when it is stored, then it is cryptographically signed to prevent tampering
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_i_tap_'unfreeze(self):
+    def test_ac3_given_audit_logs_are(self):
         """
-        AC3: Given I tap 'Unfreeze Card', when confirmation dialog appears, then I am informed step-up auth is required
+        AC3: Given audit logs are stored, when they reach 24 months age, then they are automatically archived or deleted per retention policy
         """
         # TODO: Implement test for acceptance criterion 3
+        result = self.instance.execute()
+        assert result["success"] is True
+
+    def test_ac4_given_an_attempt_to(self):
+        """
+        AC4: Given an attempt to modify an audit log, when detected, then the system raises an alert and prevents the modification
+        """
+        # TODO: Implement test for acceptance criterion 4
+        result = self.instance.execute()
+        assert result["success"] is True
+
+    def test_ac5_given_audit_log_writes(self):
+        """
+        AC5: Given audit log writes, when they occur, then they do not impact freeze/unfreeze response time SLA (async processing)
+        """
+        # TODO: Implement test for acceptance criterion 5
         result = self.instance.execute()
         assert result["success"] is True
 

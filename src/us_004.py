@@ -1,8 +1,8 @@
 """
-Implementation for US-004: synchronize freeze status with core banking system
+Implementation for US-004: the unfreeze action to validate step-up authentication on the backend
 
-Persona: System
-Goal: card authorization checks reflect current freeze state
+Persona: Customer
+Goal: only authorized users can reactivate a frozen card
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US004Feature:
-    """Implementation of synchronize freeze status with core banking system."""
+    """Implementation of the unfreeze action to validate step-up authentication on the backend."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,11 @@ class US004Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given card freeze API succeeds, when sync starts, then core banking system receives freeze notification
-        - Given core banking sync fails, when retry limit reached, then freeze action is rolled back
-        - Given sync message sent, when acknowledged, then transaction is marked complete
+        - Given a valid unfreeze request with step-up token, when the API receives it, then it validates the authentication token before processing
+        - Given an expired or invalid step-up token, when the API receives an unfreeze request, then it returns a 401 Unauthorized status
+        - Given a valid unfreeze request, when the API processes it, then the card status is updated to 'Active' in the database
+        - Given an unfreeze request for an already active card, when the API processes it, then it returns a 409 Conflict status
+        - Given a valid unfreeze request, when it is processed, then an immutable audit log entry is created
 
         Args:
             user_id: Authenticated user ID (required for security)

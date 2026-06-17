@@ -13,7 +13,14 @@ __version__ = "0.1.0"
 from .bootstrap import ensure_harness as _ensure_harness
 _ensure_harness()
 
-from .harness import Harness, get_harness, reset_harness, Severity
+from .harness import (
+    Harness,
+    get_harness,
+    reset_harness,
+    Severity,
+    TokenUsage,
+    record_llm_usage,
+)
 from .hooks import register_default_hooks
 
 __all__ = [
@@ -22,4 +29,6 @@ __all__ = [
     "reset_harness",
     "register_default_hooks",
     "Severity",
+    "TokenUsage",
+    "record_llm_usage",
 ]

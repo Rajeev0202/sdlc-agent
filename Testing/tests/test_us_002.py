@@ -1,5 +1,5 @@
 """
-Tests for US-002: process card freeze requests via API
+Tests for US-002: the freeze action to be processed by a secure backend API
 
 This file follows TDD approach - tests written first.
 """
@@ -29,33 +29,41 @@ class TestUS002Feature:
 
     def test_ac1_given_a_valid_freeze(self):
         """
-        AC1: Given a valid freeze request, when API receives it, then card status changes to FROZEN in database
+        AC1: Given a valid freeze request, when the API receives it, then the card status is updated to 'Frozen' in the database
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_an_invalid_card(self):
+    def test_ac2_given_a_freeze_request(self):
         """
-        AC2: Given an invalid card ID, when API receives freeze request, then return 404 error
+        AC2: Given a freeze request for an already frozen card, when the API processes it, then it returns a 409 Conflict status
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_card_is_already(self):
+    def test_ac3_given_a_freeze_request(self):
         """
-        AC3: Given card is already frozen, when API receives freeze request, then return 409 conflict
+        AC3: Given a freeze request, when it is processed, then an immutable audit log entry is created with timestamp, user ID, and action type
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_freeze_request_when(self):
+    def test_ac4_given_a_freeze_request(self):
         """
-        AC4: Given freeze request, when processing completes, then response time is under 2 seconds
+        AC4: Given a freeze request, when the API processes it, then the response time is under 2 seconds
         """
         # TODO: Implement test for acceptance criterion 4
+        result = self.instance.execute()
+        assert result["success"] is True
+
+    def test_ac5_given_an_invalid_card(self):
+        """
+        AC5: Given an invalid card ID, when a freeze request is made, then the API returns a 404 Not Found
+        """
+        # TODO: Implement test for acceptance criterion 5
         result = self.instance.execute()
         assert result["success"] is True
 

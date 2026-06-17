@@ -1,8 +1,8 @@
 """
-Implementation for US-001: see a freeze option on my card details screen
+Implementation for US-001: freeze my active debit card from the mobile app card details screen
 
 Persona: Customer
-Goal: I can quickly access card freeze functionality
+Goal: I can prevent unauthorized transactions immediately when I suspect fraud
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US001Feature:
-    """Implementation of see a freeze option on my card details screen."""
+    """Implementation of freeze my active debit card from the mobile app card details screen."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,10 @@ class US001Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given I am viewing my active card details, when the screen loads, then I see a 'Freeze Card' button
-        - Given my card is already frozen, when I view card details, then the 'Freeze Card' button is hidden
-        - Given I tap 'Freeze Card', when the confirmation dialog appears, then I see clear warning about freeze consequences
+        - Given I am on the card details screen, when I tap the 'Freeze Card' button, then the card status changes to 'Frozen' within 2 seconds
+        - Given my card is frozen, when I view the card details, then I see a visual indicator showing the card is frozen
+        - Given I freeze my card, when I attempt a transaction, then the transaction is declined
+        - Given I have no active cards, when I view card details, then the freeze button is disabled
 
         Args:
             user_id: Authenticated user ID (required for security)

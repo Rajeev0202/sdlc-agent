@@ -1,8 +1,8 @@
 """
-Implementation for US-005: see unfreeze option for my frozen card
+Implementation for US-005: an immutable audit log service for all card state changes
 
-Persona: Customer
-Goal: I can restore card functionality when ready
+Persona: System
+Goal: freeze and unfreeze events are tamper-proof and retained for 24 months for compliance
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US005Feature:
-    """Implementation of see unfreeze option for my frozen card."""
+    """Implementation of an immutable audit log service for all card state changes."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,11 @@ class US005Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given my card is frozen, when I view card details, then I see 'Unfreeze Card' button
-        - Given my card is active, when I view card details, then 'Unfreeze Card' button is hidden
-        - Given I tap 'Unfreeze Card', when confirmation dialog appears, then I am informed step-up auth is required
+        - Given a card freeze or unfreeze event, when it occurs, then an audit log entry is created with: timestamp, user ID, card ID, action type, IP address, device ID
+        - Given an audit log entry is created, when it is stored, then it is cryptographically signed to prevent tampering
+        - Given audit logs are stored, when they reach 24 months age, then they are automatically archived or deleted per retention policy
+        - Given an attempt to modify an audit log, when detected, then the system raises an alert and prevents the modification
+        - Given audit log writes, when they occur, then they do not impact freeze/unfreeze response time SLA (async processing)
 
         Args:
             user_id: Authenticated user ID (required for security)

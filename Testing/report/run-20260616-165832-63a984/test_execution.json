@@ -1,0 +1,25 @@
+{
+  "run_id": "run-20260616-165832-63a984",
+  "executed_at": "2026-06-17T03:40:00.955018+00:00",
+  "total_tests": 2,
+  "passed": 2,
+  "failed": 0,
+  "skipped": 0,
+  "flaky": 0,
+  "pass_rate": 100.0,
+  "execution_time_ms": 2100,
+  "results": [
+    {
+      "test_id": "us-001.spec::test-1",
+      "status": "passed",
+      "duration_ms": 1000,
+      "error": null
+    },
+    {
+      "test_id": "us-001.spec::test-2",
+      "status": "passed",
+      "duration_ms": 1100,
+      "error": null
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 """
-Tests for US-006: complete step-up authentication before unfreezing card
+Tests for US-006: query and export all freeze and unfreeze events for the last 24 months
 
 This file follows TDD approach - tests written first.
 """
@@ -27,35 +27,43 @@ class TestUS006Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_i_request_unfreeze(self):
+    def test_ac1_given_i_am_a(self):
         """
-        AC1: Given I request unfreeze, when step-up auth starts, then I am prompted for biometric or PIN
+        AC1: Given I am a compliance officer, when I access the audit query interface, then I can filter by date range (up to 24 months)
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_step-up_auth_fails(self):
+    def test_ac2_given_i_apply_filters(self):
         """
-        AC2: Given step-up auth fails, when max attempts reached, then unfreeze is blocked and user is notified
+        AC2: Given I apply filters, when I query, then I can filter by: customer ID, card ID, action type (freeze/unfreeze), date range
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_step-up_auth_succeeds(self):
+    def test_ac3_given_query_results_when(self):
         """
-        AC3: Given step-up auth succeeds, when validated, then unfreeze confirmation is shown
+        AC3: Given query results, when displayed, then I see: timestamp, customer ID, card ID, action type, IP address, device ID
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_step-up_auth_in(self):
+    def test_ac4_given_query_results_when(self):
         """
-        AC4: Given step-up auth in progress, when timeout occurs, then session expires and user must restart
+        AC4: Given query results, when I request export, then I can download the results as CSV or JSON
         """
         # TODO: Implement test for acceptance criterion 4
+        result = self.instance.execute()
+        assert result["success"] is True
+
+    def test_ac5_given_a_large_result(self):
+        """
+        AC5: Given a large result set, when I query, then results are paginated (max 1000 records per page)
+        """
+        # TODO: Implement test for acceptance criterion 5
         result = self.instance.execute()
         assert result["success"] is True
 

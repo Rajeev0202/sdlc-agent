@@ -1,8 +1,8 @@
 """
-Implementation for US-003: log all card freeze events to audit trail
+Implementation for US-003: unfreeze my frozen debit card after completing step-up authentication
 
-Persona: System
-Goal: compliance requirements are met
+Persona: Customer
+Goal: I can resume using my card securely after the threat has passed
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US003Feature:
-    """Implementation of log all card freeze events to audit trail."""
+    """Implementation of unfreeze my frozen debit card after completing step-up authentication."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,9 +30,11 @@ class US003Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a freeze action occurs, when it completes, then audit log contains timestamp, user ID, card ID, and outcome
-        - Given audit log entry is created, when stored, then it is immutable and tamper-proof
-        - Given multiple freeze events, when querying audit log, then events are retrievable for 24+ months
+        - Given my card is frozen, when I tap 'Unfreeze Card', then I am prompted for step-up authentication (biometric or PIN)
+        - Given I complete step-up authentication successfully, when I confirm unfreeze, then the card status changes to 'Active' within 2 seconds
+        - Given I fail step-up authentication, when I attempt to unfreeze, then the card remains frozen and I see an error message
+        - Given step-up authentication times out, when I return to the app, then the unfreeze action is cancelled
+        - Given my card is active, when I view card details, then the unfreeze button is not visible
 
         Args:
             user_id: Authenticated user ID (required for security)

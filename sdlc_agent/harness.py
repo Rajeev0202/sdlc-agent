@@ -41,6 +41,16 @@ class Severity(str, Enum):
     ERROR = "error"
 
 
+class TokenUsage(BaseModel):
+    """Token usage metrics for LLM calls"""
+
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cache_creation_tokens: int = 0
+    cache_read_tokens: int = 0
+    total_tokens: int = 0
+
+
 class ToolSpan(BaseModel):
     """Tool execution span for distributed tracing"""
 
@@ -52,6 +62,7 @@ class ToolSpan(BaseModel):
     input: str | None = None
     status: Literal["ok", "error"] = "ok"
     duration_ms: int | None = None
+    token_usage: TokenUsage | None = None
     ts: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -234,17 +245,25 @@ class Harness:
             stage=self.state.stage,
             persona=self.state.persona,
             input=input_data[:100] if input_data else None,
+            token_usage=None,
         )
         self._current_span = span
         return span
 
-    def end_span(self, status: Literal["ok", "error"] = "ok", duration_ms: int | None = None) -> None:
+    def end_span(
+        self,
+        status: Literal["ok", "error"] = "ok",
+        duration_ms: int | None = None,
+        token_usage: TokenUsage | None = None,
+    ) -> None:
         """End the current span and write to traces.jsonl"""
         if not self._current_span:
             return
 
         self._current_span.status = status
         self._current_span.duration_ms = duration_ms
+        if token_usage:
+            self._current_span.token_usage = token_usage
 
         if self.config.enable_observability:
             traces_path = self.config.observability_dir / "traces.jsonl"
@@ -266,6 +285,14 @@ class Harness:
         if totals["tool_calls"] > 0:
             totals["error_rate_pct"] = round(100 * totals.get("errors", 0) / totals["tool_calls"], 2)
 
+        # Token usage aggregation
+        if span.token_usage:
+            totals["total_input_tokens"] = totals.get("total_input_tokens", 0) + span.token_usage.input_tokens
+            totals["total_output_tokens"] = totals.get("total_output_tokens", 0) + span.token_usage.output_tokens
+            totals["total_cache_creation_tokens"] = totals.get("total_cache_creation_tokens", 0) + span.token_usage.cache_creation_tokens
+            totals["total_cache_read_tokens"] = totals.get("total_cache_read_tokens", 0) + span.token_usage.cache_read_tokens
+            totals["total_tokens"] = totals.get("total_tokens", 0) + span.token_usage.total_tokens
+
         # By stage
         if span.stage:
             stage_data = self.metrics.by_stage.setdefault(span.stage, {})
@@ -280,6 +307,11 @@ class Harness:
                 stage_data["error_rate_pct"] = round(
                     100 * stage_data.get("errors", 0) / stage_data["tool_calls"], 2
                 )
+            # Stage-level token aggregation
+            if span.token_usage:
+                stage_data["total_tokens"] = stage_data.get("total_tokens", 0) + span.token_usage.total_tokens
+                stage_data["input_tokens"] = stage_data.get("input_tokens", 0) + span.token_usage.input_tokens
+                stage_data["output_tokens"] = stage_data.get("output_tokens", 0) + span.token_usage.output_tokens
 
         # By tool
         tool_data = self.metrics.by_tool.setdefault(span.tool, {})
@@ -290,6 +322,11 @@ class Harness:
             calls = tool_data["calls"]
             avg = tool_data.get("avg_duration_ms", 0)
             tool_data["avg_duration_ms"] = round((avg * (calls - 1) + span.duration_ms) / calls, 2)
+        # Tool-level token aggregation
+        if span.token_usage:
+            tool_data["total_tokens"] = tool_data.get("total_tokens", 0) + span.token_usage.total_tokens
+            tool_data["input_tokens"] = tool_data.get("input_tokens", 0) + span.token_usage.input_tokens
+            tool_data["output_tokens"] = tool_data.get("output_tokens", 0) + span.token_usage.output_tokens
 
         self._save_metrics()
 
@@ -457,16 +494,33 @@ class Harness:
                 self.tool = tool
                 self.input_data = input_data
                 self.start_time = 0
+                self.token_usage: TokenUsage | None = None
 
             def __enter__(self):
                 self.start_time = time.perf_counter_ns()
                 self.harness.start_span(self.tool, self.input_data)
                 return self
 
+            def set_token_usage(
+                self,
+                input_tokens: int = 0,
+                output_tokens: int = 0,
+                cache_creation_tokens: int = 0,
+                cache_read_tokens: int = 0,
+            ) -> None:
+                """Set token usage for this span"""
+                self.token_usage = TokenUsage(
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    cache_creation_tokens=cache_creation_tokens,
+                    cache_read_tokens=cache_read_tokens,
+                    total_tokens=input_tokens + output_tokens + cache_creation_tokens,
+                )
+
             def __exit__(self, exc_type, exc_val, exc_tb):
                 duration_ms = int((time.perf_counter_ns() - self.start_time) / 1_000_000)
                 status = "error" if exc_type else "ok"
-                self.harness.end_span(status, duration_ms)
+                self.harness.end_span(status, duration_ms, self.token_usage)
                 if exc_type:
                     self.harness.log(
                         Severity.ERROR,
@@ -496,3 +550,38 @@ def reset_harness() -> None:
     """Reset global harness (useful for testing)"""
     global _harness
     _harness = None
+
+
+# ── Utility Functions ────────────────────────────────────────────────────────
+
+
+def record_llm_usage(
+    span_context: Any,
+    response: Any,
+) -> None:
+    """Extract and record token usage from an LLM API response.
+
+    Args:
+        span_context: The SpanContext from harness.tool_span()
+        response: The API response object with usage data
+    """
+    if not hasattr(span_context, "set_token_usage"):
+        return
+
+    # Handle Anthropic Messages API response
+    if hasattr(response, "usage"):
+        usage = response.usage
+        span_context.set_token_usage(
+            input_tokens=getattr(usage, "input_tokens", 0),
+            output_tokens=getattr(usage, "output_tokens", 0),
+            cache_creation_tokens=getattr(usage, "cache_creation_input_tokens", 0),
+            cache_read_tokens=getattr(usage, "cache_read_input_tokens", 0),
+        )
+    # Handle dict-based usage (from MockClaudeClient.last_token_usage)
+    elif isinstance(response, dict) and "input_tokens" in response:
+        span_context.set_token_usage(
+            input_tokens=response.get("input_tokens", 0),
+            output_tokens=response.get("output_tokens", 0),
+            cache_creation_tokens=response.get("cache_creation_input_tokens", 0),
+            cache_read_tokens=response.get("cache_read_input_tokens", 0),
+        )

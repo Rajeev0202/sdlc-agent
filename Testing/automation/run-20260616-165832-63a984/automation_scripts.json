@@ -1,0 +1,22 @@
+{
+  "run_id": "run-20260616-165832-63a984",
+  "generated_at": "2026-06-17T03:39:47.405734+00:00",
+  "total_scripts": 1,
+  "scripts": [
+    {
+      "story_id": "US-001",
+      "file_path": "Testing\\automation\\run-20260616-165832-63a984\\us-001.spec.ts",
+      "test_count": 2,
+      "selectors_used": [
+        "css",
+        "role",
+        "data-testid"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2"
+      ]
+    }
+  ],
+  "output_dir": "Testing\\automation\\run-20260616-165832-63a984"
+}

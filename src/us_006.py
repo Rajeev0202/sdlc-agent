@@ -1,8 +1,8 @@
 """
-Implementation for US-006: complete step-up authentication before unfreezing card
+Implementation for US-006: query and export all freeze and unfreeze events for the last 24 months
 
-Persona: Customer
-Goal: my card security is protected from unauthorized unfreeze
+Persona: Compliance officer
+Goal: I can audit card activity for regulatory compliance and investigation purposes
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US006Feature:
-    """Implementation of complete step-up authentication before unfreezing card."""
+    """Implementation of query and export all freeze and unfreeze events for the last 24 months."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,10 +30,11 @@ class US006Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given I request unfreeze, when step-up auth starts, then I am prompted for biometric or PIN
-        - Given step-up auth fails, when max attempts reached, then unfreeze is blocked and user is notified
-        - Given step-up auth succeeds, when validated, then unfreeze confirmation is shown
-        - Given step-up auth in progress, when timeout occurs, then session expires and user must restart
+        - Given I am a compliance officer, when I access the audit query interface, then I can filter by date range (up to 24 months)
+        - Given I apply filters, when I query, then I can filter by: customer ID, card ID, action type (freeze/unfreeze), date range
+        - Given query results, when displayed, then I see: timestamp, customer ID, card ID, action type, IP address, device ID
+        - Given query results, when I request export, then I can download the results as CSV or JSON
+        - Given a large result set, when I query, then results are paginated (max 1000 records per page)
 
         Args:
             user_id: Authenticated user ID (required for security)

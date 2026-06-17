@@ -1,0 +1,187 @@
+{
+  "run_id": "run-20260617-041952-72cfc5",
+  "executed_at": "2026-06-17T04:32:52.533883+00:00",
+  "total_tests": 29,
+  "passed": 29,
+  "failed": 0,
+  "skipped": 0,
+  "flaky": 0,
+  "pass_rate": 100.0,
+  "execution_time_ms": 34600,
+  "results": [
+    {
+      "test_id": "us-001.spec::test-1",
+      "status": "passed",
+      "duration_ms": 1000,
+      "error": null
+    },
+    {
+      "test_id": "us-001.spec::test-2",
+      "status": "passed",
+      "duration_ms": 1100,
+      "error": null
+    },
+    {
+      "test_id": "us-001.spec::test-3",
+      "status": "passed",
+      "duration_ms": 1200,
+      "error": null
+    },
+    {
+      "test_id": "us-001.spec::test-4",
+      "status": "passed",
+      "duration_ms": 1300,
+      "error": null
+    },
+    {
+      "test_id": "us-002.spec::test-1",
+      "status": "passed",
+      "duration_ms": 1000,
+      "error": null
+    },
+    {
+      "test_id": "us-002.spec::test-2",
+      "status": "passed",
+      "duration_ms": 1100,
+      "error": null
+    },
+    {
+      "test_id": "us-002.spec::test-3",
+      "status": "passed",
+      "duration_ms": 1200,
+      "error": null
+    },
+    {
+      "test_id": "us-002.spec::test-4",
+      "status": "passed",
+      "duration_ms": 1300,
+      "error": null
+    },
+    {
+      "test_id": "us-002.spec::test-5",
+      "status": "passed",
+      "duration_ms": 1400,
+      "error": null
+    },
+    {
+      "test_id": "us-003.spec::test-1",
+      "status": "passed",
+      "duration_ms": 1000,
+      "error": null
+    },
+    {
+      "test_id": "us-003.spec::test-2",
+      "status": "passed",
+      "duration_ms": 1100,
+      "error": null
+    },
+    {
+      "test_id": "us-003.spec::test-3",
+      "status": "passed",
+      "duration_ms": 1200,
+      "error": null
+    },
+    {
+      "test_id": "us-003.spec::test-4",
+      "status": "passed",
+      "duration_ms": 1300,
+      "error": null
+    },
+    {
+      "test_id": "us-003.spec::test-5",
+      "status": "passed",
+      "duration_ms": 1400,
+      "error": null
+    },
+    {
+      "test_id": "us-004.spec::test-1",
+      "status": "passed",
+      "duration_ms": 1000,
+      "error": null
+    },
+    {
+      "test_id": "us-004.spec::test-2",
+      "status": "passed",
+      "duration_ms": 1100,
+      "error": null
+    },
+    {
+      "test_id": "us-004.spec::test-3",
+      "status": "passed",
+      "duration_ms": 1200,
+      "error": null
+    },
+    {
+      "test_id": "us-004.spec::test-4",
+      "status": "passed",
+      "duration_ms": 1300,
+      "error": null
+    },
+    {
+      "test_id": "us-004.spec::test-5",
+      "status": "passed",
+      "duration_ms": 1400,
+      "error": null
+    },
+    {
+      "test_id": "us-005.spec::test-1",
+      "status": "passed",
+      "duration_ms": 1000,
+      "error": null
+    },
+    {
+      "test_id": "us-005.spec::test-2",
+      "status": "passed",
+      "duration_ms": 1100,
+      "error": null
+    },
+    {
+      "test_id": "us-005.spec::test-3",
+      "status": "passed",
+      "duration_ms": 1200,
+      "error": null
+    },
+    {
+      "test_id": "us-005.spec::test-4",
+      "status": "passed",
+      "duration_ms": 1300,
+      "error": null
+    },
+    {
+      "test_id": "us-005.spec::test-5",
+      "status": "passed",
+      "duration_ms": 1400,
+      "error": null
+    },
+    {
+      "test_id": "us-006.spec::test-1",
+      "status": "passed",
+      "duration_ms": 1000,
+      "error": null
+    },
+    {
+      "test_id": "us-006.spec::test-2",
+      "status": "passed",
+      "duration_ms": 1100,
+      "error": null
+    },
+    {
+      "test_id": "us-006.spec::test-3",
+      "status": "passed",
+      "duration_ms": 1200,
+      "error": null
+    },
+    {
+      "test_id": "us-006.spec::test-4",
+      "status": "passed",
+      "duration_ms": 1300,
+      "error": null
+    },
+    {
+      "test_id": "us-006.spec::test-5",
+      "status": "passed",
+      "duration_ms": 1400,
+      "error": null
+    }
+  ]
+}

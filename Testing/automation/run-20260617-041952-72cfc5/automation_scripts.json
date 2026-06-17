@@ -1,0 +1,109 @@
+{
+  "run_id": "run-20260617-041952-72cfc5",
+  "generated_at": "2026-06-17T04:32:39.336147+00:00",
+  "total_scripts": 6,
+  "scripts": [
+    {
+      "story_id": "US-001",
+      "file_path": "Testing\\automation\\run-20260617-041952-72cfc5\\us-001.spec.ts",
+      "test_count": 4,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4"
+      ]
+    },
+    {
+      "story_id": "US-002",
+      "file_path": "Testing\\automation\\run-20260617-041952-72cfc5\\us-002.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    },
+    {
+      "story_id": "US-003",
+      "file_path": "Testing\\automation\\run-20260617-041952-72cfc5\\us-003.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    },
+    {
+      "story_id": "US-004",
+      "file_path": "Testing\\automation\\run-20260617-041952-72cfc5\\us-004.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    },
+    {
+      "story_id": "US-005",
+      "file_path": "Testing\\automation\\run-20260617-041952-72cfc5\\us-005.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    },
+    {
+      "story_id": "US-006",
+      "file_path": "Testing\\automation\\run-20260617-041952-72cfc5\\us-006.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    }
+  ],
+  "output_dir": "Testing\\automation\\run-20260617-041952-72cfc5"
+}
