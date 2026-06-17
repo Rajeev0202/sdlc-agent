@@ -1,0 +1,192 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5b9dff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="cyanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fa709a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fee140;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#30cfd0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#330867;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="pinkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a8edea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fed6e3;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Glowing filter -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Animations -->
+    <style>
+      @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+
+      .rotating-circle {
+        animation: rotate 20s linear infinite;
+        transform-origin: center;
+      }
+
+      .pulsing {
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .stage-icon {
+        transition: all 0.3s ease;
+      }
+
+      .stage-icon:hover {
+        transform: scale(1.1);
+      }
+    </style>
+  </defs>
+
+  <!-- Background circles (rotating) -->
+  <g class="rotating-circle">
+    <circle cx="100" cy="100" r="85" fill="none" stroke="url(#blueGradient)" stroke-width="0.5" opacity="0.3"/>
+    <circle cx="100" cy="100" r="75" fill="none" stroke="url(#purpleGradient)" stroke-width="0.5" opacity="0.3"/>
+  </g>
+
+  <!-- Outer ring segments (6 stages) -->
+  <g class="pulsing">
+    <!-- Stage 1: Requirement Ingestion (Top) -->
+    <path d="M 100 20 A 80 80 0 0 1 138.6 30" fill="none" stroke="url(#blueGradient)" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Stage 2: User Story Generation (Top Right) -->
+    <path d="M 140 31 A 80 80 0 0 1 169 69" fill="none" stroke="url(#purpleGradient)" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Stage 3: Code Generation (Bottom Right) -->
+    <path d="M 170 71 A 80 80 0 0 1 170 129" fill="none" stroke="url(#cyanGradient)" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Stage 4: Code Review (Bottom) -->
+    <path d="M 169 131 A 80 80 0 0 1 138.6 170" fill="none" stroke="url(#orangeGradient)" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Stage 5: Test Management (Bottom Left) -->
+    <path d="M 136 171 A 80 80 0 0 1 61.4 170" fill="none" stroke="url(#greenGradient)" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Stage 6: Deployment (Top Left) -->
+    <path d="M 60 169 A 80 80 0 0 1 30 131" fill="none" stroke="url(#pinkGradient)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 30 129 A 80 80 0 0 1 30 69" fill="none" stroke="url(#pinkGradient)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 31 67 A 80 80 0 0 1 60 30" fill="none" stroke="url(#pinkGradient)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 62 29 A 80 80 0 0 1 98 20" fill="none" stroke="url(#pinkGradient)" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Center AI Brain Icon -->
+  <g transform="translate(100, 100)" filter="url(#glow)">
+    <!-- AI Chip/Brain -->
+    <rect x="-15" y="-15" width="30" height="30" rx="4" fill="url(#blueGradient)" opacity="0.9"/>
+
+    <!-- Neural network nodes -->
+    <circle cx="-6" cy="-6" r="2" fill="#fff"/>
+    <circle cx="6" cy="-6" r="2" fill="#fff"/>
+    <circle cx="0" cy="0" r="2" fill="#fff"/>
+    <circle cx="-6" cy="6" r="2" fill="#fff"/>
+    <circle cx="6" cy="6" r="2" fill="#fff"/>
+
+    <!-- Connection lines -->
+    <line x1="-6" y1="-6" x2="0" y2="0" stroke="#fff" stroke-width="0.5" opacity="0.6"/>
+    <line x1="6" y1="-6" x2="0" y2="0" stroke="#fff" stroke-width="0.5" opacity="0.6"/>
+    <line x1="0" y1="0" x2="-6" y2="6" stroke="#fff" stroke-width="0.5" opacity="0.6"/>
+    <line x1="0" y1="0" x2="6" y2="6" stroke="#fff" stroke-width="0.5" opacity="0.6"/>
+
+    <!-- AI text -->
+    <text x="0" y="25" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="url(#blueGradient)" text-anchor="middle">AI</text>
+  </g>
+
+  <!-- Stage Icons (positioned around the circle) -->
+  <g class="stage-icon">
+    <!-- 1. Requirement Ingestion (Top - 12 o'clock) -->
+    <g transform="translate(100, 10)">
+      <circle cx="0" cy="0" r="10" fill="url(#blueGradient)" opacity="0.9"/>
+      <text x="0" y="4" font-family="Arial" font-size="12" fill="#fff" text-anchor="middle">📄</text>
+    </g>
+  </g>
+
+  <g class="stage-icon">
+    <!-- 2. User Story Generation (2 o'clock) -->
+    <g transform="translate(150, 35)">
+      <circle cx="0" cy="0" r="10" fill="url(#purpleGradient)" opacity="0.9"/>
+      <text x="0" y="4" font-family="Arial" font-size="12" fill="#fff" text-anchor="middle">📖</text>
+    </g>
+  </g>
+
+  <g class="stage-icon">
+    <!-- 3. Code Generation (4 o'clock) -->
+    <g transform="translate(175, 100)">
+      <circle cx="0" cy="0" r="10" fill="url(#cyanGradient)" opacity="0.9"/>
+      <text x="0" y="4" font-family="Arial" font-size="12" fill="#fff" text-anchor="middle">💻</text>
+    </g>
+  </g>
+
+  <g class="stage-icon">
+    <!-- 4. Code Review (6 o'clock - bottom right) -->
+    <g transform="translate(150, 165)">
+      <circle cx="0" cy="0" r="10" fill="url(#orangeGradient)" opacity="0.9"/>
+      <text x="0" y="4" font-family="Arial" font-size="12" fill="#fff" text-anchor="middle">🔍</text>
+    </g>
+  </g>
+
+  <g class="stage-icon">
+    <!-- 5. Test Management (8 o'clock - bottom left) -->
+    <g transform="translate(50, 165)">
+      <circle cx="0" cy="0" r="10" fill="url(#greenGradient)" opacity="0.9"/>
+      <text x="0" y="4" font-family="Arial" font-size="12" fill="#fff" text-anchor="middle">🧪</text>
+    </g>
+  </g>
+
+  <g class="stage-icon">
+    <!-- 6. Deployment (10 o'clock - top left) -->
+    <g transform="translate(25, 100)">
+      <circle cx="0" cy="0" r="10" fill="url(#pinkGradient)" opacity="0.9"/>
+      <text x="0" y="4" font-family="Arial" font-size="12" fill="#fff" text-anchor="middle">🚀</text>
+    </g>
+  </g>
+
+  <!-- Connecting arrows (showing cycle flow) -->
+  <g opacity="0.4" class="pulsing">
+    <defs>
+      <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#5b9dff" />
+      </marker>
+    </defs>
+
+    <!-- Flow arrows between stages -->
+    <path d="M 110 15 Q 120 20 135 27" fill="none" stroke="#5b9dff" stroke-width="1" marker-end="url(#arrowhead)"/>
+    <path d="M 155 40 Q 165 55 170 70" fill="none" stroke="#5b9dff" stroke-width="1" marker-end="url(#arrowhead)"/>
+    <path d="M 173 110 Q 170 130 165 145" fill="none" stroke="#5b9dff" stroke-width="1" marker-end="url(#arrowhead)"/>
+    <path d="M 145 168 Q 120 173 100 173" fill="none" stroke="#5b9dff" stroke-width="1" marker-end="url(#arrowhead)"/>
+    <path d="M 55 168 Q 35 160 28 140" fill="none" stroke="#5b9dff" stroke-width="1" marker-end="url(#arrowhead)"/>
+    <path d="M 25 90 Q 23 60 30 40" fill="none" stroke="#5b9dff" stroke-width="1" marker-end="url(#arrowhead)"/>
+    <path d="M 35 30 Q 55 20 80 15" fill="none" stroke="#5b9dff" stroke-width="1" marker-end="url(#arrowhead)"/>
+  </g>
+</svg>

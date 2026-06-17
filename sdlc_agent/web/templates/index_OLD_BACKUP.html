@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SDLC Agent — NatWest (Phase 1)</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="gradient-bg"></div>
+  <header>
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo-icon">🚀</div>
+        <div>
+          <h1>SDLC Agent <span class="tag">Phase 1 · Claude Code</span></h1>
+          <p class="subtitle">End-to-End Software Delivery Pipeline</p>
+        </div>
+      </div>
+      <div class="run-id">Run ID: <code id="run-id">—</code></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Progress Bar -->
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <!-- ============ STAGE 1 ============ -->
+    <section class="stage" id="stage1" data-stage="1">
+      <div class="stage-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <i class="fas fa-file-alt"></i>
+      </div>
+      <header>
+        <div class="stage-header-content">
+          <div class="stage-number">01</div>
+          <h2>Requirement Ingestion</h2>
+        </div>
+        <span class="status pending" id="s1-status">Pending</span>
+      </header>
+      <p class="desc">Pick a BRD or paste a requirement. The agent extracts personas, functional needs, non-functional constraints, business goal, scope, and open questions.</p>
+
+      <label>Sample BRD:
+        <select id="brd-select">
+          <option value="">— choose a sample —</option>
+          {% for f in samples %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+        </select>
+      </label>
+      <details>
+        <summary>…or paste raw requirement text</summary>
+        <textarea id="brd-text" rows="6" placeholder="# My BRD&#10;## Business goal&#10;..."></textarea>
+      </details>
+      <button class="primary" data-action="stage1">Ingest Requirement</button>
+      <div class="output" id="s1-out"></div>
+    </section>
+
+    <!-- ============ STAGE 2 ============ -->
+    <section class="stage locked" id="stage2" data-stage="2">
+      <div class="stage-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        <i class="fas fa-book-open"></i>
+      </div>
+      <header>
+        <div class="stage-header-content">
+          <div class="stage-number">02</div>
+          <h2>User Story Generation</h2>
+        </div>
+        <span class="status pending" id="s2-status">Locked</span>
+      </header>
+      <p class="desc">Maps each persona × functional-need pair to a sign-off-ready story with acceptance criteria derived from the BRD's constraints and goal.</p>
+      <button class="primary" data-action="stage2" disabled>Generate User Stories</button>
+      <div class="output" id="s2-out"></div>
+
+      <div class="gate" id="po-gate" hidden>
+        <strong>🚦 PO Approval Gate</strong>
+        <p>Review the stories above. Approve to unlock Stage 3.</p>
+        <label>Approver: <input id="approver" value="po@natwest"></label>
+        <button class="approve" data-action="approve">Approve Backlog</button>
+      </div>
+    </section>
+
+    <!-- ============ STAGE 3 ============ -->
+    <section class="stage locked" id="stage3" data-stage="3">
+      <div class="stage-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+        <i class="fas fa-code"></i>
+      </div>
+      <header>
+        <div class="stage-header-content">
+          <div class="stage-number">03</div>
+          <h2>Code Generation</h2>
+        </div>
+        <span class="status pending" id="s3-status">Locked</span>
+      </header>
+      <p class="desc">Generates Flask service code following existing patterns, with inline AC comments. Raises a draft PR and writes files under <code>src/</code>.</p>
+      <label><input type="checkbox" id="inject-defect"> Inject seeded defect (demo aid for Stage 4)</label>
+      <button class="primary" data-action="stage3" disabled>Generate Code</button>
+      <div class="output" id="s3-out"></div>
+    </section>
+
+    <!-- ============ STAGE 4 ============ -->
+    <section class="stage locked" id="stage4" data-stage="4">
+      <div class="stage-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+        <i class="fas fa-search"></i>
+      </div>
+      <header>
+        <div class="stage-header-content">
+          <div class="stage-number">04</div>
+          <h2>Code Review</h2>
+        </div>
+        <span class="status pending" id="s4-status">Locked</span>
+      </header>
+      <p class="desc">Scans the PR for security, standards, logic, coverage and NatWest compliance issues. Saves a structured report to <code>CodeReview/</code>.</p>
+      <button class="primary" data-action="stage4" disabled>Run Code Review</button>
+      <div class="output" id="s4-out"></div>
+    </section>
+
+    <!-- ============ STAGE 5 - UPDATED ============ -->
+    <section class="stage locked" id="stage5" data-stage="5">
+      <div class="stage-icon" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+        <i class="fas fa-vial"></i>
+      </div>
+      <header>
+        <div class="stage-header-content">
+          <div class="stage-number">05</div>
+          <h2 style="background:red;color:white;padding:20px;">🔥 UPDATED VERSION - Test Management Workflow 🔥</h2>
+        </div>
+        <span class="status pending" id="s5-status">Locked</span>
+      </header>
+      <p class="desc">Complete test workflow: Generate manual test cases → Create automation scripts → Execute tests → Heal failures</p>
+
+      <div class="test-workflow">
+        <div class="workflow-step">
+          <button class="primary" data-action="stage5-manual" disabled>
+            <i class="fas fa-clipboard-list"></i> 1. Generate Manual Test Cases
+          </button>
+          <div class="output" id="s5-manual-out"></div>
+        </div>
+
+        <div class="workflow-step">
+          <button class="primary" data-action="stage5-automation" disabled>
+            <i class="fas fa-robot"></i> 2. Generate Automation Scripts
+          </button>
+          <div class="output" id="s5-automation-out"></div>
+        </div>
+
+        <div class="workflow-step">
+          <button class="primary" data-action="stage5-execute" disabled>
+            <i class="fas fa-play-circle"></i> 3. Execute Tests
+          </button>
+          <div class="output" id="s5-execute-out"></div>
+        </div>
+
+        <div class="workflow-step">
+          <button class="healing" data-action="stage5-heal" disabled>
+            <i class="fas fa-magic"></i> 4. Heal Failed Tests
+          </button>
+          <div class="output" id="s5-heal-out"></div>
+        </div>
+      </div>
+
+      <div class="output" id="s5-out"></div>
+    </section>
+
+    <!-- ============ STAGE 6 ============ -->
+    <section class="stage locked" id="stage6" data-stage="6">
+      <div class="stage-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+        <i class="fas fa-rocket"></i>
+      </div>
+      <header>
+        <div class="stage-header-content">
+          <div class="stage-number">06</div>
+          <h2>Deployment Readiness</h2>
+        </div>
+        <span class="status pending" id="s6-status">Locked</span>
+      </header>
+      <p class="desc">Validates every release gate. Drafts a release note. Emits the final GO / NO-GO signal.</p>
+      <button class="primary" data-action="stage6" disabled>Check Deployment Readiness</button>
+      <div class="output" id="s6-out"></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

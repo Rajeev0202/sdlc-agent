@@ -8,11 +8,12 @@ public methods defined here.
 from .anthropic_client import MockClaudeClient
 from .confluence_client import MockConfluenceClient
 from .github_client import MockGitHubClient
-from .jira_client import MockJiraClient
+from .jira_client import MockJiraClient, JiraClient
 
 __all__ = [
     "MockClaudeClient",
     "MockConfluenceClient",
     "MockGitHubClient",
     "MockJiraClient",
+    "JiraClient",
 ]

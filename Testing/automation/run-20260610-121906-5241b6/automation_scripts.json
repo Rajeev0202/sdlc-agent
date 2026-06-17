@@ -1,0 +1,189 @@
+{
+  "run_id": "run-20260610-121906-5241b6",
+  "generated_at": "2026-06-10T12:29:34.984938+00:00",
+  "total_scripts": 11,
+  "scripts": [
+    {
+      "story_id": "US-001",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-001.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    },
+    {
+      "story_id": "US-002",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-002.spec.ts",
+      "test_count": 4,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4"
+      ]
+    },
+    {
+      "story_id": "US-003",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-003.spec.ts",
+      "test_count": 4,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4"
+      ]
+    },
+    {
+      "story_id": "US-004",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-004.spec.ts",
+      "test_count": 4,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4"
+      ]
+    },
+    {
+      "story_id": "US-005",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-005.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    },
+    {
+      "story_id": "US-006",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-006.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    },
+    {
+      "story_id": "US-007",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-007.spec.ts",
+      "test_count": 4,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4"
+      ]
+    },
+    {
+      "story_id": "US-008",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-008.spec.ts",
+      "test_count": 4,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4"
+      ]
+    },
+    {
+      "story_id": "US-009",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-009.spec.ts",
+      "test_count": 4,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4"
+      ]
+    },
+    {
+      "story_id": "US-010",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-010.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    },
+    {
+      "story_id": "US-011",
+      "file_path": "Testing\\automation\\run-20260610-121906-5241b6\\us-011.spec.ts",
+      "test_count": 5,
+      "selectors_used": [
+        "data-testid",
+        "css",
+        "role"
+      ],
+      "coverage": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5"
+      ]
+    }
+  ],
+  "output_dir": "Testing\\automation\\run-20260610-121906-5241b6"
+}

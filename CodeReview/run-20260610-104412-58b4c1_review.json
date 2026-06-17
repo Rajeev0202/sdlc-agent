@@ -1,0 +1,853 @@
+{
+  "pr_number": 8586,
+  "findings": [
+    {
+      "file": "src/us_001.py",
+      "line": 55,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_001.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 56,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_002.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 54,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_003.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 54,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_004.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 56,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_005.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 55,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_006.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_007.py",
+      "line": 56,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_007.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_008.py",
+      "line": 54,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_008.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_009.py",
+      "line": 56,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_009.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_010.py",
+      "line": 57,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_010.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_011.py",
+      "line": 55,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_011.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_012.py",
+      "line": 55,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_012.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_013.py",
+      "line": 55,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "Testing/tests/test_us_013.py",
+      "line": 34,
+      "severity": "low",
+      "category": "standards",
+      "message": "TODO comment found - should be resolved before merge"
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (119 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_001.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (122 chars)"
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (123 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_002.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (126 chars)"
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (108 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_003.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (111 chars)"
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (120 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_004.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (123 chars)"
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 2,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (110 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_005.py",
+      "line": 2,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (101 chars)"
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (126 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_006.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (129 chars)"
+    },
+    {
+      "file": "src/us_007.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (141 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_007.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (144 chars)"
+    },
+    {
+      "file": "src/us_008.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (110 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_008.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (113 chars)"
+    },
+    {
+      "file": "src/us_009.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (186 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_009.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (189 chars)"
+    },
+    {
+      "file": "src/us_010.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (120 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_010.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (123 chars)"
+    },
+    {
+      "file": "src/us_011.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (127 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_011.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (130 chars)"
+    },
+    {
+      "file": "src/us_012.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (127 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_012.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (130 chars)"
+    },
+    {
+      "file": "src/us_013.py",
+      "line": 33,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (110 chars)"
+    },
+    {
+      "file": "Testing/tests/test_us_013.py",
+      "line": 32,
+      "severity": "low",
+      "category": "standards",
+      "message": "Line exceeds 100 characters (113 chars)"
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 52,
+      "severity": "critical",
+      "category": "logic",
+      "message": "[LLM] Code is incomplete and truncated - ends with 'sel' causing a SyntaxError. This will fail at runtime. | Suggestion: Complete the implementation of the audit logging block and ensure all code blocks are properly closed."
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 41,
+      "severity": "critical",
+      "category": "security",
+      "message": "[LLM] Authorization bypass vulnerability: 'if self.auth_service and not self.auth_service.is_authorized()' fails OPEN. If auth_service is None, authorization is silently skipped via short-circuit evaluation. | Suggestion: Fail closed: 'if not self.auth_service: raise PermissionError(\"Authorization service not configured\")' followed by unconditional 'if not self.auth_service.is_authorized(user_id, kwargs): raise PermissionError(...)'"
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 1,
+      "severity": "critical",
+      "category": "compliance",
+      "message": "[LLM] Missing card ownership verification. User could potentially freeze another customer's card by passing any card_id. Banking regulation requires ownership validation before any card operation. | Suggestion: Add card ownership check: verify that user_id owns the card_id before proceeding. This should be done after authentication but before any operations."
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 49,
+      "severity": "critical",
+      "category": "logic",
+      "message": "[LLM] Method '_perform_operation' is called but never defined in the class. This will raise AttributeError at runtime. | Suggestion: Implement the _perform_operation method or replace with actual business logic implementation."
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 52,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] Audit logging is conditional and optional ('if self.audit_service'). For banking operations, audit trails are mandatory for regulatory compliance (PSD2, SOX, internal NatWest policies). | Suggestion: Make audit_service required in __init__ (no default None) and raise exception if audit logging fails. Card freeze/unfreeze operations must always be audited."
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 42,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] Failed authorization attempts are not audited. Banking compliance requires logging all failed access attempts for security monitoring and regulatory requirements. | Suggestion: Before raising PermissionError on line 43, call self.audit_service.log_failed_authorization(user_id, operation='card_freeze_attempt', reason='unauthorized')."
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 1,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] Missing card_id parameter and card status retrieval. Acceptance criteria require checking if card is ACTIVE vs FROZEN to determine button visibility, but no logic exists to fetch or validate card status. | Suggestion: Add card_id as required parameter, fetch card object from repository, check card.status to implement AC: 'Given I am viewing an ACTIVE card...' vs 'Given I am viewing a FROZEN card...'"
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 43,
+      "severity": "high",
+      "category": "security",
+      "message": "[LLM] Information leakage: PermissionError message includes user_id which could help attackers enumerate valid user IDs through error message differences. | Suggestion: Use generic error message: 'raise PermissionError(\"You are not authorized for this operation\")' without exposing user_id."
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 49,
+      "severity": "high",
+      "category": "security",
+      "message": "[LLM] PII logging: user_id is logged in plain text. NatWest data protection policy requires sanitization of customer identifiers in logs. | Suggestion: Use hashed or masked user_id in logs: logger.info('Executing %s for user %s', self.__class__.__name__, hash_user_id(user_id))"
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 36,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] Weak user_id validation: 'if not user_id' accepts any truthy string. Should validate format (UUID, numeric ID pattern, etc.) to prevent injection of malformed IDs. | Suggestion: Add format validation: 'if not user_id or not re.match(r'^[A-Z0-9]{8,12}$', user_id): raise ValueError(\"Invalid user_id format\")' (adjust regex to match actual NatWest user ID format)"
+    },
+    {
+      "file": "src/us_001.py",
+      "line": 39,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] Authorization check is inside try block which could catch and suppress authorization errors inappropriately if there's a broad except clause. | Suggestion: Move authorization check outside/before the try block, or use specific except clauses that don't catch PermissionError."
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 65,
+      "severity": "critical",
+      "category": "logic",
+      "message": "[LLM] Method _perform_operation() is called but not defined in the class. This will raise AttributeError at runtime. | Suggestion: Implement _perform_operation method or replace with actual business logic for card freezing."
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 67,
+      "severity": "critical",
+      "category": "compliance",
+      "message": "[LLM] Audit logging is required by acceptance criteria ('an audit event is logged') but not implemented. Section 4 comment exists but no actual audit_service call follows. | Suggestion: Add: if self.audit_service: self.audit_service.log_event('CARD_FREEZE_ATTEMPT', user_id=user_id, card_id=kwargs.get('card_id'), result=result)"
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 48,
+      "severity": "critical",
+      "category": "security",
+      "message": "[LLM] Missing card ownership validation. User could freeze another customer's card. Authorization check validates user_id but not whether user owns the card_id being frozen. | Suggestion: Add explicit check: if not self.auth_service.user_owns_card(user_id, kwargs.get('card_id')): raise PermissionError('User does not own this card')"
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 63,
+      "severity": "critical",
+      "category": "compliance",
+      "message": "[LLM] Missing card status validation. Acceptance criteria requires: 'Given I submit a freeze request for non-ACTIVE card... then it returns 400 error'. No check for ACTIVE status exists. | Suggestion: Before freezing, validate card status: if card.status != 'ACTIVE': raise ValueError('Card must be in ACTIVE status to freeze', status_code=400)"
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 63,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] Missing transaction wrapping for atomic card freeze operation. Card status updates should be atomic to prevent partial state changes. | Suggestion: Wrap card freeze in database transaction to ensure atomicity: with db.transaction(): card.freeze(); audit_log();"
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 42,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] card_id parameter is not extracted or validated from kwargs despite being central to the operation. Acceptance criteria mentions 'valid card ID' validation. | Suggestion: Add explicit validation: card_id = kwargs.get('card_id'); if not card_id: raise ValueError('card_id is required')"
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 16,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] Critical dependencies (audit_service, auth_service) default to None, allowing security and compliance features to be silently skipped. This violates NatWest compliance requirements. | Suggestion: Make dependencies required: Remove None defaults and raise exception in __init__ if not provided, OR check and raise at operation time if None."
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 56,
+      "severity": "high",
+      "category": "security",
+      "message": "[LLM] No authentication verification. Code checks authorization but doesn't verify user_id is authenticated. Malicious actor could pass arbitrary user_id. | Suggestion: Add authentication check before authorization: if self.auth_service and not self.auth_service.is_authenticated(user_id): raise PermissionError('User not authenticated')"
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 63,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] Missing timestamp in response. Acceptance criteria states: 'then it includes updated card status and timestamp'. No timestamp is added to result. | Suggestion: Add timestamp to response: result['timestamp'] = datetime.utcnow().isoformat()"
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 23,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] initialized attribute is set but never used. Dead code or incomplete implementation. | Suggestion: Remove unused attribute or add validation in execute() to check if self.initialized before proceeding."
+    },
+    {
+      "file": "src/us_002.py",
+      "line": 36,
+      "severity": "low",
+      "category": "security",
+      "message": "[LLM] No input sanitization for user_id. While likely validated upstream, defensive programming requires validation of external inputs to prevent injection attacks. | Suggestion: Add input validation: if not isinstance(user_id, str) or not user_id.isalnum(): raise ValueError('Invalid user_id format')"
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 54,
+      "severity": "critical",
+      "category": "logic",
+      "message": "[LLM] Method _perform_operation() is called but never defined in the class. This will raise AttributeError at runtime. | Suggestion: Define the _perform_operation method or replace with actual implementation logic per acceptance criteria."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 17,
+      "severity": "critical",
+      "category": "compliance",
+      "message": "[LLM] No notification service dependency injected, but acceptance criteria requires sending push notifications with card details. Core functionality is missing. | Suggestion: Add notification_service parameter to __init__ and implement notification sending with card last 4 digits and freeze timestamp per AC."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 61,
+      "severity": "critical",
+      "category": "compliance",
+      "message": "[LLM] Missing audit log for notification delivery. NatWest compliance requires audit trail for all customer communications containing card data. | Suggestion: Log notification attempt, success/failure, and notification content hash to audit service before returning."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 49,
+      "severity": "high",
+      "category": "security",
+      "message": "[LLM] Authorization check passes raw kwargs without validation. Attacker could inject unexpected parameters to bypass authorization. | Suggestion: Extract and validate only required parameters before passing to is_authorized(). Use explicit parameter list instead of **kwargs."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 17,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] No validation that card belongs to user_id. User could potentially receive notifications about other users' cards. | Suggestion: Add card ownership validation: verify card_id in kwargs belongs to user_id before processing."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 44,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] Empty required_fields list with TODO makes validation loop dead code. Required fields like card_id, freeze_status are not validated. | Suggestion: Based on AC, required_fields should include: ['card_id', 'freeze_status', 'freeze_timestamp', 'card_last_four']. Remove TODO and validate these."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 54,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] AC states 'notification service unavailable...operation still completes successfully' but no try-except around notification sending. Service failure will crash the operation. | Suggestion: Wrap notification sending in try-except block. Log failure but return success if freeze operation succeeded per AC requirement."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 40,
+      "severity": "high",
+      "category": "security",
+      "message": "[LLM] No validation that user_id is properly formatted or sanitized. Could be injection vector for logging or downstream services. | Suggestion: Validate user_id format (e.g., UUID pattern, alphanumeric only) before using in authorization or logging."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 54,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] No timezone handling for freeze_timestamp. NatWest transactions must use consistent timezone (UTC) for audit and compliance. | Suggestion: Ensure freeze_timestamp is converted to UTC before including in notification and audit logs."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 23,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] self.initialized flag is set but never used. Serves no purpose and adds confusion. | Suggestion: Remove self.initialized = True unless there's a specific initialization check required elsewhere."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 17,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] Services (audit_service, auth_service) are optional but create inconsistent behavior. Core security/compliance features become optional. | Suggestion: Make audit_service and auth_service required parameters. Fail fast if not provided rather than silently skipping critical checks."
+    },
+    {
+      "file": "src/us_003.py",
+      "line": 54,
+      "severity": "low",
+      "category": "security",
+      "message": "[LLM] No rate limiting on notification sending. User could trigger freeze/unfreeze repeatedly to spam notifications. | Suggestion: Add rate limiting check before sending notification, or rely on upstream rate limiting in notification service."
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 72,
+      "severity": "critical",
+      "category": "logic",
+      "message": "[LLM] Code is incomplete - audit_service.log_action call is truncated mid-statement. This will cause syntax error. | Suggestion: Complete the implementation or remove the incomplete code before committing."
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 61,
+      "severity": "critical",
+      "category": "logic",
+      "message": "[LLM] Method _perform_operation() is called but never defined in the class. This will raise AttributeError at runtime. | Suggestion: Define the _perform_operation method or implement the business logic directly in execute()."
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 61,
+      "severity": "critical",
+      "category": "compliance",
+      "message": "[LLM] Core business logic missing: No check for card FROZEN status before transaction authorization. Acceptance criteria requires 'Given my card status is FROZEN, when a transaction is attempted, then it is declined' but no card status check exists. | Suggestion: Add card status retrieval and check: card_status = card_repo.get_status(card_id); if card_status == 'FROZEN': return {'success': False, 'reason': 'CARD_FROZEN'}"
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 29,
+      "severity": "critical",
+      "category": "security",
+      "message": "[LLM] Missing authorization check: No verification that the card_id in kwargs belongs to the authenticated user_id. This allows users to freeze/check other users' cards. | Suggestion: Add ownership validation: if not card_repo.is_owner(user_id, card_id): raise PermissionError('Card does not belong to user')"
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 61,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] Variable 'result' is assigned but never returned. Method signature declares 'Returns: dict' but no return statement exists in visible code. | Suggestion: Add 'return result' at the end of the execute method."
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 69,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] Audit log missing critical fields for financial compliance: transaction_id, card_id, amount, decline_reason, and timestamp. NatWest requires complete audit trail for all transaction attempts. | Suggestion: Include all transaction details: audit_service.log_action(user_id=user_id, action='TRANSACTION_DECLINED', transaction_id=txn_id, card_id=card_id, amount=amount, reason='CARD_FROZEN', timestamp=datetime.utcnow())"
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 51,
+      "severity": "high",
+      "category": "security",
+      "message": "[LLM] Authorization check passes entire kwargs dict to auth_service without sanitization. This exposes all parameters including potentially sensitive data or allows parameter injection attacks. | Suggestion: Pass only required authorization parameters: auth_service.is_authorized(user_id, resource='card', resource_id=card_id, action='transaction')"
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 46,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] Input validation is bypassed: required_fields is hardcoded to empty list []. Critical parameters like card_id, transaction_amount are never validated. | Suggestion: Define actual required fields: required_fields = ['card_id', 'transaction_amount', 'merchant_id'] or extract from acceptance criteria as suggested by TODO."
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 29,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] Missing transaction atomicity wrapper for card status check. If this interacts with transaction processing, it must be wrapped in a database transaction to prevent race conditions (e.g., card unfrozen between check and transaction). | Suggestion: Wrap in transaction context: with db_session.begin_transaction(): ... to ensure ACID properties for financial operations."
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 29,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] Single Responsibility Principle violation: execute() method handles input validation, authorization, business logic, and audit logging. This makes testing difficult and violates SRP. | Suggestion: Split into separate methods: _validate_inputs(), _authorize_user(), _check_card_freeze(), _audit_transaction(). Keep execute() as orchestrator."
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 18,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] audit_service and auth_service are optional (default None) but code has conditional checks 'if self.audit_service'. This creates inconsistent behavior and makes testing harder. | Suggestion: Either make services required dependencies or use Null Object pattern: self.audit_service = audit_service or NullAuditService()"
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 23,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] Attribute self.initialized is set but never used. This is dead code that adds no value. | Suggestion: Remove the unused attribute or implement proper initialization state tracking if needed."
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 41,
+      "severity": "low",
+      "category": "security",
+      "message": "[LLM] user_id parameter has no format validation or sanitization. While checked for existence, malformed user_id could cause issues in downstream systems or logs. | Suggestion: Add format validation: if not re.match(r'^[A-Z0-9]{8,12}$', user_id): raise ValueError('Invalid user_id format')"
+    },
+    {
+      "file": "src/us_004.py",
+      "line": 13,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] Class name 'US004Feature' is meaningless outside development context. Production code should have descriptive business names. | Suggestion: Rename to 'FrozenCardTransactionValidator' or 'CardFreezeEnforcer' to reflect actual business purpose."
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 49,
+      "severity": "critical",
+      "category": "security",
+      "message": "[LLM] Authorization bypass vulnerability: if auth_service is None, authorization check is skipped entirely. User could perform unfreeze operation without any authorization. | Suggestion: Make auth_service a required dependency in __init__ and fail fast if None. Change to: if not self.auth_service.is_authorized(user_id, kwargs): ..."
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 56,
+      "severity": "critical",
+      "category": "compliance",
+      "message": "[LLM] Missing audit logging for sensitive card unfreeze operation. NatWest compliance requires all card state changes to be audited with user_id, timestamp, card_id, and outcome. | Suggestion: Add audit log before and after operation: self.audit_service.log_card_operation(user_id=user_id, operation='UNFREEZE_ATTEMPT', card_id=kwargs.get('card_id'), status='SUCCESS/FAILURE')"
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 56,
+      "severity": "critical",
+      "category": "security",
+      "message": "[LLM] Missing card ownership validation. User could potentially unfreeze cards they don't own by passing arbitrary card_id in kwargs. | Suggestion: Add ownership check: validate that the card_id in kwargs belongs to user_id before proceeding with any operations."
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 56,
+      "severity": "high",
+      "category": "security",
+      "message": "[LLM] Step-up authentication requirement from acceptance criteria is not implemented. AC explicitly states: 'Given I tap Unfreeze Card, when the action is triggered, then step-up authentication challenge is presented' | Suggestion: Implement step-up auth flow: challenge = self.auth_service.initiate_step_up(user_id); if not challenge.verify(): raise PermissionError('Step-up authentication failed')"
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 61,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] Method doesn't return anything but docstring claims it returns dict with success status and message. Caller will get None instead of expected result. | Suggestion: Add return statement: return {'success': True, 'message': 'Card unfrozen successfully', 'card_id': card_id}"
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 18,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] Critical dependencies (audit_service, auth_service) are optional but should be required. Setting them to None creates security vulnerabilities and compliance violations. | Suggestion: Make dependencies required: def __init__(self, audit_service, auth_service): ... if not audit_service or not auth_service: raise ValueError('Required services must be provided')"
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 49,
+      "severity": "high",
+      "category": "security",
+      "message": "[LLM] Authorization check passes entire kwargs dict to is_authorized(), which is too vague. Authorization should be based on specific, validated parameters (user_id, card_id, account_id). | Suggestion: Extract and validate specific parameters first: card_id = kwargs.get('card_id'); if not card_id: raise ValueError('card_id required'); then pass specific context to auth check."
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 45,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] Dead code: required_fields is empty list with TODO, so validation loop never executes. This gives false sense of security that validation is happening. | Suggestion: Either implement the validation with actual required fields like ['card_id', 'card_status'] or remove the dead code until ready to implement."
+    },
+    {
+      "file": "src/us_005.py",
+      "line": 25,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] Instance variable 'self.initialized' is set but never used anywhere in the class. | Suggestion: Remove unused variable or implement initialization state checking if needed."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 67,
+      "severity": "critical",
+      "category": "logic",
+      "message": "[LLM] Code is incomplete - truncated at audit_service.log_action() call. File ends mid-statement, making it non-functional. | Suggestion: Complete the implementation including the audit logging call and return statement."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 63,
+      "severity": "critical",
+      "category": "logic",
+      "message": "[LLM] Method _perform_operation() is called but never defined. This will cause AttributeError at runtime. | Suggestion: Implement the _perform_operation() method or replace with actual step-up auth validation logic."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 29,
+      "severity": "critical",
+      "category": "security",
+      "message": "[LLM] Step-up authentication token validation is completely missing. AC requires: 'validate auth token against step-up auth service' and check if token is recent (< 5 minutes), but no such logic exists. | Suggestion: Extract auth_token from kwargs, validate it against auth service, check timestamp is within 5 minutes, and return 401 if invalid/expired."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 65,
+      "severity": "critical",
+      "category": "compliance",
+      "message": "[LLM] Missing audit log for authentication failures. AC explicitly requires: 'Given step-up auth validation fails, when the error occurs, then an audit event is logged'. Current code only logs success path. | Suggestion: Add audit logging in exception handlers for both PermissionError and authentication failures with event type, user_id, timestamp, and failure reason."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 54,
+      "severity": "critical",
+      "category": "security",
+      "message": "[LLM] Authorization check is optional (if self.auth_service). For a security-critical card unfreeze operation, bypassing auth when service is None is dangerous. | Suggestion: Make auth_service mandatory. Raise an exception in __init__ if auth_service is None, or at minimum fail-closed by raising PermissionError if auth_service is missing."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 49,
+      "severity": "high",
+      "category": "logic",
+      "message": "[LLM] Required fields validation is stubbed with TODO and empty list. Critical validation is missing - auth token, card_id, and other fields per AC are not validated. | Suggestion: Implement required_fields = ['auth_token', 'card_id'] at minimum, based on acceptance criteria requirements."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 63,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] No verification that the authenticated user owns the card being unfrozen. Banking compliance requires proving the user has rights to the resource. | Suggestion: Before unfreezing, query card ownership and validate that user_id matches the card owner. Log access denial attempts."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 63,
+      "severity": "high",
+      "category": "security",
+      "message": "[LLM] No token expiry validation logic. AC requires checking if auth token is recent (< 5 minutes), but timestamp comparison is completely absent. | Suggestion: Extract token_timestamp from auth_token payload, compare with current UTC time, reject if delta > 300 seconds. Use timezone-aware datetime for banking compliance."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 29,
+      "severity": "high",
+      "category": "compliance",
+      "message": "[LLM] No transaction wrapping for card unfreeze operation. Card state changes should be atomic with audit logs to ensure consistency. | Suggestion: Wrap the unfreeze operation in a database transaction that includes both card status update and audit log insertion."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 23,
+      "severity": "low",
+      "category": "logic",
+      "message": "[LLM] self.initialized flag is set but never used anywhere in the code. This is dead code. | Suggestion: Remove the unused initialized flag or add validation logic that checks it before execute()."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 43,
+      "severity": "low",
+      "category": "security",
+      "message": "[LLM] No input sanitization on user_id before logging. Could leak sensitive data or enable log injection attacks. | Suggestion: Sanitize user_id before logging (remove special chars, limit length) or use structured logging with proper escaping."
+    },
+    {
+      "file": "src/us_006.py",
+      "line": 29,
+      "severity": "low",
+      "category": "compliance",
+      "message": "[LLM] No rate limiting or brute force protection. Multiple failed authentication attempts should trigger account lockout or alerting. | Suggestion: Implement rate limiting on failed step-up auth attempts per user (e.g., max 3 attempts in 15 minutes) and log suspicious patterns."
+    }
+  ],
+  "verdict": "pass"
+}

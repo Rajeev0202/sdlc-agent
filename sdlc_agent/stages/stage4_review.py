@@ -87,24 +87,51 @@ def run(
     backend = getattr(claude, "backend", "stub")
     is_live = getattr(claude, "is_live", False)
     logger.info("Stage 4 starting (backend=%s, is_live=%s)", backend, is_live)
+    print(f"\n{'='*70}")
+    print(f"🔍 Stage 4: Code Review Started")
+    print(f"{'='*70}")
+    print(f"PR Number: #{pr.number}")
+    print(f"Files to review: {len(pr.files)}")
+    print(f"Review backend: {backend} {'(Live LLM)' if is_live else '(Rules-based)'}")
+    print(f"{'='*70}\n")
 
     findings: list[ReviewFinding] = []
     for f in pr.files:
-        findings.extend(_scan_file(f.path, f.contents))
+        print(f"📄 Reviewing: {f.path} ({len(f.contents.splitlines())} lines)")
+        file_findings = _scan_file(f.path, f.contents)
+        if file_findings:
+            print(f"   ⚠️  Found {len(file_findings)} issue(s):")
+            for finding in file_findings:
+                severity_icon = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵", "info": "ℹ️"}.get(finding.severity.value, "•")
+                print(f"      {severity_icon} Line {finding.line}: [{finding.category.upper()}] {finding.message}")
+        else:
+            print(f"   ✅ No issues found")
+        findings.extend(file_findings)
 
     gap = _coverage_gap(pr)
     if gap:
+        print(f"\n📊 Coverage Analysis:")
+        print(f"   ⚠️  {gap.message}")
         findings.append(gap)
+    else:
+        print(f"\n📊 Coverage Analysis:")
+        print(f"   ✅ Test files found in PR")
 
     # Layer an LLM review on top of the deterministic regex pass.
+    print(f"\n🤖 LLM Review:")
     llm_findings = _review_with_llm(pr, claude) if is_live else None
     review_source = "rules"
     if llm_findings is not None:
         findings.extend(llm_findings)
         review_source = "llm+rules"
         logger.info("Stage 4 added %d LLM finding(s).", len(llm_findings))
+        print(f"   ✅ LLM analysis complete - found {len(llm_findings)} additional issue(s)")
+        for finding in llm_findings:
+            severity_icon = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵", "info": "ℹ️"}.get(finding.severity.value, "•")
+            print(f"      {severity_icon} {finding.file}:{finding.line or '?'} [{finding.category.upper()}] {finding.message}")
     else:
         logger.info("Stage 4 ran rules only (backend=%s).", backend)
+        print(f"   ℹ️  LLM not available - using rules-based review only")
 
     # Drop duplicates that both the rule scan and the LLM may surface
     # (same file/line/message).
@@ -130,6 +157,28 @@ def run(
         if f.severity in (Severity.HIGH, Severity.CRITICAL)
     ]
     verdict = "fail" if blocking else "pass"
+
+    # Print final summary
+    print(f"\n{'='*70}")
+    print(f"📋 Review Summary")
+    print(f"{'='*70}")
+    print(f"Total findings: {len(findings)}")
+    print(f"  🔴 Critical: {sum(1 for f in findings if f.severity == Severity.CRITICAL)}")
+    print(f"  🟠 High:     {sum(1 for f in findings if f.severity == Severity.HIGH)}")
+    print(f"  🟡 Medium:   {sum(1 for f in findings if f.severity == Severity.MEDIUM)}")
+    print(f"  🔵 Low:      {sum(1 for f in findings if f.severity == Severity.LOW)}")
+    print(f"  ℹ️  Info:     {sum(1 for f in findings if f.severity == Severity.INFO)}")
+    print(f"\nBlocking issues: {len(blocking)}")
+    print(f"Review source: {review_source}")
+    if verdict == "pass":
+        print(f"\n✅ VERDICT: PASS - Ready to proceed to testing")
+    else:
+        print(f"\n❌ VERDICT: FAIL - Fix blocking issues before proceeding")
+        print(f"\nBlocking issues that must be fixed:")
+        for i, finding in enumerate(blocking, 1):
+            print(f"  {i}. {finding.file}:{finding.line or '?'} - {finding.message}")
+    print(f"{'='*70}\n")
+
     report = ReviewReport(pr_number=pr.number, findings=findings, verdict=verdict)
     report.__dict__["_review_source"] = review_source
     report.__dict__["_review_backend"] = backend
