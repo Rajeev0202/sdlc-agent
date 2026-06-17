@@ -8,6 +8,21 @@ from ..models import UserStory
 logger = logging.getLogger(__name__)
 
 
+def _trigger_jira_hook(card_key: str, summary: str | None = None):
+    """Trigger the on_jira_card_created hook if harness is available."""
+    try:
+        from ..harness import get_harness
+        harness = get_harness()
+        harness._trigger_hook(
+            "on_jira_card_created",
+            card_key=card_key,
+            summary=summary
+        )
+    except Exception:
+        # Harness not available or hook failed - non-fatal
+        pass
+
+
 class MockJiraClient:
     """In-memory Jira client for testing and demo without credentials."""
 
@@ -28,6 +43,10 @@ class MockJiraClient:
             'story': story,
         }
         logger.info("Mock Jira: created issue %s for story %s", issue_key, story.id)
+
+        # Trigger harness hook
+        _trigger_jira_hook(card_key=issue_key, summary=story.want)
+
         return issue_key
 
 
@@ -76,6 +95,9 @@ class JiraClient:
             self._add_to_active_sprint(issue)
         except Exception as e:
             logger.warning("Failed to add %s to sprint: %s", issue.key, e)
+
+        # Trigger harness hook
+        _trigger_jira_hook(card_key=issue.key, summary=story.want)
 
         return issue.key
 

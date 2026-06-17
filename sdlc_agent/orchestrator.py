@@ -12,6 +12,8 @@ import os
 from datetime import datetime, timezone
 from typing import Callable
 
+from .bootstrap import ensure_harness
+from .harness import get_harness, Severity
 from .integrations import (
     MockClaudeClient,
     MockConfluenceClient,
@@ -46,7 +48,12 @@ class Orchestrator:
         github: MockGitHubClient | None = None,
         claude: MockClaudeClient | None = None,
         max_remediation_attempts: int = 2,
+        use_harness: bool = True,
     ) -> None:
+        # Ensure harness is initialized with hooks (if enabled)
+        if use_harness:
+            ensure_harness()
+
         self.confluence = confluence or MockConfluenceClient()
         # Prefer real JiraClient if env vars are set, else fallback to mock
         if jira is not None:
@@ -65,6 +72,7 @@ class Orchestrator:
         self.github = github or MockGitHubClient()
         self.claude = claude or MockClaudeClient()
         self.max_remediation_attempts = max_remediation_attempts
+        self.harness = get_harness() if use_harness else None
 
     def run(
         self,
@@ -84,55 +92,126 @@ class Orchestrator:
                 deliberately faulty PR; Stage 4 must catch it; the
                 remediation rerun produces a clean PR.
         """
+        if self.harness:
+            self.harness.log(Severity.INFO, f"Pipeline started: {source_ref}")
+
         # Stage 1
-        brief = stage1_requirement.run(
-            source_ref, confluence=self.confluence, claude=self.claude
-        )
+        if self.harness:
+            self.harness.transition_to("requirement", "Winston")
+            with self.harness.tool_span("stage1_requirement"):
+                brief = stage1_requirement.run(
+                    source_ref, confluence=self.confluence, claude=self.claude
+                )
+        else:
+            brief = stage1_requirement.run(
+                source_ref, confluence=self.confluence, claude=self.claude
+            )
 
         # Stage 2
-        backlog = stage2_stories.run(brief, jira=self.jira, claude=self.claude)
+        if self.harness:
+            self.harness.transition_to("stories", "Priya")
+            with self.harness.tool_span("stage2_stories"):
+                backlog = stage2_stories.run(brief, jira=self.jira, claude=self.claude)
+        else:
+            backlog = stage2_stories.run(brief, jira=self.jira, claude=self.claude)
 
         # Human approval gate
         if not approval(backlog):
+            if self.harness:
+                self.harness.log(Severity.WARN, "Backlog not approved - halted at PO gate")
             return PipelineResult(brief=brief, backlog=backlog)
         backlog.approved = True
         backlog.approver = approver
         backlog.approved_at = datetime.now(timezone.utc)
 
+        if self.harness:
+            self.harness.log(Severity.INFO, f"Backlog approved by {approver}")
+
         # Stages 3 + 4 (with bounded remediation loop)
-        pr = stage3_code.run(
-            backlog,
-            github=self.github,
-            claude=self.claude,
-            inject_defect=inject_defect,
-        )
-        review = stage4_review.run(pr, claude=self.claude)
-        attempts = 0
-        while review.verdict == "fail" and attempts < self.max_remediation_attempts:
-            attempts += 1
-            # Remediation: regenerate Stage 3 output with defects removed.
-            # In Phase 2 we will feed `review.findings` back into the
-            # generator; for Phase 1 the deterministic rerun is sufficient.
+        if self.harness:
+            self.harness.transition_to("code", "Amelia")
+            with self.harness.tool_span("stage3_code"):
+                pr = stage3_code.run(
+                    backlog,
+                    github=self.github,
+                    claude=self.claude,
+                    inject_defect=inject_defect,
+                )
+        else:
             pr = stage3_code.run(
                 backlog,
                 github=self.github,
                 claude=self.claude,
-                inject_defect=False,
+                inject_defect=inject_defect,
             )
+
+        if self.harness:
+            self.harness.transition_to("review", "Devon")
+            with self.harness.tool_span("stage4_review"):
+                review = stage4_review.run(pr, claude=self.claude)
+        else:
             review = stage4_review.run(pr, claude=self.claude)
 
+        attempts = 0
+        while review.verdict == "fail" and attempts < self.max_remediation_attempts:
+            attempts += 1
+            if self.harness:
+                self.harness.log(
+                    Severity.WARN,
+                    f"Review failed (attempt {attempts}/{self.max_remediation_attempts})"
+                )
+                with self.harness.tool_span(f"stage3_code_remediation_{attempts}"):
+                    pr = stage3_code.run(
+                        backlog,
+                        github=self.github,
+                        claude=self.claude,
+                        inject_defect=False,
+                    )
+                with self.harness.tool_span(f"stage4_review_retry_{attempts}"):
+                    review = stage4_review.run(pr, claude=self.claude)
+            else:
+                pr = stage3_code.run(
+                    backlog,
+                    github=self.github,
+                    claude=self.claude,
+                    inject_defect=False,
+                )
+                review = stage4_review.run(pr, claude=self.claude)
+
         # Stage 5
-        tests = stage5_tests.run(
-            pr, backlog, github=self.github, claude=self.claude
-        )
+        if self.harness:
+            self.harness.transition_to("tests", "Quinn")
+            with self.harness.tool_span("stage5_tests"):
+                tests = stage5_tests.run(
+                    pr, backlog, github=self.github, claude=self.claude
+                )
+        else:
+            tests = stage5_tests.run(
+                pr, backlog, github=self.github, claude=self.claude
+            )
 
         # Re-run review now that tests are attached so the coverage gate clears.
-        review = stage4_review.run(pr, claude=self.claude)
+        if self.harness:
+            with self.harness.tool_span("stage4_review_final"):
+                review = stage4_review.run(pr, claude=self.claude)
+        else:
+            review = stage4_review.run(pr, claude=self.claude)
 
         # Stage 6
-        decision = stage6_deploy.run(
-            pr, review, tests, backlog, github=self.github, claude=self.claude
-        )
+        if self.harness:
+            self.harness.transition_to("deploy", "Marcus")
+            with self.harness.tool_span("stage6_deploy"):
+                decision = stage6_deploy.run(
+                    pr, review, tests, backlog, github=self.github, claude=self.claude
+                )
+            self.harness.log(
+                Severity.INFO,
+                f"Pipeline complete: {'GO' if decision.go else 'NO-GO'}"
+            )
+        else:
+            decision = stage6_deploy.run(
+                pr, review, tests, backlog, github=self.github, claude=self.claude
+            )
 
         return PipelineResult(
             brief=brief,

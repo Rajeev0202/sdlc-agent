@@ -1,8 +1,8 @@
 """
-Implementation for US-002: an API endpoint to freeze my card
+Implementation for US-002: unfreeze my previously frozen debit card after passing step-up authentication
 
 Persona: Customer
-Goal: the mobile app can process my freeze request securely
+Goal: Instant Card Freeze/Unfreeze
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US002Feature:
-    """Implementation of an API endpoint to freeze my card."""
+    """Implementation of unfreeze my previously frozen debit card after passing step-up authentication."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,10 +30,7 @@ class US002Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a valid card ID and user token, when POST /cards/{id}/freeze is called, then the card status changes to FROZEN
-        - Given an already-frozen or non-existent card, when the endpoint is called, then it returns HTTP 400 with error details
-        - Given the request lacks authentication, when the endpoint is called, then it returns HTTP 401
-        - Given the endpoint is called, when processing, then TLS 1.2+ with certificate verification is enforced
+        - System should unfreeze my previously frozen debit card after passing step-up authentication
 
         Args:
             user_id: Authenticated user ID (required for security)

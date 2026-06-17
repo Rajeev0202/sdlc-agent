@@ -1,5 +1,4 @@
 [INFO] Loading environment from: C:\Users\Administrator\sdlc-agent\.env
-[OK] Loaded GOOGLE_API_KEY
 [OK] Loaded Confluence/Atlassian email: rrjha82@gmail.com
 [OK] Loaded Confluence/Atlassian API token
  * Serving Flask app 'app'

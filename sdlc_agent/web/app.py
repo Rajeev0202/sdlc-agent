@@ -47,6 +47,10 @@ from uuid import uuid4
 
 from flask import Flask, jsonify, render_template, request, send_from_directory
 
+# Ensure harness is initialized with hooks for web context
+from ..bootstrap import ensure_harness
+_harness = ensure_harness()
+
 from ..models import (
     CodeFile,
     PullRequest,
@@ -390,6 +394,19 @@ def api_stage1():
         # Skill state is already saved to .claude/sdlc-state.json by the automation
         print(f"[Stage 1 - SKILL AUTOMATION] Skill state saved to .claude/sdlc-state.json")
 
+        # Trigger harness hook for requirement ingestion
+        try:
+            from ..harness import get_harness
+            harness = get_harness()
+            harness._trigger_hook(
+                "on_requirements_ingested",
+                source=source,
+                stories_found=len(skill_state.get("stories", [])),
+                open_questions=len(skill_state.get("open_questions", []))
+            )
+        except Exception:
+            pass  # Non-fatal
+
         return jsonify({
             "run_id": run_id,
             "artifact": str(out.relative_to(ROOT)),
@@ -579,6 +596,19 @@ def api_stage3():
         pr = skill_automation.run(backlog, inject_defect=inject)
 
         _write_json(rd / "03_pr.json", pr)
+
+        # Trigger harness hook for PR creation
+        try:
+            from ..harness import get_harness
+            harness = get_harness()
+            harness._trigger_hook(
+                "on_pr_created",
+                pr_number=pr.number,
+                branch=pr.branch,
+                files_count=len(pr.files)
+            )
+        except Exception:
+            pass  # Non-fatal
     except Exception as e:
         import traceback
         print(f"[Stage 3 - SKILL AUTOMATION] ERROR: {e}")
@@ -748,6 +778,18 @@ def api_stage5():
     suite = stage5_tests.run(pr, backlog)
     _write_json(rd / "05_tests.json", suite)
     _write_json(rd / "03_pr.json", pr)  # PR now has tests attached
+
+    # Trigger harness hook for test generation
+    try:
+        from ..harness import get_harness
+        harness = get_harness()
+        harness._trigger_hook(
+            "on_tests_generated",
+            test_files_count=len(suite.files),
+            coverage_map=suite.coverage_map
+        )
+    except Exception:
+        pass  # Non-fatal
 
     # Materialise everything under a single Testing/ folder, per the brief.
     TESTING_DIR.mkdir(parents=True, exist_ok=True)
@@ -1131,6 +1173,75 @@ def api_cost_stats_clear():
     from ..integrations.llm_cache import get_cache
     get_cache().clear()
     return jsonify({"status": "cleared"})
+# ---------------------------------------------------------------------------
+# Harness Verification Endpoints
+# ---------------------------------------------------------------------------
+
+def _harness_status_endpoint():
+    """Check if harness is initialized with hooks (for verification)."""
+    from ..harness import get_harness
+
+    harness = get_harness()
+    return jsonify({
+        "initialized": True,
+        "hooks_registered": harness._hooks_registered,
+        "hook_events": list(harness._hooks.keys()),
+        "hook_counts": {
+            event: len(callbacks)
+            for event, callbacks in harness._hooks.items()
+        },
+        "state": {
+            "stage": harness.state.stage,
+            "trace_id": harness.state.trace_id,
+            "jira_cards_tracked": len(harness.state.jira_creates),
+            "coverage_pct": harness.state.coverage_pct,
+        },
+        "config": {
+            "coverage_threshold": harness.config.coverage_threshold,
+            "enable_observability": harness.config.enable_observability,
+            "enable_hooks": harness.config.enable_hooks,
+        }
+    })
+
+app.add_url_rule("/api/harness/status", "harness_status", _harness_status_endpoint, methods=["GET"])
+
+
+def _test_jira_hook_endpoint():
+    """Test endpoint to verify Jira hook fires in web context."""
+    from ..integrations.jira_client import MockJiraClient
+    from ..models import UserStory
+    from ..harness import get_harness
+
+    harness = get_harness()
+    harness.state.epic = {"key": "WEB-TEST", "summary": "Web Hook Test"}
+
+    jira = MockJiraClient()
+    story = UserStory(
+        id="S-WEB-TEST",
+        persona="Web Tester",
+        want="verify hooks work via uvicorn",
+        so_that="ensure web deployment is correct",
+        acceptance_criteria=[
+            "Hooks are registered on uvicorn start",
+            "Hooks fire when Jira cards are created",
+            "State is tracked correctly"
+        ]
+    )
+
+    initial_count = len(harness.state.jira_creates)
+    issue_key = jira.create_story(story)
+    hook_fired = len(harness.state.jira_creates) > initial_count
+
+    return jsonify({
+        "success": True,
+        "hook_fired": hook_fired,
+        "card_created": issue_key,
+        "cards_before": initial_count,
+        "cards_after": len(harness.state.jira_creates),
+        "latest_card": harness.state.jira_creates[-1] if harness.state.jira_creates else None
+    })
+
+app.add_url_rule("/api/test/jira-hook", "test_jira_hook", _test_jira_hook_endpoint, methods=["GET", "POST"])
 
 
 def main() -> None:

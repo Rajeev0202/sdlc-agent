@@ -1,0 +1,109 @@
+{
+  "totals": {
+    "tool_calls": 225,
+    "errors": 83,
+    "error_rate_pct": 36.89,
+    "agents_stopped": 36,
+    "total_input_tokens": 3046,
+    "total_output_tokens": 974,
+    "total_cache_creation_tokens": 200,
+    "total_cache_read_tokens": 2400,
+    "total_tokens": 4220
+  },
+  "by_stage": {
+    "ingest": {
+      "tool_calls": 40,
+      "errors": 17,
+      "error_rate_pct": 42.5,
+      "total_duration_ms": 7184,
+      "avg_tool_duration_ms": 180,
+      "runs": 5,
+      "last_wall_ms": 908909
+    },
+    "plan": {
+      "tool_calls": 69,
+      "errors": 34,
+      "error_rate_pct": 49.28,
+      "total_duration_ms": 51646,
+      "avg_tool_duration_ms": 748,
+      "runs": 9,
+      "last_wall_ms": 91635062
+    },
+    "review": {
+      "tool_calls": 60,
+      "errors": 20,
+      "error_rate_pct": 33.33,
+      "total_duration_ms": 414702,
+      "avg_tool_duration_ms": 6912,
+      "runs": 5,
+      "total_tokens": 4220,
+      "input_tokens": 3046,
+      "output_tokens": 974,
+      "last_wall_ms": 135481
+    },
+    "init": {
+      "tool_calls": 56,
+      "errors": 12,
+      "error_rate_pct": 21.43,
+      "total_duration_ms": 163629,
+      "avg_tool_duration_ms": 2922,
+      "runs": 17,
+      "last_wall_ms": 22022298
+    }
+  },
+  "by_tool": {
+    "Glob": {
+      "calls": 15,
+      "errors": 0,
+      "total_duration_ms": 6587,
+      "avg_duration_ms": 439
+    },
+    "Read": {
+      "calls": 65,
+      "errors": 30,
+      "total_duration_ms": 372379,
+      "avg_duration_ms": 5729
+    },
+    "Write": {
+      "calls": 35,
+      "errors": 17,
+      "total_duration_ms": 6458,
+      "avg_duration_ms": 185
+    },
+    "Edit": {
+      "calls": 43,
+      "errors": 32,
+      "total_duration_ms": 26057,
+      "avg_duration_ms": 606
+    },
+    "Bash": {
+      "calls": 42,
+      "errors": 1,
+      "total_duration_ms": 217209,
+      "avg_duration_ms": 5172
+    },
+    "Grep": {
+      "calls": 17,
+      "errors": 1,
+      "total_duration_ms": 8471,
+      "avg_duration_ms": 498
+    },
+    "claude_complete": {
+      "calls": 3,
+      "avg_duration_ms": 23421.33
+    },
+    "claude_code_review": {
+      "calls": 3,
+      "errors": 2,
+      "avg_duration_ms": 60070.67
+    },
+    "test_llm_call": {
+      "calls": 2,
+      "avg_duration_ms": 100,
+      "total_tokens": 4220,
+      "input_tokens": 3046,
+      "output_tokens": 974
+    }
+  },
+  "last_updated": "2026-06-17T11:51:20.311Z"
+}

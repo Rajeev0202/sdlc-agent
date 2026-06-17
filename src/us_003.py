@@ -1,8 +1,8 @@
 """
-Implementation for US-003: my card freeze propagated to the authorization switch
+Implementation for US-003: audit every freeze and unfreeze event for the last 24 months
 
 Persona: Customer
-Goal: transactions are blocked within 2 seconds
+Goal: Instant Card Freeze/Unfreeze
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US003Feature:
-    """Implementation of my card freeze propagated to the authorization switch."""
+    """Implementation of audit every freeze and unfreeze event for the last 24 months."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,10 +30,7 @@ class US003Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Given a card is frozen via API, when the freeze event is published, then it reaches the authorization switch within 2 seconds at p95
-        - Given the switch is temporarily unavailable, when the publish fails, then the system retries with exponential backoff
-        - Given duplicate freeze events, when they are sent to the switch, then the operation is idempotent
-        - Given the propagation fails after retries, when the error occurs, then the user sees an error and the freeze is rolled back
+        - System should audit every freeze and unfreeze event for the last 24 months
 
         Args:
             user_id: Authenticated user ID (required for security)

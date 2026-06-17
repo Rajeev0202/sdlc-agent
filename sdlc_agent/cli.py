@@ -18,7 +18,10 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.markdown import Markdown
 
+from .bootstrap import ensure_harness
+from .harness import get_harness
 from .integrations import (
     MockClaudeClient,
     MockGitHubClient,
@@ -43,6 +46,9 @@ from .stages import (
 
 app = typer.Typer(add_completion=False, help="End-to-end SDLC agent (Phase 1).")
 console = Console()
+
+# Ensure harness is initialized when CLI is loaded
+ensure_harness()
 
 
 def _interactive_approval(backlog: StoryBacklog) -> bool:
@@ -111,6 +117,69 @@ def stages() -> None:
     ]
     for n in names:
         console.print(f"  • {n}")
+
+
+@app.command()
+def status() -> None:
+    """Show current SDLC pipeline status with observability metrics."""
+    harness = get_harness()
+
+    # Main status banner
+    console.print(harness.render_status())
+
+    # Show metrics summary
+    metrics = harness.metrics
+    if metrics.totals:
+        table = Table(title="Pipeline Metrics")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", justify="right")
+
+        table.add_row("Tool Calls", str(metrics.totals.get("tool_calls", 0)))
+        table.add_row("Errors", str(metrics.totals.get("errors", 0)))
+        table.add_row(
+            "Error Rate",
+            f"{metrics.totals.get('error_rate_pct', 0):.1f}%"
+        )
+        table.add_row(
+            "Agents Stopped",
+            str(metrics.totals.get("agents_stopped", 0))
+        )
+
+        console.print(table)
+
+    # Show recent errors
+    recent_errors = harness.state.errors[-5:]
+    if recent_errors:
+        console.print("\n[bold red]Recent Errors:[/bold red]")
+        for err in recent_errors:
+            console.print(f"  • [{err.get('stage', '?')}] {err.get('message', 'unknown')}")
+
+
+@app.command()
+def observe(
+    report: str = typer.Argument("summary", help="Report type: summary, metrics, traces, logs, errors, slow"),
+    limit: int = typer.Option(20, "--limit", "-n", help="Number of entries to show"),
+) -> None:
+    """Show observability reports (metrics, traces, logs, errors)."""
+    import subprocess
+    import sys
+
+    # Delegate to the Node.js observability script
+    script_path = ".claude/hooks/sdlc-observe.js"
+    try:
+        result = subprocess.run(
+            ["node", script_path, report, str(limit)],
+            capture_output=True,
+            text=True,
+        )
+        console.print(result.stdout)
+        if result.stderr:
+            console.print(f"[yellow]{result.stderr}[/yellow]", file=sys.stderr)
+    except FileNotFoundError:
+        console.print(
+            "[red]Error:[/red] Node.js not found. Install Node.js to use observability reports.",
+            file=sys.stderr,
+        )
 
 
 # ---------------------------------------------------------------------------
