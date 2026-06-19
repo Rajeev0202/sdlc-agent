@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from flask import Blueprint, current_app, jsonify, request, send_from_directory
+from flask import Blueprint, current_app, jsonify, render_template, request, send_from_directory
 
 from ..config import ROOT
 from ..models import (
@@ -76,13 +76,9 @@ bp = Blueprint("main", __name__)
 # ---------------------------------------------------------------------------
 @bp.get("/")
 def index():
+    """Render the single-page SDLC pipeline UI."""
     samples = sorted(p.name for p in SAMPLES_DIR.glob("*.md"))
-    # Read template directly from disk to ensure fresh content
-    from pathlib import Path
-    template_path = Path(__file__).parent / "templates" / "index.html"
-    template_content = template_path.read_text(encoding="utf-8")
-    from flask import render_template_string
-    return render_template_string(template_content, samples=samples)
+    return render_template("index.html", samples=samples)
 
 
 @bp.post("/api/test")

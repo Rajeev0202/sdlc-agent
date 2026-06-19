@@ -1,0 +1,22 @@
+/* SDLC Agent · Design tokens (:root custom properties)
+   Part of the modular stylesheet — load order matters (see index.html). */
+:root {
+  --bg: #0a0e1a;
+  --panel: #1a1f2e;
+  --panel-soft: #232937;
+  --text: #e6e9f0;
+  --muted: #8b91a7;
+  --accent: #5b9dff;
+  --ok: #3ecf8e;
+  --warn: #f5a524;
+  --bad: #ff6b6b;
+  --border: #2a2f40;
+  --glow: rgba(91, 157, 255, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
