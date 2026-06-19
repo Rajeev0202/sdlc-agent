@@ -63,7 +63,7 @@ class IngestSkillAutomation:
             # URL handling
             if "confluence" in source.lower() or "atlassian" in source.lower():
                 # Fetch from Confluence using REST API
-                from ..confluence_client import fetch_confluence_page
+                from ..integrations import fetch_confluence_page
                 try:
                     return fetch_confluence_page(source)
                 except Exception as e:
