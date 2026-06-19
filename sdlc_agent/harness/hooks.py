@@ -8,12 +8,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .harness import Harness
+    from .core import Harness
 
 
 def on_stage_transition(harness: Harness, old_stage: str, new_stage: str, **kwargs) -> None:
     """Hook fired when pipeline transitions between stages."""
-    from .harness import Severity
+    from .core import Severity
 
     harness.log(
         Severity.INFO,
@@ -30,7 +30,7 @@ def on_stage_transition(harness: Harness, old_stage: str, new_stage: str, **kwar
 def on_jira_card_created(harness: Harness, card_key: str, summary: str | None = None, **kwargs) -> None:
     """Hook fired when a Jira card is created."""
     from datetime import datetime, timezone
-    from .harness import Severity
+    from .core import Severity
 
     harness.log(
         Severity.INFO,
@@ -51,7 +51,7 @@ def on_jira_card_created(harness: Harness, card_key: str, summary: str | None = 
 
 def on_coverage_measured(harness: Harness, coverage_pct: float, **kwargs) -> None:
     """Hook fired when test coverage is measured."""
-    from .harness import Severity
+    from .core import Severity
 
     harness.state.coverage_pct = coverage_pct
     harness._save_state()
@@ -72,7 +72,7 @@ def on_coverage_measured(harness: Harness, coverage_pct: float, **kwargs) -> Non
 
 def on_git_push_attempt(harness: Harness, **kwargs) -> bool:
     """Hook fired before git push. Returns False to block the push."""
-    from .harness import Severity
+    from .core import Severity
 
     # Coverage gate
     if harness.state.coverage_pct is not None:
@@ -90,7 +90,7 @@ def on_git_push_attempt(harness: Harness, **kwargs) -> bool:
 def on_requirements_ingested(harness: Harness, source: str, stories_found: int, open_questions: int, **kwargs) -> None:
     """Hook fired when requirements are ingested (Stage 1 - Brainstorming)."""
     from datetime import datetime, timezone
-    from .harness import Severity
+    from .core import Severity
 
     harness.log(
         Severity.INFO,
@@ -114,7 +114,7 @@ def on_requirements_ingested(harness: Harness, source: str, stories_found: int, 
 def on_pr_created(harness: Harness, pr_number: int, branch: str, files_count: int, **kwargs) -> None:
     """Hook fired when a Pull Request is created (Stage 3)."""
     from datetime import datetime, timezone
-    from .harness import Severity
+    from .core import Severity
 
     harness.log(
         Severity.INFO,
@@ -138,7 +138,7 @@ def on_pr_created(harness: Harness, pr_number: int, branch: str, files_count: in
 def on_tests_generated(harness: Harness, test_files_count: int, coverage_map: list, **kwargs) -> None:
     """Hook fired when tests are generated (Stage 5)."""
     from datetime import datetime, timezone
-    from .harness import Severity
+    from .core import Severity
 
     harness.log(
         Severity.INFO,

@@ -10,7 +10,8 @@ import os
 from pathlib import Path
 
 #: Repository root (…/sdlc-agent), used to anchor runtime artifact folders.
-ROOT = Path(__file__).resolve().parent.parent
+#: This file lives at sdlc_agent/core/config.py, so the root is three levels up.
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _as_bool(value: str | None, default: bool = False) -> bool:

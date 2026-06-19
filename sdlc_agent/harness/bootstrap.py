@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def init_harness():
     """Initialize harness with hooks - safe to call multiple times."""
     try:
-        from .harness import get_harness
+        from .core import get_harness
 
         # Get or create harness (hooks auto-register on first init)
         harness = get_harness()

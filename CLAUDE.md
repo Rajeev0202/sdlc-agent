@@ -24,9 +24,9 @@ retry up to **2** times before halting and asking the user.
 
 1. **Never skip the PO approval gate.** Stage 3 must not run until
    `backlog.approved == true`.
-2. **Never edit `sdlc_agent/models.py`.** Those are the inter-stage contracts.
+2. **Never edit `sdlc_agent/core/models.py`.** Those are the inter-stage contracts.
 3. All stage outputs MUST be valid JSON conforming to the Pydantic models in
-   [sdlc_agent/models.py](sdlc_agent/models.py). Validate before passing on.
+   [sdlc_agent/core/models.py](sdlc_agent/core/models.py). Validate before passing on.
 4. **NatWest coding standards** apply to every generated file:
    - Use the standard logger, never `print()`.
    - TLS verification must remain enabled (`verify=True`); reject `verify=False`.

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from ..integrations.anthropic_client import MockClaudeClient
-from ..models import RequirementBrief, StoryBacklog, UserStory
+from ..core.models import RequirementBrief, StoryBacklog, UserStory
 
 logger = logging.getLogger(__name__)
 

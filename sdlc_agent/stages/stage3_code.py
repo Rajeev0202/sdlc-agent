@@ -13,7 +13,7 @@ import logging
 import re
 
 from ..integrations import MockClaudeClient, MockGitHubClient
-from ..models import CodeFile, PullRequest, StoryBacklog, UserStory
+from ..core.models import CodeFile, PullRequest, StoryBacklog, UserStory
 
 logger = logging.getLogger(__name__)
 

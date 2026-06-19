@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 from jira import JIRA
-from ..models import UserStory
+from ..core.models import UserStory
 
 logger = logging.getLogger(__name__)
 

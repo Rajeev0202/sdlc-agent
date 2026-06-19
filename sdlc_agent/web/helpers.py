@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from ..config import ROOT
+from ..core.config import ROOT
 
 # ── Runtime artifact directories (anchored at the repo root) ────────────────
 RUNS_DIR = ROOT / "runs"

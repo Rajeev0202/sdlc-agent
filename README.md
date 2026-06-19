@@ -83,9 +83,10 @@ demo is reproducible across runs.
 | Path | Purpose |
 |------|---------|
 | [sdlc_agent/stages](sdlc_agent/stages) | One module per SDLC stage (1–6) |
-| [sdlc_agent/orchestrator.py](sdlc_agent/orchestrator.py) | Runs the pipeline + approval gate |
+| [sdlc_agent/core/orchestrator.py](sdlc_agent/core/orchestrator.py) | Runs the pipeline + approval gate |
+| [sdlc_agent/harness/](sdlc_agent/harness) | Observability/state runtime: harness core, hooks, bootstrap |
 | [sdlc_agent/integrations](sdlc_agent/integrations) | Mocked Jira / Confluence / GitHub / Anthropic clients |
-| [sdlc_agent/models.py](sdlc_agent/models.py) | Pydantic data contracts between stages |
+| [sdlc_agent/core/models.py](sdlc_agent/core/models.py) | Pydantic data contracts between stages |
 | [sdlc_agent/cli.py](sdlc_agent/cli.py) | Typer CLI entrypoint |
 | [samples/](samples) | Example BRD inputs |
 | [tests/](tests) | Stage smoke tests |

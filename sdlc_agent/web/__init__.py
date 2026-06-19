@@ -7,7 +7,7 @@ from pathlib import Path
 
 from flask import Flask
 
-from ..config import ROOT, BaseConfig, get_config
+from ..core.config import ROOT, BaseConfig, get_config
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def create_app(config: type[BaseConfig] | None = None) -> Flask:
 
     # Initialise the harness (registers observability hooks) before serving.
     try:
-        from ..bootstrap import ensure_harness
+        from ..harness import ensure_harness
 
         ensure_harness()
     except Exception:  # pragma: no cover - harness is best-effort

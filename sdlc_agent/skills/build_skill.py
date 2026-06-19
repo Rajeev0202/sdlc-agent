@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from ..integrations.anthropic_client import MockClaudeClient
-from ..models import StoryBacklog, PullRequest, CodeFile
+from ..core.models import StoryBacklog, PullRequest, CodeFile
 from ..guardrails import CodeQualityGuardrails, format_guardrail_report
 
 logger = logging.getLogger(__name__)

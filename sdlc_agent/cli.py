@@ -20,20 +20,20 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.markdown import Markdown
 
-from .bootstrap import ensure_harness
+from .harness import ensure_harness
 from .harness import get_harness
 from .integrations import (
     MockClaudeClient,
     MockGitHubClient,
 )
-from .models import (
+from .core.models import (
     PullRequest,
     ReviewReport,
     RequirementBrief,
     StoryBacklog,
     TestSuite,
 )
-from .orchestrator import Orchestrator
+from .core.orchestrator import Orchestrator
 from .stages import (
     stage1_requirement,
     stage2_stories,

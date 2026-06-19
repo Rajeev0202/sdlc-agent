@@ -17,7 +17,7 @@ import logging
 import re
 
 from ..integrations import MockClaudeClient
-from ..models import PullRequest, ReviewFinding, ReviewReport, Severity
+from ..core.models import PullRequest, ReviewFinding, ReviewReport, Severity
 
 logger = logging.getLogger(__name__)
 

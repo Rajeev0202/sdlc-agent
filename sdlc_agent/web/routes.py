@@ -17,8 +17,8 @@ from uuid import uuid4
 
 from flask import Blueprint, current_app, jsonify, render_template, request, send_from_directory
 
-from ..config import ROOT
-from ..models import (
+from ..core.config import ROOT
+from ..core.models import (
     CodeFile,
     PullRequest,
     ReviewReport,
@@ -357,7 +357,7 @@ def api_stage1():
 
 def _skill_state_to_brief(skill_state: dict) -> RequirementBrief:
     """Convert skill state format to RequirementBrief model."""
-    from ..models import Persona
+    from ..core.models import Persona
 
     # Extract personas from stories
     personas = []
@@ -1139,7 +1139,7 @@ bp.add_url_rule("/api/harness/status", "harness_status", _harness_status_endpoin
 def _test_jira_hook_endpoint():
     """Test endpoint to verify Jira hook fires in web context."""
     from ..integrations.jira_client import MockJiraClient
-    from ..models import UserStory
+    from ..core.models import UserStory
     from ..harness import get_harness
 
     harness = get_harness()

@@ -12,9 +12,9 @@ import os
 from datetime import datetime, timezone
 from typing import Callable
 
-from .bootstrap import ensure_harness
-from .harness import get_harness, Severity
-from .integrations import (
+from ..harness import ensure_harness
+from ..harness import get_harness, Severity
+from ..integrations import (
     MockClaudeClient,
     MockConfluenceClient,
     MockGitHubClient,
@@ -22,7 +22,7 @@ from .integrations import (
     JiraClient,
 )
 from .models import PipelineResult, StoryBacklog
-from .stages import (
+from ..stages import (
     stage1_requirement,
     stage2_stories,
     stage3_code,
