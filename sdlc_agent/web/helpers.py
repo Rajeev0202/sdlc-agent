@@ -12,15 +12,22 @@ from uuid import uuid4
 
 from ..core.config import ROOT
 
-# ── Runtime artifact directories (anchored at the repo root) ────────────────
-RUNS_DIR = ROOT / "runs"
+# ── Runtime artifact directories ────────────────────────────────────────────
+# Only true runtime artifacts (JSON, reports) go under sdlc_agent_output/
+# Source code and tests are versioned at repo root
+OUTPUT_ROOT = ROOT / "sdlc_agent_output"
+
+RUNS_DIR = OUTPUT_ROOT / "runs"
+REVIEW_DIR = OUTPUT_ROOT / "code_review"
+
+# Versioned code and tests at repo root
 SAMPLES_DIR = ROOT / "samples"
-SRC_DIR = ROOT / "src"
-TESTING_DIR = ROOT / "Testing"
-REVIEW_DIR = ROOT / "CodeReview"
-MANUAL_TESTS_DIR = ROOT / "Manual_Test_Cases"
-AUTOMATION_SCRIPTS_DIR = ROOT / "Automation_Scripts"
-RESULTS_DIR = ROOT / "Results"
+SRC_DIR = ROOT / "src"  # Generated production code (versioned)
+TESTS_DIR = ROOT / "tests"  # Tests for generated application (versioned)
+MANUAL_TESTS_DIR = TESTS_DIR / "manual"
+AUTOMATION_SCRIPTS_DIR = TESTS_DIR / "automation"
+UNIT_TESTS_DIR = TESTS_DIR / "unit"
+RESULTS_DIR = TESTS_DIR / "results"
 
 
 def _run_dir(run_id: str) -> Path:

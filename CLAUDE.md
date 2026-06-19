@@ -9,13 +9,13 @@ approval gate between Stage 2 and Stage 3.
 
 | # | Subagent | Reads | Writes |
 |---|---|---|---|
-| 1 | `stage1-requirement` | BRD path/URL/text | `runs/<id>/01_brief.json` (RequirementBrief) |
-| 2 | `stage2-stories` | brief.json | `runs/<id>/02_backlog.json` (StoryBacklog) |
+| 1 | `stage1-requirement` | BRD path/URL/text | `sdlc_agent_output/runs/<id>/01_brief.json` (RequirementBrief) |
+| 2 | `stage2-stories` | brief.json | `sdlc_agent_output/runs/<id>/02_backlog.json` (StoryBacklog) |
 | — | **PO APPROVAL GATE** — wait for human via `/approve-backlog` | | sets `approved: true` |
-| 3 | `stage3-code` | approved backlog.json | `runs/<id>/03_pr.json` + files in `src/` |
-| 4 | `stage4-review` | PR files | `runs/<id>/04_review.json` (ReviewReport) |
-| 5 | `stage5-tests` | PR + backlog | files in `tests/` + `runs/<id>/05_tests.json` |
-| 6 | `stage6-deploy` | PR + review + tests + backlog | `runs/<id>/06_decision.json` |
+| 3 | `stage3-code` | approved backlog.json | `sdlc_agent_output/runs/<id>/03_pr.json` + files in `src/` |
+| 4 | `stage4-review` | PR files | `sdlc_agent_output/code_review/<id>_review.json` (ReviewReport) |
+| 5 | `stage5-tests` | PR + backlog | files in `tests/` + `sdlc_agent_output/runs/<id>/05_tests.json` |
+| 6 | `stage6-deploy` | PR + review + tests + backlog | `sdlc_agent_output/runs/<id>/06_decision.json` |
 
 If Stage 4 returns `verdict: "fail"`, return to Stage 3 with the findings and
 retry up to **2** times before halting and asking the user.
@@ -36,7 +36,7 @@ retry up to **2** times before halting and asking the user.
 5. **Single source of truth for execution**: prefer calling the Python backbone
    (`python -m sdlc_agent.cli ...`) over re-implementing logic in prompts.
    This keeps the demo deterministic and repeatable.
-6. Write all run artifacts under `runs/<run-id>/` so the demo is auditable.
+6. Write all run artifacts under `sdlc_agent_output/runs/<run-id>/` so the demo is auditable.
 
 ## Repo map (what you can touch)
 
@@ -45,9 +45,15 @@ retry up to **2** times before halting and asking the user.
   signatures.
 - [samples/](samples) — BRD inputs for demos. The NatWest reference is
   [samples/brd_natwest_card_freeze.md](samples/brd_natwest_card_freeze.md).
-- [tests/](tests) — pytest suite. Must stay green.
-- `src/` — generated production code (created by Stage 3).
-- `runs/` — per-run artifacts (created by you; gitignored).
+- [tests/](tests) — pytest suite for the SDLC Agent itself. Must stay green.
+- [src/](src) — generated production code (created by Stage 3, versioned in git).
+- [testing/](testing) — generated test artifacts (created by Stage 5, versioned in git):
+  - `manual/` — manual test case Excel files
+  - `automation/` — Playwright scripts
+  - `results/` — test execution results (gitignored)
+- `sdlc_agent_output/` — runtime artifacts only (gitignored):
+  - `runs/` — per-run JSON artifacts (Stage 1-6)
+  - `code_review/` — review reports (Stage 4)
 
 ## Demo acceptance criteria (must remain true)
 
@@ -121,3 +127,4 @@ All stages read/write `.claude/sdlc-state.json`. Never edit manually.
 - TDD cycle: Red → Green → Refactor. Never skip writing tests first.
 - MR description must reference the Jira card ID.
 - Coverage threshold: 80% minimum before MR is production-ready.
+

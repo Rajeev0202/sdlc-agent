@@ -17,9 +17,14 @@ coverage.xml
 *.log
 logs/
 
-# Runtime artifacts
-runs/
+# Runtime artifacts (only non-code artifacts are ignored)
+sdlc_agent_output/  # Run JSONs, review reports
+tests/results/      # Test execution results only
+*.xlsx              # Generated manual test Excel files
 .claude/sdlc-state.json
+
+# Note: src/ and tests/ contain generated code and tests - these ARE versioned
+# Note: sdlc_agent/tests/ contains unit tests for the SDLC Agent itself
 
 # Environment files
 .env

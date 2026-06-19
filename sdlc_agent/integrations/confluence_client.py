@@ -19,6 +19,20 @@ from urllib.parse import urlparse
 
 import requests
 
+# Configure SSL certificate bundle for Windows
+try:
+    import certifi
+    import ssl
+    # Use certifi's CA bundle for SSL verification
+    SSL_VERIFY = certifi.where()
+except ImportError:
+    # Fall back to default verification
+    SSL_VERIFY = True
+    logger.warning(
+        "certifi not installed - SSL verification may fail on Windows. "
+        "Install via: python -m pip install certifi python-certifi-win32"
+    )
+
 logger = logging.getLogger(__name__)
 
 
@@ -111,7 +125,7 @@ class ConfluenceClient:
             api_url, params, "email+token" if auth else "bearer",
         )
 
-        response = requests.get(api_url, headers=headers, auth=auth, params=params)
+        response = requests.get(api_url, headers=headers, auth=auth, params=params, verify=SSL_VERIFY)
 
         if response.status_code != 200:
             logger.error(

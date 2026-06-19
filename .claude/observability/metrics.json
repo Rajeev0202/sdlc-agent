@@ -1,8 +1,8 @@
 {
   "totals": {
-    "tool_calls": 225,
-    "errors": 83,
-    "error_rate_pct": 36.89,
+    "tool_calls": 338,
+    "errors": 94,
+    "error_rate_pct": 27.81,
     "agents_stopped": 36,
     "total_input_tokens": 3046,
     "total_output_tokens": 974,
@@ -53,40 +53,40 @@
   },
   "by_tool": {
     "Glob": {
-      "calls": 15,
+      "calls": 18,
       "errors": 0,
-      "total_duration_ms": 6587,
-      "avg_duration_ms": 439
+      "total_duration_ms": 11610,
+      "avg_duration_ms": 645
     },
     "Read": {
-      "calls": 65,
-      "errors": 30,
-      "total_duration_ms": 372379,
-      "avg_duration_ms": 5729
+      "calls": 87,
+      "errors": 35,
+      "total_duration_ms": 392647,
+      "avg_duration_ms": 4513
     },
     "Write": {
-      "calls": 35,
+      "calls": 37,
       "errors": 17,
-      "total_duration_ms": 6458,
-      "avg_duration_ms": 185
+      "total_duration_ms": 14808,
+      "avg_duration_ms": 400
     },
     "Edit": {
-      "calls": 43,
-      "errors": 32,
-      "total_duration_ms": 26057,
-      "avg_duration_ms": 606
+      "calls": 69,
+      "errors": 37,
+      "total_duration_ms": 207178,
+      "avg_duration_ms": 3003
     },
     "Bash": {
-      "calls": 42,
-      "errors": 1,
-      "total_duration_ms": 217209,
-      "avg_duration_ms": 5172
+      "calls": 63,
+      "errors": 2,
+      "total_duration_ms": 596507,
+      "avg_duration_ms": 9468
     },
     "Grep": {
-      "calls": 17,
+      "calls": 36,
       "errors": 1,
-      "total_duration_ms": 8471,
-      "avg_duration_ms": 498
+      "total_duration_ms": 40415,
+      "avg_duration_ms": 1123
     },
     "claude_complete": {
       "calls": 3,
@@ -103,7 +103,13 @@
       "total_tokens": 4220,
       "input_tokens": 3046,
       "output_tokens": 974
+    },
+    "PowerShell": {
+      "calls": 20,
+      "errors": 0,
+      "total_duration_ms": 169180,
+      "avg_duration_ms": 8459
     }
   },
-  "last_updated": "2026-06-17T11:51:20.311Z"
+  "last_updated": "2026-06-19T17:10:48.685Z"
 }

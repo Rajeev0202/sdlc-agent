@@ -24,7 +24,7 @@ class HarnessConfig(BaseModel):
 
     observability_dir: Path = Field(default=Path(".claude/observability"))
     state_file: Path = Field(default=Path(".claude/sdlc-state.json"))
-    runs_dir: Path = Field(default=Path("./runs"))
+    runs_dir: Path = Field(default=Path("./sdlc_agent_output/runs"))
     coverage_threshold: int = Field(default=80, ge=0, le=100)
     auto_advance_stages: bool = Field(default=False)
     enable_observability: bool = Field(default=True)
@@ -166,7 +166,7 @@ class Harness:
                 data = json.loads(settings_path.read_text())
                 env = data.get("env", {})
                 return HarnessConfig(
-                    runs_dir=Path(env.get("SDLC_AGENT_RUNS_DIR", "./runs")),
+                    runs_dir=Path(env.get("SDLC_AGENT_RUNS_DIR", "./sdlc_agent_output/runs")),
                     coverage_threshold=int(env.get("COVERAGE_THRESHOLD", "80")),
                     auto_advance_stages=env.get("AUTO_ADVANCE_STAGES", "false").lower() == "true",
                     enable_observability=env.get("ENABLE_OBSERVABILITY", "true").lower() == "true",

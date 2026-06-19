@@ -59,7 +59,7 @@ Inside the Claude Code REPL:
 ```
 > /run-sdlc samples/brd_natwest_card_freeze.md
 # (review the backlog table it prints)
-> /approve-backlog runs/<run-id>
+> /approve-backlog sdlc_agent_output/runs/<run-id>
 ```
 
 What you get:

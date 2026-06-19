@@ -59,7 +59,7 @@ from .helpers import (
     RUNS_DIR,
     SAMPLES_DIR,
     SRC_DIR,
-    TESTING_DIR,
+    TESTS_DIR,
     _new_run_id,
     _read_json,
     _run_dir,
@@ -722,8 +722,8 @@ def api_stage5():
         pass  # Non-fatal
 
     # Materialise everything under a single Testing/ folder, per the brief.
-    TESTING_DIR.mkdir(parents=True, exist_ok=True)
-    automation_dir = TESTING_DIR / "automation"
+    TESTS_DIR.mkdir(parents=True, exist_ok=True)
+    automation_dir = TESTS_DIR / "automation"
     automation_dir.mkdir(exist_ok=True)
     for f in suite.files:
         target = automation_dir / Path(f.path).name
@@ -734,11 +734,11 @@ def api_stage5():
         canon.write_text(f.contents, encoding="utf-8")
 
     # 1. Manual test cases as Excel.
-    xlsx_path = TESTING_DIR / f"{run_id}_manual_tests.xlsx"
+    xlsx_path = TESTS_DIR / f"{run_id}_manual_tests.xlsx"
     write_manual_tests_xlsx(backlog, xlsx_path)
 
     # 2. Playwright TypeScript suite under Testing/playwright/.
-    playwright_dir = TESTING_DIR / "playwright"
+    playwright_dir = TESTS_DIR / "playwright"
     pw_info = write_playwright_suite(backlog, playwright_dir)
 
     # 3. Execute pytest for the deployment-readiness gate.
@@ -749,7 +749,7 @@ def api_stage5():
         text=True,
         timeout=120,
     )
-    result_path = TESTING_DIR / f"{run_id}_results.txt"
+    result_path = TESTS_DIR / f"{run_id}_results.txt"
     result_path.write_text(
         proc.stdout + "\n--- STDERR ---\n" + proc.stderr, encoding="utf-8"
     )
@@ -779,7 +779,7 @@ def _run_playwright(playwright_dir: Path, run_id: str) -> dict:
     """
     import shutil
 
-    log_path = TESTING_DIR / f"{run_id}_playwright.log"
+    log_path = TESTS_DIR / f"{run_id}_playwright.log"
     npx = shutil.which("npx")
     if not npx:
         log_path.write_text(
