@@ -1,8 +1,8 @@
 """
-Implementation for US-001: freeze my active debit card from the card details screen
+Implementation for US-001: interact with 💳 Credit Card Management System – Overview
 
-Persona: Customer
-Goal: Instant Card Freeze/Unfreeze
+Persona: User
+Goal: 💳 Credit Card Management System – Overview
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US001Feature:
-    """Implementation of freeze my active debit card from the card details screen."""
+    """Implementation of interact with 💳 Credit Card Management System – Overview."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,7 +30,8 @@ class US001Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - System should freeze my active debit card from the card details screen
+        - Placeholder AC - requirements need clarification
+        - Review Stage 1 open questions before proceeding
 
         Args:
             user_id: Authenticated user ID (required for security)

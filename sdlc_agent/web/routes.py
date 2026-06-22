@@ -839,7 +839,7 @@ def api_stage5_manual():
 
         # Load existing state or create new
         if state_file.exists():
-            with open(state_file, 'r') as f:
+            with open(state_file, 'r', encoding='utf-8') as f:
                 state = json.load(f)
         else:
             state = {}
@@ -848,8 +848,8 @@ def api_stage5_manual():
         state["stories"] = [s.model_dump() for s in backlog.stories]
         state["total_stories"] = len(backlog.stories)
 
-        with open(state_file, 'w') as f:
-            json.dump(state, f, indent=2)
+        with open(state_file, 'w', encoding='utf-8') as f:
+            json.dump(state, f, indent=2, ensure_ascii=False)
 
         print(f"[Stage 5.1] Populated sdlc-state.json with {len(backlog.stories)} stories")
 

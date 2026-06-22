@@ -34,3 +34,6 @@ tests/results/      # Test execution results only
 .DS_Store
 .idea/
 *.swp
+sdlc_agent_output
+runs
+Testing

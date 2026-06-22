@@ -158,19 +158,22 @@ For each story, estimate story points using Fibonacci (1, 2, 3, 5, 8) based on:
 - Risk (unknowns, dependencies)
 - Doubt (unclear requirements)
 
-Return ONLY valid JSON array with this structure:
-[
-  {
-    "persona": "Card holder",
-    "want": "Freeze my card via mobile app",
-    "so_that": "I can prevent fraud immediately",
-    "acceptance_criteria": ["Given X, when Y, then Z", "..."],
-    "story_points": 3,
-    "labels": ["frontend", "security"],
-    "layer": "ui",
-    "dependencies": ["US-002"]
-  }
-]"""
+Return ONLY valid JSON object with this structure (no markdown, no prose):
+{
+  "stories": [
+    {
+      "persona": "Card holder",
+      "want": "freeze my card via mobile app",
+      "so_that": "I can prevent fraud immediately",
+      "acceptance_criteria": [
+        "Given an authenticated card holder, when they request to freeze their card, then the card status is updated to FROZEN within 2 seconds",
+        "Given an unauthenticated request, when freeze is attempted, then the request is rejected with HTTP 401"
+      ],
+      "dependencies": ["Card Management Service"],
+      "risks": ["External API latency"]
+    }
+  ]
+}"""
 
         # Format requirements as input
         req_text = "\n\n".join([
@@ -196,18 +199,36 @@ Requirements to decompose:
 
 Decompose these requirements into well-defined user stories following INVEST principles.
 Split by service, layer, and user journey where appropriate.
-Return JSON array only."""
+
+Return ONLY a JSON object with a "stories" array. No markdown fences, no explanatory text."""
 
         try:
             result = self.llm.complete_json(
                 system=system_prompt, user=user_prompt, max_tokens=4096, temperature=0.3
             )
 
-            if not result or not isinstance(result, list):
+            # Handle both list and dict responses
+            story_list = []
+            if isinstance(result, list):
+                story_list = result
+            elif isinstance(result, dict) and "stories" in result:
+                story_list = result["stories"]
+            else:
+                logger.warning(f"LLM returned unexpected format: {type(result)}")
                 return []
 
+            if not story_list:
+                logger.warning("LLM returned empty story list")
+                return []
+
+            print(f"[Stage 2 - LLM] Received {len(story_list)} stories from LLM", flush=True)
+
             stories = []
-            for i, s in enumerate(result, 1):
+            for i, s in enumerate(story_list, 1):
+                if not isinstance(s, dict):
+                    logger.warning(f"Story {i} is not a dict: {type(s)}")
+                    continue
+
                 stories.append(
                     UserStory(
                         id=f"US-{i:03d}",
@@ -219,9 +240,14 @@ Return JSON array only."""
                         risks=s.get("risks", []),
                     )
                 )
+
+            print(f"[Stage 2 - LLM] Successfully parsed {len(stories)} stories", flush=True)
             return stories
+
         except Exception as e:
             logger.error(f"LLM decomposition failed: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def _rule_based_decompose(
@@ -299,30 +325,70 @@ Return JSON array only."""
         self, stories: list[UserStory], project_key: str
     ) -> dict[str, str]:
         """
-        Create Jira issues for each user story.
+        Create comprehensive Jira issues for each user story with all details.
+
+        Creates cards with:
+        - Comprehensive description (User Story, AC, DoD, Scope, Risks)
+        - Story points estimation
+        - Labels and components
+        - Priority based on context
+        - Epic linkage (if applicable)
 
         Returns mapping: { internal_story_id -> jira_issue_key }
-        e.g. { "US-001" -> "SCRUM-123" }
+        e.g. { "US-001" -> "KAN-123" }
         """
         jira_links: dict[str, str] = {}
         is_real = type(self.jira).__name__ == "JiraClient"
         mode = "REAL Jira" if is_real else "Mock Jira"
 
-        logger.info(f"[{mode}] Creating {len(stories)} Jira issues in project {project_key}")
-        print(f"[Stage 2 - Jira] {mode}: Creating {len(stories)} issues...", flush=True)
+        logger.info(f"[{mode}] Creating {len(stories)} comprehensive Jira issues in project {project_key}")
+        print(f"[Stage 2 - Jira] {mode}: Creating {len(stories)} comprehensive cards...", flush=True)
 
-        for story in stories:
+        # Optional: Create epic first if multiple related stories
+        epic_key = None
+        if len(stories) > 3:
+            epic_key = self._create_epic_if_needed(stories, project_key)
+            if epic_key:
+                print(f"[Stage 2 - Jira] Created epic: {epic_key}", flush=True)
+
+        for idx, story in enumerate(stories, 1):
             try:
-                issue_key = self.jira.create_story(story)
+                # Estimate story points based on complexity
+                story_points = self._estimate_story_points(story)
+
+                # Create comprehensive Jira card
+                if is_real:
+                    issue_key = self.jira.create_story(
+                        story=story,
+                        epic_key=epic_key,
+                        story_points=story_points
+                    )
+                else:
+                    issue_key = self.jira.create_story(story)
+
                 jira_links[story.id] = issue_key
-                logger.info(f"Created {issue_key} for {story.id}: {story.want[:50]}")
-                print(f"[Stage 2 - Jira] [OK] {story.id} -> {issue_key}: {story.want[:50]}", flush=True)
+
+                logger.info(
+                    f"Created {issue_key} for {story.id} "
+                    f"(points: {story_points}, epic: {epic_key or 'none'})"
+                )
+                print(
+                    f"[Stage 2 - Jira] [{idx}/{len(stories)}] ✓ {story.id} -> {issue_key} "
+                    f"({story_points} pts): {story.want[:50]}",
+                    flush=True
+                )
+
             except Exception as e:
                 logger.error(f"Failed to create Jira issue for {story.id}: {e}")
                 print(f"[Stage 2 - Jira] [FAIL] {story.id} failed: {e}", flush=True)
                 # Don't break the pipeline if a single issue fails
 
-        print(f"[Stage 2 - Jira] Created {len(jira_links)}/{len(stories)} issues", flush=True)
+        print(f"\n[Stage 2 - Jira] Summary:", flush=True)
+        print(f"  ✓ Created: {len(jira_links)}/{len(stories)} cards", flush=True)
+        if epic_key:
+            print(f"  ✓ Epic: {epic_key}", flush=True)
+        print(flush=True)
+
         return jira_links
 
     def _create_backlog(
@@ -367,3 +433,137 @@ Return JSON array only."""
             json.dump(state, f, indent=2, ensure_ascii=False)
 
         logger.info(f"Updated state file: {self.state_file}")
+
+
+    def _estimate_story_points(self, story: UserStory) -> int:
+        """
+        Estimate story points using Fibonacci scale (1, 2, 3, 5, 8, 13).
+
+        Factors:
+        - Complexity: Number of acceptance criteria
+        - Dependencies: External service integrations
+        - Risk: Unknown/uncertain factors
+        - Scope: Amount of work
+
+        Returns:
+            Story points (1-13)
+        """
+        points = 0
+
+        # Base complexity from acceptance criteria
+        ac_count = len(story.acceptance_criteria)
+        if ac_count <= 2:
+            points += 1
+        elif ac_count <= 4:
+            points += 3
+        else:
+            points += 5
+
+        # Add points for dependencies
+        dep_count = len(story.dependencies) if story.dependencies else 0
+        if dep_count > 0:
+            points += 2
+
+        # Add points for risks/unknowns
+        risk_count = len(story.risks) if story.risks else 0
+        if risk_count > 0:
+            points += 1
+
+        # Add points for complex operations (keywords)
+        want_lower = story.want.lower()
+        complex_keywords = [
+            "integrate", "migration", "security", "authentication",
+            "encryption", "audit", "compliance", "workflow"
+        ]
+        if any(k in want_lower for k in complex_keywords):
+            points += 2
+
+        # Map to Fibonacci scale
+        fibonacci = [1, 2, 3, 5, 8, 13]
+        for fib in fibonacci:
+            if points <= fib:
+                return fib
+
+        return 13  # Max points for very complex stories
+
+    def _create_epic_if_needed(self, stories: list[UserStory], project_key: str) -> str | None:
+        """
+        Create an epic to group related stories (if applicable).
+
+        Creates epic only if:
+        - More than 3 stories
+        - Real Jira client (not mock)
+
+        Returns:
+            Epic key (e.g., "KAN-100") or None
+        """
+        is_real = type(self.jira).__name__ == "JiraClient"
+
+        if not is_real or len(stories) < 3:
+            return None
+
+        try:
+            # Extract common theme from stories
+            epic_name = self._extract_epic_name(stories)
+
+            # Create epic
+            epic_dict = {
+                'project': {'key': project_key},
+                'summary': epic_name,
+                'description': self._build_epic_description(stories),
+                'issuetype': {'name': 'Epic'},
+            }
+
+            # Try to set epic name (custom field)
+            try:
+                epic_dict['customfield_10011'] = epic_name  # Common Epic Name field
+            except Exception:
+                pass
+
+            epic = self.jira.jira.create_issue(fields=epic_dict)
+            logger.info(f"Created epic {epic.key}: {epic_name}")
+            return epic.key
+
+        except Exception as e:
+            logger.warning(f"Failed to create epic: {e}")
+            return None
+
+    def _extract_epic_name(self, stories: list[UserStory]) -> str:
+        """Extract a meaningful epic name from stories."""
+        # Use the brief title or extract common theme
+        state = self.load_state(self.root_dir)
+        if state and state.get("epic"):
+            return state["epic"]
+
+        # Fallback: extract from story wants
+        wants = [s.want for s in stories]
+        common_words = set(wants[0].lower().split())
+
+        for want in wants[1:]:
+            common_words &= set(want.lower().split())
+
+        if common_words:
+            return " ".join(sorted(common_words)[:3]).title()
+
+        return "Feature Development"
+
+    def _build_epic_description(self, stories: list[UserStory]) -> str:
+        """Build epic description summarizing all stories."""
+        lines = [
+            "h2. Epic Overview",
+            "",
+            f"This epic groups {len(stories)} related user stories.",
+            "",
+            "h2. Stories Included",
+            ""
+        ]
+
+        for story in stories:
+            lines.append(f"* {story.id}: {story.persona} - {story.want}")
+
+        lines.append("")
+        lines.append("h2. Business Value")
+        if stories:
+            lines.append(f"* {stories[0].so_that}")
+
+        return "".join(lines)

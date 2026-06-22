@@ -18,20 +18,27 @@ from typing import Optional
 from urllib.parse import urlparse
 
 import requests
+# Suppress SSL warnings when verification is disabled
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configure SSL certificate bundle for Windows
-try:
-    import certifi
-    import ssl
-    # Use certifi's CA bundle for SSL verification
-    SSL_VERIFY = certifi.where()
-except ImportError:
-    # Fall back to default verification
-    SSL_VERIFY = True
-    logger.warning(
-        "certifi not installed - SSL verification may fail on Windows. "
-        "Install via: python -m pip install certifi python-certifi-win32"
-    )
+# WARNING: SSL verification is disabled for testing purposes only
+# This should be re-enabled for production use
+SSL_VERIFY = False
+
+# try:
+#     import certifi
+#     import ssl
+#     # Use certifi's CA bundle for SSL verification
+#     SSL_VERIFY = certifi.where()
+# except ImportError:
+#     # Fall back to default verification
+#     SSL_VERIFY = True
+#     logger.warning(
+#         "certifi not installed - SSL verification may fail on Windows. "
+#         "Install via: python -m pip install certifi python-certifi-win32"
+#     )
 
 logger = logging.getLogger(__name__)
 
@@ -67,17 +74,104 @@ class ConfluenceClient:
         - https://company.atlassian.net/wiki/spaces/SPACE/pages/12345/Page+Title
         - https://confluence.company.com/display/SPACE/Page+Title?pageId=12345
         - https://company.atlassian.net/wiki/pages/viewpage.action?pageId=12345
+        - https://company.atlassian.net/x/ABC123 (shorthand/tiny URL - resolved via API)
         """
+        # Format 1: Query parameter (?pageId=12345)
         if "pageId=" in url:
             match = re.search(r"pageId=(\d+)", url)
             if match:
                 return match.group(1)
 
+        # Format 2: Path-based (/pages/12345/)
         match = re.search(r"/pages/(\d+)", url)
         if match:
             return match.group(1)
 
-        raise ValueError(f"Could not extract page ID from URL: {url}")
+        # Format 3: Shorthand/tiny URL (/x/ABC123)
+        # This requires resolving the redirect to get the actual page ID
+        if "/x/" in url:
+            return self._resolve_shorthand_url(url)
+
+        raise ValueError(
+            f"Could not extract page ID from URL: {url}\n\n"
+            f"Supported formats:\n"
+            f"  - /wiki/spaces/SPACE/pages/12345/Title\n"
+            f"  - /display/SPACE/Title?pageId=12345\n"
+            f"  - /wiki/pages/viewpage.action?pageId=12345\n"
+            f"  - /x/ABC123 (shorthand URL)\n\n"
+            f"Tip: Open the page in your browser and copy the full URL."
+        )
+
+    def _resolve_shorthand_url(self, shorthand_url: str) -> str:
+        """Resolve a Confluence shorthand URL (/x/ABC123) to get the page ID.
+
+        Shorthand URLs redirect to the full page URL. We follow the redirect
+        and extract the page ID from the final URL.
+
+        Args:
+            shorthand_url: Confluence shorthand URL (e.g., https://company.atlassian.net/x/ABC123)
+
+        Returns:
+            Numeric page ID as string
+
+        Raises:
+            ValueError: If redirect resolution fails or page ID cannot be extracted
+        """
+        try:
+            # Prepare authentication headers (same logic as get_page_content)
+            headers = {"Accept": "application/json"}
+            if self.token and self.email:
+                # Confluence Cloud (email + token)
+                auth = (self.email, self.token)
+            elif self.token:
+                # Server/DC with PAT or API token
+                headers["Authorization"] = f"Bearer {self.token}"
+                auth = None
+            else:
+                raise ValueError(
+                    "Confluence credentials not found. Please set:\n"
+                    "- CONFLUENCE_API_TOKEN (and CONFLUENCE_EMAIL for Cloud)\n"
+                    "- Or ATLASSIAN_TOKEN (and ATLASSIAN_EMAIL)\n"
+                    "in your .env file or environment variables."
+                )
+
+            # Follow redirects to get the final URL
+            response = requests.head(
+                shorthand_url,
+                headers=headers,
+                auth=auth,
+                allow_redirects=True,
+                verify=SSL_VERIFY,
+                timeout=10,
+                proxies={}
+            )
+
+            final_url = response.url
+            logger.debug(
+                "Resolved shorthand URL: %s -> %s",
+                shorthand_url,
+                final_url
+            )
+
+            # Extract page ID from the final URL using existing logic
+            # (recursively call extract_page_id, but prevent infinite loop)
+            if "/x/" in final_url:
+                raise ValueError(
+                    f"Shorthand URL {shorthand_url} redirected to another shorthand URL. "
+                    f"Cannot resolve page ID."
+                )
+
+            return self.extract_page_id(final_url)
+
+        except requests.RequestException as e:
+            raise ValueError(
+                f"Failed to resolve shorthand URL {shorthand_url}: {e}\n\n"
+                f"This may happen if:\n"
+                f"  - You don't have permission to view the page\n"
+                f"  - The page doesn't exist\n"
+                f"  - Network connectivity issues\n\n"
+                f"Try opening the URL in your browser and copying the full URL instead."
+            )
 
     def get_page_content(self, page_url: str) -> dict:
         """Fetch page content from Confluence.
@@ -125,7 +219,7 @@ class ConfluenceClient:
             api_url, params, "email+token" if auth else "bearer",
         )
 
-        response = requests.get(api_url, headers=headers, auth=auth, params=params, verify=SSL_VERIFY)
+        response = requests.get(api_url, headers=headers, auth=auth, params=params, verify=SSL_VERIFY, proxies={})
 
         if response.status_code != 200:
             logger.error(
