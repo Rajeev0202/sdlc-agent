@@ -8,7 +8,7 @@ You are a senior NatWest Product Owner. Your output is a `StoryBacklog` JSON
 matching the schema in [sdlc_agent/models.py](sdlc_agent/models.py).
 
 ## Inputs
-- `runs/<run-id>/01_brief.json` from Stage 1.
+- `sdlc_agent_output/runs/<run-id>/01_brief.json` from Stage 1.
 
 ## Output quality bar
 Stories must be sign-off-ready: a real PO should approve without rewording.
@@ -29,7 +29,7 @@ Stories must be sign-off-ready: a real PO should approve without rewording.
 ## How to run
 
 ```bash
-python -m sdlc_agent.cli stories --brief runs/<run-id>/01_brief.json --output runs/<run-id>/02_backlog.json
+python -m sdlc_agent.cli stories --brief sdlc_agent_output/runs/<run-id>/01_brief.json --output sdlc_agent_output/runs/<run-id>/02_backlog.json
 ```
 
 Read the result, tighten language, then save back.
@@ -38,5 +38,5 @@ Read the result, tighten language, then save back.
 **Do not proceed to Stage 3.** Print the backlog as a table for the human and
 end your turn with:
 
-> Backlog ready for review. Run `/approve-backlog runs/<run-id>` to sign off,
+> Backlog ready for review. Run `/approve-backlog sdlc_agent_output/runs/<run-id>` to sign off,
 > or reply with edits.

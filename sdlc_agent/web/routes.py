@@ -1,7 +1,7 @@
 """HTTP routes for the SDLC Agent web UI.
 
 Each route maps to one button in the UI and one stage of the pipeline. Run
-state is persisted under ``runs/<run-id>/`` so the demo is auditable and
+state is persisted under ``sdlc_agent_output/runs/<run-id>/`` so the demo is auditable and
 refresh-safe. The blueprint is registered by ``sdlc_agent.web.create_app``.
 """
 from __future__ import annotations
@@ -211,44 +211,224 @@ def api_autonomous_pipeline_resume():
         payload = request.get_json(force=True)
         run_id = payload["run_id"]
 
-        print(f"[Autonomous Pipeline Resume] Phase 2 for {run_id}")
+        print(f"\n{'='*60}")
+        print(f"[Autonomous Pipeline Resume] Starting Phase 2 for {run_id}")
+        print(f"{'='*60}\n")
 
-        client = current_app.test_client()
+        # Verify the backlog is approved before proceeding
+        rd = _run_dir(run_id)
+        backlog_path = rd / "02_backlog.json"
+        if not backlog_path.exists():
+            error_msg = f"Backlog not found at {backlog_path}"
+            print(f"[Autonomous Pipeline Resume] ERROR: {error_msg}")
+            return jsonify({"error": error_msg}), 404
 
-        def call_endpoint(path, payload):
-            resp = client.post(path, json=payload)
-            if resp.status_code >= 400:
-                raise RuntimeError(f"{path} failed: {resp.get_json()}")
-            return resp.get_json()
+        backlog = _read_json(backlog_path, StoryBacklog)
+        if not backlog.approved:
+            error_msg = "Backlog is not approved. Cannot proceed with Phase 2."
+            print(f"[Autonomous Pipeline Resume] ERROR: {error_msg}")
+            return jsonify({"error": error_msg}), 400
+
+        print(f"[Autonomous Pipeline Resume] Backlog approved by {backlog.approver}, proceeding...\n")
+
+        # Call stage functions directly instead of using test_client to avoid ERR_CONNECTION_RESET
+        # The test_client creates nested request contexts which crash Flask
+
+        def run_stage3(run_id: str) -> dict:
+            """Stage 3: Code generation"""
+            print(f"  → Running Stage 3 (Build)")
+            try:
+                rd = _run_dir(run_id)
+                backlog = _read_json(rd / "02_backlog.json", StoryBacklog)
+
+                skill_automation = BuildSkillAutomation(ROOT)
+                pr = skill_automation.run(backlog, inject_defect=False)
+                _write_json(rd / "03_pr.json", pr)
+
+                # Materialize files to disk
+                SRC_DIR.mkdir(parents=True, exist_ok=True)
+                for code_file in pr.files:
+                    if code_file.path.startswith("src/"):
+                        file_path = ROOT / code_file.path
+                        file_path.parent.mkdir(parents=True, exist_ok=True)
+                        file_path.write_text(code_file.contents, encoding="utf-8")
+
+                print(f"  ✓ Stage 3 completed - PR#{pr.number}")
+                return {"run_id": run_id, "pr": pr.model_dump()}
+            except Exception as e:
+                print(f"  ✗ Stage 3 failed: {e}")
+                raise
+
+        def run_stage4(run_id: str) -> dict:
+            """Stage 4: Code review"""
+            print(f"  → Running Stage 4 (Review)")
+            try:
+                rd = _run_dir(run_id)
+                pr = _read_json(rd / "03_pr.json", PullRequest)
+
+                skill_automation = ReviewSkillAutomation(ROOT)
+                review = skill_automation.run(pr)
+                _write_json(rd / "04_review.json", review)
+
+                print(f"  ✓ Stage 4 completed - verdict: {review.verdict}")
+                return {
+                    "run_id": run_id,
+                    "report": {
+                        "verdict": review.verdict,
+                        "findings": [f.model_dump() for f in review.findings],
+                    }
+                }
+            except Exception as e:
+                print(f"  ✗ Stage 4 failed: {e}")
+                raise
+
+        def run_stage5_manual(run_id: str) -> dict:
+            """Stage 5.1: Manual test generation"""
+            print(f"  → Running Stage 5.1 (Manual Tests)")
+            try:
+                skill_automation = TestManualSkillAutomation(ROOT)
+                result = skill_automation.run(run_id)
+                print(f"  ✓ Stage 5.1 completed - {result.get('total_test_cases', 0)} test cases")
+                return result
+            except Exception as e:
+                print(f"  ✗ Stage 5.1 failed: {e}")
+                raise
+
+        def run_stage5_automation(run_id: str) -> dict:
+            """Stage 5.2: Automation script generation"""
+            print(f"  → Running Stage 5.2 (Automation Scripts)")
+            try:
+                skill_automation = TestAutomationSkillAutomation(ROOT)
+                result = skill_automation.run(run_id)
+                print(f"  ✓ Stage 5.2 completed - {result.get('total_scripts', 0)} scripts")
+                return result
+            except Exception as e:
+                print(f"  ✗ Stage 5.2 failed: {e}")
+                raise
+
+        def run_stage5_execute(run_id: str) -> dict:
+            """Stage 5.3: Test execution"""
+            print(f"  → Running Stage 5.3 (Execute Tests)")
+            try:
+                skill_automation = TestExecuteSkillAutomation(ROOT, demo_mode=True)
+                result = skill_automation.run(run_id)
+
+                # Update 05_tests.json (preserve existing pytest files + add Playwright files)
+                rd = _run_dir(run_id)
+                tests_json_path = rd / "05_tests.json"
+                automation_dir = ROOT / "Testing" / "automation" / run_id
+
+                existing_test_files = []
+                if tests_json_path.exists():
+                    try:
+                        existing_suite = _read_json(tests_json_path, TestSuite)
+                        existing_test_files = existing_suite.files
+                    except Exception:
+                        pass
+
+                # Add Playwright test files from automation directory
+                playwright_test_files = []
+                if automation_dir.exists():
+                    for test_file in automation_dir.glob("*.spec.ts"):
+                        with open(test_file, 'r', encoding='utf-8') as f:
+                            contents = f.read()
+                        playwright_test_files.append(CodeFile(
+                            path=str(test_file.relative_to(ROOT)),
+                            language="typescript",
+                            contents=contents
+                        ))
+
+                # Combine existing pytest files with new Playwright files
+                test_files = existing_test_files + playwright_test_files
+
+                # Build coverage map from results
+                coverage_map = []
+                test_results = result.get("results", [])
+                story_tests = {}
+                for test_result in test_results:
+                    test_id = test_result.get("test_id", "unknown")
+                    if "us-" in test_id.lower():
+                        parts = test_id.lower().split("us-")
+                        if len(parts) > 1:
+                            story_num = parts[1].split(".")[0].split("::")[0]
+                            story_id = f"US-{story_num.upper()}"
+                            if story_id not in story_tests:
+                                story_tests[story_id] = []
+                            story_tests[story_id].append(test_id)
+
+                for story_id, test_names in story_tests.items():
+                    coverage_map.append(TestCoverage(
+                        acceptance_criterion=f"{story_id} acceptance criteria",
+                        test_names=test_names
+                    ))
+
+                test_suite = TestSuite(files=test_files, coverage_map=coverage_map)
+                _write_json(tests_json_path, test_suite)
+
+                print(f"  ✓ Stage 5.3 completed - {result.get('total_tests', 0)} tests")
+                return result
+            except Exception as e:
+                print(f"  ✗ Stage 5.3 failed: {e}")
+                raise
+
+        def run_stage5_heal(run_id: str) -> dict:
+            """Stage 5.4: Test healing"""
+            print(f"  → Running Stage 5.4 (Heal Tests)")
+            try:
+                skill_automation = TestHealSkillAutomation(ROOT)
+                result = skill_automation.run(run_id)
+                print(f"  ✓ Stage 5.4 completed")
+                return result
+            except Exception as e:
+                print(f"  ✗ Stage 5.4 failed: {e}")
+                raise
+
+        def run_stage6(run_id: str) -> dict:
+            """Stage 6: Deployment decision"""
+            print(f"  → Running Stage 6 (Deploy)")
+            try:
+                rd = _run_dir(run_id)
+                pr = _read_json(rd / "03_pr.json", PullRequest)
+                review = _read_json(rd / "04_review.json", ReviewReport)
+                tests = _read_json(rd / "05_tests.json", TestSuite)
+                backlog = _read_json(rd / "02_backlog.json", StoryBacklog)
+
+                decision = stage6_deploy.run(pr, review, tests, backlog)
+                _write_json(rd / "06_decision.json", decision)
+                (rd / "RELEASE_NOTES.md").write_text(decision.release_note, encoding="utf-8")
+
+                verdict = "GO" if decision.go else "NO-GO"
+                print(f"  ✓ Stage 6 completed - {verdict}")
+                return {"run_id": run_id, "decision": decision.model_dump()}
+            except Exception as e:
+                print(f"  ✗ Stage 6 failed: {e}")
+                raise
 
         stage_fns = {
-            "stage3": lambda run_id: call_endpoint(
-                "/api/stage3", {"run_id": run_id, "inject_defect": False}
-            ),
-            "stage4": lambda run_id: call_endpoint("/api/stage4", {"run_id": run_id}),
-            "stage5_manual": lambda run_id: call_endpoint(
-                "/api/stage5/manual-tests", {"run_id": run_id}
-            ),
-            "stage5_automation": lambda run_id: call_endpoint(
-                "/api/stage5/automation-scripts", {"run_id": run_id}
-            ),
-            "stage5_execute": lambda run_id: call_endpoint(
-                "/api/stage5/execute-tests", {"run_id": run_id}
-            ),
-            "stage5_heal": lambda run_id: call_endpoint(
-                "/api/stage5/heal-tests", {"run_id": run_id}
-            ),
-            "stage6": lambda run_id: call_endpoint("/api/stage6", {"run_id": run_id}),
+            "stage3": run_stage3,
+            "stage4": run_stage4,
+            "stage5_manual": run_stage5_manual,
+            "stage5_automation": run_stage5_automation,
+            "stage5_execute": run_stage5_execute,
+            "stage5_heal": run_stage5_heal,
+            "stage6": run_stage6,
         }
 
         pipeline = AutonomousPipelineLoop()
         result = pipeline.execute_phase2(run_id, stage_fns)
 
-        rd = _run_dir(run_id)
         (rd / "autonomous_pipeline_phase2.json").write_text(
             json.dumps(result.to_dict(), indent=2),
             encoding="utf-8",
         )
+
+        print(f"\n{'='*60}")
+        print(f"[Autonomous Pipeline Resume] Phase 2 Complete")
+        print(f"  Status: {result.status}")
+        print(f"  Duration: {result.duration_ms}ms")
+        if result.error:
+            print(f"  Error: {result.error}")
+        print(f"{'='*60}\n")
 
         return jsonify({
             "status": result.status,
@@ -261,8 +441,12 @@ def api_autonomous_pipeline_resume():
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        error_trace = traceback.format_exc()
+        print(f"\n{'='*60}")
+        print(f"[Autonomous Pipeline Resume] FATAL ERROR")
+        print(f"{error_trace}")
+        print(f"{'='*60}\n")
+        return jsonify({"error": str(e), "trace": error_trace}), 500
 
 
 @bp.post("/api/stage1")
@@ -916,19 +1100,34 @@ def api_stage5_execute():
 
         # Also save 05_tests.json for Stage 6 compatibility
         rd = _run_dir(run_id)
-        playwright_dir = rd / "playwright_tests"
+        automation_dir = ROOT / "Testing" / "automation" / run_id
 
-        # Build TestSuite from test execution results
-        test_files = []
-        if playwright_dir.exists():
-            for test_file in playwright_dir.glob("*.spec.ts"):
+        # Read existing 05_tests.json to preserve pytest files from Stage 5
+        existing_test_files = []
+        tests_json_path = rd / "05_tests.json"
+        if tests_json_path.exists():
+            try:
+                existing_suite = _read_json(tests_json_path, TestSuite)
+                existing_test_files = existing_suite.files
+                print(f"[Stage 5.3] Preserving {len(existing_test_files)} existing test files from Stage 5")
+            except Exception as e:
+                print(f"[Stage 5.3] Warning: Could not read existing 05_tests.json: {e}")
+
+        # Build TestSuite from test execution results (Playwright tests)
+        playwright_test_files = []
+        if automation_dir.exists():
+            for test_file in automation_dir.glob("*.spec.ts"):
                 with open(test_file, 'r', encoding='utf-8') as f:
                     contents = f.read()
-                test_files.append(CodeFile(
+                playwright_test_files.append(CodeFile(
                     path=str(test_file.relative_to(ROOT)),
                     language="typescript",
                     contents=contents
                 ))
+            print(f"[Stage 5.3] Found {len(playwright_test_files)} Playwright test files")
+
+        # Combine existing pytest files with new Playwright files
+        test_files = existing_test_files + playwright_test_files
 
         # Build coverage map from test results
         coverage_map = []
@@ -1019,28 +1218,57 @@ def api_stage5_heal():
 # ---------------------------------------------------------------------------
 @bp.post("/api/stage6")
 def api_stage6():
-    payload = request.get_json(force=True)
-    run_id = payload["run_id"]
-    rd = _run_dir(run_id)
-    pr = _read_json(rd / "03_pr.json", PullRequest)
-    review = _read_json(rd / "04_review.json", ReviewReport)
-    tests = _read_json(rd / "05_tests.json", TestSuite)
-    backlog = _read_json(rd / "02_backlog.json", StoryBacklog)
-    decision = stage6_deploy.run(pr, review, tests, backlog)
-    _write_json(rd / "06_decision.json", decision)
-    (rd / "RELEASE_NOTES.md").write_text(decision.release_note, encoding="utf-8")
+    try:
+        payload = request.get_json(force=True)
+        run_id = payload["run_id"]
+        print(f"[Stage 6] Deployment decision for {run_id}")
 
-    # If deployment is GO, transition Jira cards to DONE
-    jira_transitions = []
-    if decision.go:
-        target_status = _os.environ.get("JIRA_DONE_STATUS", "DONE")
-        jira_transitions = _transition_jira_cards(run_id, target_status)
+        rd = _run_dir(run_id)
 
-    return jsonify({
-        "run_id": run_id,
-        "decision": decision.model_dump(),
-        "jira_transitions": jira_transitions,
-    })
+        # Check for required files with helpful error messages
+        required_files = {
+            "03_pr.json": "Pull Request (Stage 3)",
+            "04_review.json": "Review Report (Stage 4)",
+            "05_tests.json": "Test Suite (Stage 5)",
+            "02_backlog.json": "Story Backlog (Stage 2)"
+        }
+        for filename, description in required_files.items():
+            filepath = rd / filename
+            if not filepath.exists():
+                error_msg = f"{description} file not found: {filepath}. Did all previous stages complete?"
+                print(f"[Stage 6] ERROR: {error_msg}")
+                return jsonify({"error": error_msg}), 404
+
+        pr = _read_json(rd / "03_pr.json", PullRequest)
+        review = _read_json(rd / "04_review.json", ReviewReport)
+        tests = _read_json(rd / "05_tests.json", TestSuite)
+        backlog = _read_json(rd / "02_backlog.json", StoryBacklog)
+
+        print(f"[Stage 6] Running deployment gates - PR#{pr.number}, {len(tests.files)} test files")
+        decision = stage6_deploy.run(pr, review, tests, backlog)
+        _write_json(rd / "06_decision.json", decision)
+        (rd / "RELEASE_NOTES.md").write_text(decision.release_note, encoding="utf-8")
+
+        # If deployment is GO, transition Jira cards to DONE
+        jira_transitions = []
+        if decision.go:
+            target_status = _os.environ.get("JIRA_DONE_STATUS", "DONE")
+            jira_transitions = _transition_jira_cards(run_id, target_status)
+
+        verdict = "GO" if decision.go else "NO-GO"
+        print(f"[Stage 6] Decision: {verdict} (gates: {decision.gates})")
+
+        return jsonify({
+            "run_id": run_id,
+            "decision": decision.model_dump(),
+            "jira_transitions": jira_transitions,
+        })
+
+    except Exception as e:
+        import traceback
+        print(f"[Stage 6] ERROR: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 # ---------------------------------------------------------------------------

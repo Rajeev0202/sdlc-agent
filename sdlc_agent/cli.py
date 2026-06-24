@@ -5,7 +5,7 @@ Two entrypoint families:
 * `run` / `stages` — full-pipeline mode used in tests and the standalone demo.
 * `ingest` / `stories` / `code` / `review` / `tests` / `deploy` — per-stage
   commands invoked by Claude Code subagents. Each one reads/writes JSON
-  artifacts under `runs/<run-id>/` so subagents can hand work off without
+  artifacts under `sdlc_agent_output/runs/<run-id>/` so subagents can hand work off without
   re-parsing free text.
 """
 from __future__ import annotations

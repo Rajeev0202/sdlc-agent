@@ -34,9 +34,9 @@ A JSON object with these six fields populated:
 Prefer calling the deterministic backbone first, then enrich:
 
 ```bash
-python -m sdlc_agent.cli ingest --brd <path> --output runs/<run-id>/01_brief.json
+python -m sdlc_agent.cli ingest --brd <path> --output sdlc_agent_output/runs/<run-id>/01_brief.json
 ```
 
-Then read `runs/<run-id>/01_brief.json`, fill any gaps the heuristic missed
+Then read `sdlc_agent_output/runs/<run-id>/01_brief.json`, fill any gaps the heuristic missed
 (especially `open_questions`), and write the final version back to the same
 path. Print a one-paragraph summary for the human and stop.

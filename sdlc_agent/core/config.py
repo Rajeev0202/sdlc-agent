@@ -46,12 +46,12 @@ class BaseConfig:
 
 
 class DevelopmentConfig(BaseConfig):
-    DEBUG = True
+    DEBUG = False
 
 
 class TestingConfig(BaseConfig):
     TESTING = True
-    DEBUG = True
+    DEBUG = False
     SEND_NO_CACHE_HEADERS = False
 
 

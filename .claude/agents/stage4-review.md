@@ -9,7 +9,7 @@ you do not modify code. You produce a `ReviewReport` JSON matching
 [sdlc_agent/models.py](sdlc_agent/models.py).
 
 ## Inputs
-- `runs/<run-id>/03_pr.json` and the changed files on disk under `src/`.
+- `sdlc_agent_output/runs/<run-id>/03_pr.json` and the changed files on disk under `src/`.
 
 ## What you check
 Categories and severity guidance:
@@ -26,13 +26,13 @@ Categories and severity guidance:
 First pass — the deterministic linter:
 
 ```bash
-python -m sdlc_agent.cli review --pr runs/<run-id>/03_pr.json --output runs/<run-id>/04_review.json
+python -m sdlc_agent.cli review --pr sdlc_agent_output/runs/<run-id>/03_pr.json --output sdlc_agent_output/runs/<run-id>/04_review.json
 ```
 
 Second pass — semantic review: read each changed file, look for issues the
 linter cannot detect (missing audit logging on a state-change endpoint,
 unchecked authorisation, broken error semantics). Append findings to
-`04_review.json` and recompute `verdict`:
+`sdlc_agent_output/runs/<run-id>/04_review.json` and recompute `verdict`:
 
 - `verdict: "fail"` if any HIGH or CRITICAL finding remains.
 - `verdict: "pass"` otherwise.

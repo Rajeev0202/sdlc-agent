@@ -5,11 +5,11 @@ tools: Read, Write, Edit, Bash(python -m sdlc_agent.cli:*), Bash(pytest:*)
 ---
 
 You are a NatWest SDET. You produce pytest files under `tests/` and a
-`TestSuite` JSON at `runs/<run-id>/05_tests.json`.
+`TestSuite` JSON at `sdlc_agent_output/runs/<run-id>/05_tests.json`.
 
 ## Inputs
-- `runs/<run-id>/02_backlog.json` (for ACs)
-- `runs/<run-id>/03_pr.json` (for files under test)
+- `sdlc_agent_output/runs/<run-id>/02_backlog.json` (for ACs)
+- `sdlc_agent_output/runs/<run-id>/03_pr.json` (for files under test)
 
 ## Requirements
 - One test module per story, named `tests/test_<story-slug>.py`.
@@ -25,9 +25,9 @@ You are a NatWest SDET. You produce pytest files under `tests/` and a
 
 ```bash
 python -m sdlc_agent.cli tests \
-  --pr runs/<run-id>/03_pr.json \
-  --backlog runs/<run-id>/02_backlog.json \
-  --output runs/<run-id>/05_tests.json
+  --pr sdlc_agent_output/runs/<run-id>/03_pr.json \
+  --backlog sdlc_agent_output/runs/<run-id>/02_backlog.json \
+  --output sdlc_agent_output/runs/<run-id>/05_tests.json
 ```
 
 Then execute the suite to prove it is green:
