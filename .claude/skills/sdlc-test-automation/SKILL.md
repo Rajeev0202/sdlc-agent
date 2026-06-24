@@ -10,7 +10,7 @@ You are running Stage 5.2 of the SDLC automation pipeline - Playwright Automatio
 ## Input
 Reads from:
 - `.claude/sdlc-state.json` - approved user stories
-- `runs/<run-id>/manual_test_cases.json` - manual test cases from Stage 5.1
+- `sdlc_agent_output/runs/<run-id>/manual_test_cases.json` - manual test cases from Stage 5.1
 
 ## Your Tasks
 
@@ -37,9 +37,9 @@ For each automatable test scenario:
 - Validate selector strategies are robust
 
 ### 4. Save automation scripts
-Write to `runs/<run-id>/playwright_tests/`:
+Write to `sdlc_agent_output/runs/<run-id>/playwright_tests/`:
 ```
-runs/<run-id>/playwright_tests/
+sdlc_agent_output/runs/<run-id>/playwright_tests/
 ├── story-001.spec.ts
 ├── story-002.spec.ts
 └── test-config.json
@@ -56,7 +56,7 @@ test.describe('Story US-001: <Title>', () => {
 });
 ```
 
-Also save metadata in `runs/<run-id>/automation_scripts.json`:
+Also save metadata in `sdlc_agent_output/runs/<run-id>/automation_scripts.json`:
 ```json
 {
   "run_id": "<run-id>",
@@ -84,6 +84,6 @@ Also save metadata in `runs/<run-id>/automation_scripts.json`:
 Print summary:
 ```
 ✅ Stage 5.2 complete. Generated <N> Playwright test scripts for <M> stories.
-   Output: runs/<run-id>/playwright_tests/
-           runs/<run-id>/automation_scripts.json
+   Output: sdlc_agent_output/runs/<run-id>/playwright_tests/
+           sdlc_agent_output/runs/<run-id>/automation_scripts.json
 ```

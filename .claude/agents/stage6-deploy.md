@@ -10,9 +10,9 @@ You are the release manager. You produce a `DeploymentDecision` JSON matching
 ## Gates (all must pass for GO)
 | Gate | Source of truth |
 |---|---|
-| `tests_present` | `runs/<run-id>/05_tests.json` has ≥1 file |
+| `tests_present` | `sdlc_agent_output/runs/<run-id>/05_tests.json` has ≥1 file |
 | `tests_passing` | `pytest -q` exits 0 |
-| `review_passed` | `runs/<run-id>/04_review.json` verdict == "pass" |
+| `review_passed` | `sdlc_agent_output/runs/<run-id>/04_review.json` verdict == "pass" |
 | `no_high_findings` | no HIGH/CRITICAL findings open |
 | `story_traceable` | every story id in PR exists in backlog |
 
@@ -21,15 +21,15 @@ You are the release manager. You produce a `DeploymentDecision` JSON matching
 ```bash
 pytest -q                                  # tests_passing
 python -m sdlc_agent.cli deploy \
-  --pr runs/<run-id>/03_pr.json \
-  --review runs/<run-id>/04_review.json \
-  --tests runs/<run-id>/05_tests.json \
-  --backlog runs/<run-id>/02_backlog.json \
-  --output runs/<run-id>/06_decision.json
+  --pr sdlc_agent_output/runs/<run-id>/03_pr.json \
+  --review sdlc_agent_output/runs/<run-id>/04_review.json \
+  --tests sdlc_agent_output/runs/<run-id>/05_tests.json \
+  --backlog sdlc_agent_output/runs/<run-id>/02_backlog.json \
+  --output sdlc_agent_output/runs/<run-id>/06_decision.json
 ```
 
 Read the resulting decision, then write a one-page release note to
-`runs/<run-id>/RELEASE_NOTES.md` that summarises:
+`sdlc_agent_output/runs/<run-id>/RELEASE_NOTES.md` that summarises:
 - The business outcome delivered.
 - Stories included (id + one-line).
 - Risk register inherited from Stage 2.

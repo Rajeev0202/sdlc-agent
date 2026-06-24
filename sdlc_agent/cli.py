@@ -5,7 +5,7 @@ Two entrypoint families:
 * `run` / `stages` — full-pipeline mode used in tests and the standalone demo.
 * `ingest` / `stories` / `code` / `review` / `tests` / `deploy` — per-stage
   commands invoked by Claude Code subagents. Each one reads/writes JSON
-  artifacts under `runs/<run-id>/` so subagents can hand work off without
+  artifacts under `sdlc_agent_output/runs/<run-id>/` so subagents can hand work off without
   re-parsing free text.
 """
 from __future__ import annotations
@@ -20,20 +20,20 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.markdown import Markdown
 
-from .bootstrap import ensure_harness
+from .harness import ensure_harness
 from .harness import get_harness
 from .integrations import (
     MockClaudeClient,
     MockGitHubClient,
 )
-from .models import (
+from .core.models import (
     PullRequest,
     ReviewReport,
     RequirementBrief,
     StoryBacklog,
     TestSuite,
 )
-from .orchestrator import Orchestrator
+from .core.orchestrator import Orchestrator
 from .stages import (
     stage1_requirement,
     stage2_stories,

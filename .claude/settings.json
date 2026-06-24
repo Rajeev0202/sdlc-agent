@@ -4,12 +4,14 @@
   "permissions": {
     "allow": [
       "Read(./**)",
-      "Write(./runs/**)",
+      "Write(./sdlc_agent_output/**)",
       "Write(./src/**)",
       "Write(./tests/**)",
+      "Write(./sdlc_agent/tests/**)",
+      "Edit(./sdlc_agent_output/**)",
       "Edit(./src/**)",
       "Edit(./tests/**)",
-      "Edit(./runs/**)",
+      "Edit(./sdlc_agent/tests/**)",
       "Bash(python -m sdlc_agent.cli:*)",
       "Bash(python -m pytest:*)",
       "Bash(pytest:*)",
@@ -28,6 +30,6 @@
     ]
   },
   "env": {
-    "SDLC_AGENT_RUNS_DIR": "./runs"
+    "SDLC_AGENT_RUNS_DIR": "./sdlc_agent_output/runs"
   }
 }

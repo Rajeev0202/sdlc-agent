@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from ..integrations.anthropic_client import MockClaudeClient
-from ..models import PullRequest, ReviewReport, ReviewFinding, Severity
+from ..core.models import PullRequest, ReviewReport, ReviewFinding, Severity
 
 logger = logging.getLogger(__name__)
 

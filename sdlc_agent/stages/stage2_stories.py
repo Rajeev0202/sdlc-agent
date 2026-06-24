@@ -10,9 +10,9 @@ import logging
 import os
 import re
 
-from ..bootstrap import ensure_harness
+from ..harness import ensure_harness
 from ..integrations import MockClaudeClient, MockJiraClient, JiraClient
-from ..models import RequirementBrief, StoryBacklog, UserStory
+from ..core.models import RequirementBrief, StoryBacklog, UserStory
 
 logger = logging.getLogger(__name__)
 

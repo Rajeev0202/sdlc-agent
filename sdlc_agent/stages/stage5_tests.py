@@ -15,7 +15,7 @@ import logging
 import re
 
 from ..integrations import MockClaudeClient, MockGitHubClient
-from ..models import (
+from ..core.models import (
     CodeFile,
     PullRequest,
     StoryBacklog,

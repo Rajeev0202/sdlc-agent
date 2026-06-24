@@ -4,7 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SDLC Agent — NatWest (Phase 1)</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=5.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=7.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=7.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}?v=7.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=7.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -40,48 +43,15 @@
 
       <!-- Stages in One Row -->
       <div class="pipeline-stages">
-        <div class="pipeline-stage" data-stage="1">
+        {% for num, label in [(1, 'Ingest'), (2, 'Plan'), (3, 'Code'), (4, 'Review'), (5, 'Test'), (6, 'Deploy')] %}
+        <div class="pipeline-stage" data-stage="{{ num }}">
           <div class="stage-indicator">
             <span class="stage-light"></span>
-            <span class="stage-number-badge">1</span>
+            <span class="stage-number-badge">{{ num }}</span>
           </div>
-          <span class="stage-label">Ingest</span>
+          <span class="stage-label">{{ label }}</span>
         </div>
-        <div class="pipeline-stage" data-stage="2">
-          <div class="stage-indicator">
-            <span class="stage-light"></span>
-            <span class="stage-number-badge">2</span>
-          </div>
-          <span class="stage-label">Plan</span>
-        </div>
-        <div class="pipeline-stage" data-stage="3">
-          <div class="stage-indicator">
-            <span class="stage-light"></span>
-            <span class="stage-number-badge">3</span>
-          </div>
-          <span class="stage-label">Code</span>
-        </div>
-        <div class="pipeline-stage" data-stage="4">
-          <div class="stage-indicator">
-            <span class="stage-light"></span>
-            <span class="stage-number-badge">4</span>
-          </div>
-          <span class="stage-label">Review</span>
-        </div>
-        <div class="pipeline-stage" data-stage="5">
-          <div class="stage-indicator">
-            <span class="stage-light"></span>
-            <span class="stage-number-badge">5</span>
-          </div>
-          <span class="stage-label">Test</span>
-        </div>
-        <div class="pipeline-stage" data-stage="6">
-          <div class="stage-indicator">
-            <span class="stage-light"></span>
-            <span class="stage-number-badge">6</span>
-          </div>
-          <span class="stage-label">Deploy</span>
-        </div>
+        {% endfor %}
       </div>
     </div>
 
@@ -243,6 +213,9 @@
     </section>
   </main>
 
-  <script src="{{ url_for('static', filename='app.js') }}?v=6.5"></script>
+  <script src="{{ url_for('static', filename='js/core.js') }}?v=7.0"></script>
+  <script src="{{ url_for('static', filename='js/stages.js') }}?v=7.0"></script>
+  <script src="{{ url_for('static', filename='js/autonomous.js') }}?v=7.0"></script>
+  <script src="{{ url_for('static', filename='js/init.js') }}?v=7.0"></script>
 </body>
 </html>

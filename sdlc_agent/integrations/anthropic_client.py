@@ -24,7 +24,6 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -97,16 +96,11 @@ class MockClaudeClient:
         self._bridge_url: str | None = None
         self._claude_cli: str | None = None
 
-        # Debug: Check environment variables
-        google_key_check = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-        print(f"[MockClaudeClient.__init__] GOOGLE_API_KEY present: {bool(google_key_check)}", file=sys.stderr, flush=True)
-
         # Mode 1: Copilot bridge (preferred when reachable).
         candidate = os.getenv("SDLC_COPILOT_BRIDGE_URL", self.DEFAULT_BRIDGE_URL).rstrip("/")
         if _bridge_alive(candidate):
             self._bridge_url = candidate
             logger.info("Copilot bridge detected at %s", candidate)
-            print(f"[MockClaudeClient] Using Copilot bridge at {candidate}", file=sys.stderr, flush=True)
             return
 
         # Mode 2: Claude Code CLI (uses subscription, no API key needed)
@@ -116,24 +110,18 @@ class MockClaudeClient:
             if cli_path:
                 self._claude_cli = cli_path
                 logger.info("Claude Code CLI detected at %s", cli_path)
-                print(f"[MockClaudeClient] Using Claude Code CLI: {cli_path}", file=sys.stderr, flush=True)
                 return
 
         # Mode 3: Google Gemini API.
         google_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
         if google_key:
             try:
-                print(f"[MockClaudeClient] Attempting Gemini init with key: {google_key[:10]}...", file=sys.stderr, flush=True)
                 from google import genai  # type: ignore
-                from google.genai import types  # type: ignore
 
-                client = genai.Client(api_key=google_key)
-                self._gemini_model = client
+                self._gemini_model = genai.Client(api_key=google_key)
                 logger.info("Gemini client initialized (model=gemini-1.5-flash).")
-                print(f"[MockClaudeClient] SUCCESS - Gemini initialized!", file=sys.stderr, flush=True)
                 return
             except Exception as exc:  # pragma: no cover - depends on env
-                print(f"[MockClaudeClient] FAILED - Gemini error: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
                 logger.warning("Failed to initialize Gemini, trying Anthropic: %s", exc)
                 self._gemini_model = None
 
@@ -203,26 +191,10 @@ class MockClaudeClient:
             if text is not None:
                 self.calls.append({"task": "complete_json", "backend": "claude-code-cli"})
         elif self._gemini_model is not None:
-            # Debug: Log that we're attempting Gemini call
-            from pathlib import Path
-            import datetime
-            debug_file = Path(__file__).resolve().parents[2] / "gemini_debug.log"
-            try:
-                with open(debug_file, "a", encoding="utf-8") as f:
-                    f.write(f"\n[{datetime.datetime.now()}] Attempting Gemini call\n")
-                    f.write(f"  Prompt length: {len(system) + len(user)}\n")
-            except Exception:
-                pass
-
+            logger.debug("Attempting Gemini call (prompt length=%s)", len(system) + len(user))
             try:
                 # Combine system and user prompts for Gemini
                 prompt = f"{system}\n\n{user}"
-
-                try:
-                    with open(debug_file, "a", encoding="utf-8") as f:
-                        f.write(f"  Calling generate_content...\n")
-                except Exception:
-                    pass
 
                 response = self._gemini_model.models.generate_content(
                     model="gemini-1.5-flash",
@@ -233,21 +205,8 @@ class MockClaudeClient:
                     }
                 )
 
-                try:
-                    with open(debug_file, "a", encoding="utf-8") as f:
-                        f.write(f"  Got response object\n")
-                except Exception:
-                    pass
-
                 text = response.text.strip()
-
-                try:
-                    with open(debug_file, "a", encoding="utf-8") as f:
-                        f.write(f"  Response length: {len(text)}\n")
-                        f.write(f"  Response preview: {text[:300]}\n")
-                except Exception:
-                    pass
-
+                logger.debug("Gemini response length=%s", len(text))
                 self.calls.append({"task": "complete_json", "backend": "gemini"})
             except Exception as exc:  # pragma: no cover - network/SDK errors
                 logger.warning("Gemini call failed, falling back: %s", exc)
@@ -290,14 +249,20 @@ class MockClaudeClient:
                     )
                     text = "".join(getattr(b, "text", "") for b in msg.content).strip()
 
-                    # Log cache stats from API response when available
+                    # Capture token usage and log prompt-cache stats from the response.
                     if hasattr(msg, "usage") and msg.usage:
                         usage = msg.usage
-                        cache_read = getattr(usage, "cache_read_input_tokens", 0) or 0
-                        cache_write = getattr(usage, "cache_creation_input_tokens", 0) or 0
+                        self.last_token_usage = {
+                            "input_tokens": getattr(usage, "input_tokens", 0),
+                            "output_tokens": getattr(usage, "output_tokens", 0),
+                            "cache_creation_input_tokens": getattr(usage, "cache_creation_input_tokens", 0),
+                            "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0),
+                        }
+                        cache_read = self.last_token_usage["cache_read_input_tokens"] or 0
+                        cache_write = self.last_token_usage["cache_creation_input_tokens"] or 0
                         if cache_read or cache_write:
                             logger.info(
-                                f"[Prompt Cache] read={cache_read} write={cache_write} tokens"
+                                "[Prompt Cache] read=%s write=%s tokens", cache_read, cache_write
                             )
 
                     if text:
@@ -306,39 +271,12 @@ class MockClaudeClient:
                 except Exception as exc:  # pragma: no cover - network/SDK errors
                     logger.warning("Claude live call failed, falling back: %s", exc)
                     text = None
-                text = "".join(getattr(b, "text", "") for b in msg.content).strip()
-
-                # Capture token usage from the response
-                if hasattr(msg, "usage"):
-                    self.last_token_usage = {
-                        "input_tokens": getattr(msg.usage, "input_tokens", 0),
-                        "output_tokens": getattr(msg.usage, "output_tokens", 0),
-                        "cache_creation_input_tokens": getattr(msg.usage, "cache_creation_input_tokens", 0),
-                        "cache_read_input_tokens": getattr(msg.usage, "cache_read_input_tokens", 0),
-                    }
-
-                self.calls.append({"task": "complete_json", "backend": "anthropic"})
-            except Exception as exc:  # pragma: no cover - network/SDK errors
-                logger.warning("Claude live call failed, falling back: %s", exc)
-                text = None
 
         if text is None:
             return None
 
-        # Debug: Log JSON extraction
-        from pathlib import Path
-        debug_file = Path(__file__).resolve().parents[2] / "gemini_debug.log"
         extracted = _extract_json(text)
-        try:
-            with open(debug_file, "a", encoding="utf-8") as f:
-                import datetime
-                f.write(f"\n[{datetime.datetime.now()}] JSON Extraction\n")
-                f.write(f"  Input text length: {len(text) if text else 0}\n")
-                f.write(f"  Input preview: {text[:200] if text else 'None'}\n")
-                f.write(f"  Extracted result: {extracted}\n")
-        except Exception:
-            pass  # Ignore debug logging errors
-
+        logger.debug("JSON extraction: input_len=%s extracted=%s", len(text), extracted is not None)
         return extracted
 
 

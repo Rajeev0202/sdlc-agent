@@ -14,8 +14,17 @@ from pathlib import Path
 from typing import Any
 
 from ..integrations.anthropic_client import MockClaudeClient
-from ..models import StoryBacklog, PullRequest, CodeFile
+from ..core.models import StoryBacklog, PullRequest, CodeFile
 from ..guardrails import CodeQualityGuardrails, format_guardrail_report
+from ..core.code_layout import (
+    get_implementation_path,
+    get_test_path,
+    get_controller_path,
+    get_service_path,
+    create_directories_for_story,
+    get_layout_config,
+    LayoutStyle,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +101,13 @@ class BuildSkillAutomation:
             else:
                 print(f"[Stage 3] Batch failed, falling back to per-story generation", flush=True)
 
+        # Check if we're using Controller-Service architecture
+        layout_config = get_layout_config()
+        is_controller_service = (
+            layout_config.style == LayoutStyle.CONTROLLER_SERVICE
+            and layout_config.default_layer == "both"
+        )
+
         for idx, story in enumerate(backlog.stories, 1):
             # Decide whether to use LLM based on past failures
             use_llm = (
@@ -105,13 +121,26 @@ class BuildSkillAutomation:
                 print(f"[Stage 3] [{idx}/{total}] Template for {story.id} "
                       f"(LLM failures: {self._llm_failures}/{self._llm_max_failures})", flush=True)
 
-            # Generate main implementation file
-            impl_file = self._generate_implementation(story)
-            files.append(impl_file)
+            if is_controller_service:
+                # Generate both controller and service
+                controller_file = self._generate_controller(story)
+                service_file = self._generate_service(story)
+                files.append(controller_file)
+                files.append(service_file)
 
-            # Generate test file (TDD approach)
-            test_file = self._generate_test_file(story)
-            files.append(test_file)
+                # Generate tests for both
+                controller_test = self._generate_controller_test(story)
+                service_test = self._generate_service_test(story)
+                files.append(controller_test)
+                files.append(service_test)
+            else:
+                # Standard single-file generation
+                impl_file = self._generate_implementation(story)
+                files.append(impl_file)
+
+                # Generate test file (TDD approach)
+                test_file = self._generate_test_file(story)
+                files.append(test_file)
 
         print(f"\n[Stage 3] Generation Complete:")
         print(f"  ✓ LLM successes: {self._llm_successes}")
@@ -130,7 +159,11 @@ class BuildSkillAutomation:
 
     def _generate_implementation(self, story) -> CodeFile:
         """Generate implementation code for a story using LLM (with fast-fail)."""
-        module_name = story.id.lower().replace("-", "_")
+        # Use the configurable layout system for file paths
+        file_path = get_implementation_path(story)
+
+        # Create necessary directories
+        create_directories_for_story(story)
 
         # Skip LLM if we've already hit too many failures
         if self.llm.is_live and self._llm_failures < self._llm_max_failures:
@@ -138,7 +171,7 @@ class BuildSkillAutomation:
             if llm_code:
                 # Validate with guardrails before accepting
                 code_file = CodeFile(
-                    path=f"src/{module_name}.py",
+                    path=file_path,
                     contents=llm_code,
                     language="python",
                 )
@@ -249,11 +282,18 @@ Return ONLY the JSON, no markdown."""
             if not story_id or not code:
                 continue
 
-            module_name = story_id.lower().replace("-", "_")
+            # Find the story object to get proper paths
+            story = next((s for s in stories if s.id == story_id), None)
+            if not story:
+                logger.warning(f"Batch generation returned {story_id} but no matching story found")
+                continue
+
             if file_type == "test":
-                path = f"Testing/tests/test_{module_name}.py"
+                path = get_test_path(story)
             else:
-                path = f"src/{module_name}.py"
+                path = get_implementation_path(story)
+                # Create directories for this story
+                create_directories_for_story(story)
 
             cf = CodeFile(path=path, contents=code, language="python")
 
@@ -483,14 +523,15 @@ class {class_name}:
 '''
 
         return CodeFile(
-            path=f"src/{story.id.lower().replace('-', '_')}.py",
+            path=get_implementation_path(story),
             contents=code,
             language="python",
         )
 
     def _generate_test_file(self, story) -> CodeFile:
         """Generate test file for a story (TDD approach) using LLM (with fast-fail)."""
-        module_name = story.id.lower().replace("-", "_")
+        # Use the configurable layout system for file paths
+        file_path = get_test_path(story)
 
         # Skip LLM if we've already hit too many failures
         if self.llm.is_live and self._llm_failures < self._llm_max_failures:
@@ -498,7 +539,7 @@ class {class_name}:
             if llm_tests:
                 self._llm_successes += 1
                 return CodeFile(
-                    path=f"Testing/tests/test_{module_name}.py",
+                    path=file_path,
                     contents=llm_tests,
                     language="python",
                 )
@@ -616,7 +657,7 @@ class Test{class_name}:
 '''
 
         return CodeFile(
-            path=f"Testing/tests/test_{module_name}.py",
+            path=get_test_path(story),
             contents=code,
             language="python",
         )
@@ -782,3 +823,48 @@ class Test{class_name}:
             json.dump(state, f, indent=2, ensure_ascii=False)
 
         logger.info(f"Updated state file with PR #{pr.number}")
+
+
+    # ============================================================================
+    # Controller-Service Architecture Methods
+    # ============================================================================
+
+    def _generate_controller(self, story) -> CodeFile:
+        """Generate controller file for Controller-Service architecture."""
+        controller_path = get_controller_path(story)
+        # Placeholder - will be implemented in next iteration
+        return CodeFile(
+            path=controller_path,
+            contents='# Controller placeholder',
+            language='python',
+        )
+
+    def _generate_service(self, story) -> CodeFile:
+        """Generate service file for Controller-Service architecture."""
+        service_path = get_service_path(story)
+        # Placeholder - will be implemented in next iteration
+        return CodeFile(
+            path=service_path,
+            contents='# Service placeholder',
+            language='python',
+        )
+
+    def _generate_controller_test(self, story) -> CodeFile:
+        """Generate test file for controller."""
+        controller_path = get_controller_path(story)
+        test_path = controller_path.replace('src/', 'tests/').replace('.py', '_test.py')
+        return CodeFile(
+            path=test_path,
+            contents='# Controller test placeholder',
+            language='python',
+        )
+
+    def _generate_service_test(self, story) -> CodeFile:
+        """Generate test file for service."""
+        service_path = get_service_path(story)
+        test_path = service_path.replace('src/', 'tests/').replace('.py', '_test.py')
+        return CodeFile(
+            path=test_path,
+            contents='# Service test placeholder',
+            language='python',
+        )

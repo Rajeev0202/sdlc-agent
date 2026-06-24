@@ -1,7 +1,7 @@
 """Mocked GitHub client — opens draft PRs and appends commits."""
 from __future__ import annotations
 
-from ..models import CodeFile, PullRequest
+from ..core.models import CodeFile, PullRequest
 
 
 class MockGitHubClient:

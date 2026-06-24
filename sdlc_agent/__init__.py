@@ -10,7 +10,7 @@ lifecycle management directly within the Python agent.
 __version__ = "0.1.0"
 
 # Auto-initialize harness when module is imported
-from .bootstrap import ensure_harness as _ensure_harness
+from .harness import ensure_harness as _ensure_harness
 _ensure_harness()
 
 from .harness import (
@@ -21,7 +21,7 @@ from .harness import (
     TokenUsage,
     record_llm_usage,
 )
-from .hooks import register_default_hooks
+from .harness import register_default_hooks
 
 __all__ = [
     "Harness",

@@ -9,8 +9,8 @@ You are running Stage 5.4 of the SDLC automation pipeline - Test Healing.
 
 ## Input
 Reads from:
-- `runs/<run-id>/test_execution.json` - test execution results from Stage 5.3
-- `runs/<run-id>/playwright_tests/` - original test scripts
+- `sdlc_agent_output/runs/<run-id>/test_execution.json` - test execution results from Stage 5.3
+- `sdlc_agent_output/runs/<run-id>/playwright_tests/` - original test scripts
 - Error logs, screenshots, and stack traces from failed tests
 
 ## Your Tasks
@@ -45,7 +45,7 @@ For each failure, provide:
 - **Alternative Approaches**: Other ways to handle the scenario
 
 ### 4. Save healing report
-Write to `runs/<run-id>/test_healing.json`:
+Write to `sdlc_agent_output/runs/<run-id>/test_healing.json`:
 ```json
 {
   "run_id": "<run-id>",
@@ -98,7 +98,7 @@ Print summary:
    Auto-fixable: <M> (confidence >= 80%)
    Manual review: <X>
    
-   Healing report: runs/<run-id>/test_healing.json
+   Healing report: sdlc_agent_output/runs/<run-id>/test_healing.json
 ```
 
 Prompt user:

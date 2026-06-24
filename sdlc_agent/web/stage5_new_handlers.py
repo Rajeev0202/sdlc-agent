@@ -5,7 +5,7 @@ import sys
 import json
 from datetime import datetime, timezone
 
-from ..models import StoryBacklog, PullRequest, UserStory
+from ..core.models import StoryBacklog, PullRequest, UserStory
 from ..testing_assets import write_manual_tests_xlsx, write_playwright_suite
 from ..integrations.anthropic_client import MockClaudeClient
 

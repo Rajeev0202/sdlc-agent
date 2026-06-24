@@ -11,7 +11,7 @@ from pathlib import Path
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
-from .models import StoryBacklog, UserStory
+from .core.models import StoryBacklog, UserStory
 
 
 # ---------------------------------------------------------------------------

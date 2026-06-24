@@ -34,7 +34,7 @@ For each user story and acceptance criterion:
 - Verify test cases are specific and executable
 
 ### 4. Save test cases
-Write to `runs/<run-id>/manual_test_cases.json`:
+Write to `sdlc_agent_output/runs/<run-id>/manual_test_cases.json`:
 ```json
 {
   "run_id": "<run-id>",
@@ -55,7 +55,7 @@ Write to `runs/<run-id>/manual_test_cases.json`:
 }
 ```
 
-Also generate Excel file at `runs/<run-id>/manual_test_cases.xlsx` for QA team review.
+Also generate Excel file at `sdlc_agent_output/runs/<run-id>/manual_test_cases.xlsx` for QA team review.
 
 ## LLM Integration
 - Uses Anthropic API with user-provided API key
@@ -67,6 +67,6 @@ Also generate Excel file at `runs/<run-id>/manual_test_cases.xlsx` for QA team r
 Print summary:
 ```
 ✅ Stage 5.1 complete. Generated <N> manual test cases across <M> stories.
-   Output: runs/<run-id>/manual_test_cases.json
-           runs/<run-id>/manual_test_cases.xlsx
+   Output: sdlc_agent_output/runs/<run-id>/manual_test_cases.json
+           sdlc_agent_output/runs/<run-id>/manual_test_cases.xlsx
 ```

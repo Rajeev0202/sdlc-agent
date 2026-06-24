@@ -12,7 +12,7 @@ Gates checked:
 from __future__ import annotations
 
 from ..integrations import MockClaudeClient, MockGitHubClient
-from ..models import (
+from ..core.models import (
     DeploymentDecision,
     PullRequest,
     ReviewReport,

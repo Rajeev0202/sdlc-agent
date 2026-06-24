@@ -6,13 +6,15 @@ without changing the stage code — the stage modules only depend on the
 public methods defined here.
 """
 from .anthropic_client import MockClaudeClient
-from .confluence_client import MockConfluenceClient
+from .confluence_client import ConfluenceClient, MockConfluenceClient, fetch_confluence_page
 from .github_client import MockGitHubClient
 from .jira_client import MockJiraClient, JiraClient
 
 __all__ = [
     "MockClaudeClient",
+    "ConfluenceClient",
     "MockConfluenceClient",
+    "fetch_confluence_page",
     "MockGitHubClient",
     "MockJiraClient",
     "JiraClient",

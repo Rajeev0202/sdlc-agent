@@ -1,14 +1,39 @@
+# Python
 __pycache__/
 *.pyc
+*.egg-info/
 .venv/
-.env
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-runs/
-*.egg-info/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Logs
+*.log
+logs/
+
+# Runtime artifacts (only non-code artifacts are ignored)
+sdlc_agent_output/  # Run JSONs, review reports
+tests/results/      # Test execution results only
+*.xlsx              # Generated manual test Excel files
 .claude/sdlc-state.json
+
+# Note: src/ and tests/ contain generated code and tests - these ARE versioned
+# Note: sdlc_agent/tests/ contains unit tests for the SDLC Agent itself
 
 # Environment files
 .env
 .env.local
+
+# Editor / OS
+.DS_Store
+.idea/
+*.swp
+sdlc_agent_output
+runs
+Testing

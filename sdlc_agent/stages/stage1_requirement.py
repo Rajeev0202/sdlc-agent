@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 
 from ..integrations import MockClaudeClient, MockConfluenceClient
-from ..models import Persona, RequirementBrief
+from ..core.models import Persona, RequirementBrief
 
 
 _PERSONA_PATTERNS = [

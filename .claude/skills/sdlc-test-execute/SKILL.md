@@ -9,8 +9,8 @@ You are running Stage 5.3 of the SDLC automation pipeline - Playwright Test Exec
 
 ## Input
 Reads from:
-- `runs/<run-id>/playwright_tests/` - generated Playwright scripts from Stage 5.2
-- `runs/<run-id>/automation_scripts.json` - test metadata
+- `sdlc_agent_output/runs/<run-id>/playwright_tests/` - generated Playwright scripts from Stage 5.2
+- `sdlc_agent_output/runs/<run-id>/automation_scripts.json` - test metadata
 
 ## Your Tasks
 
@@ -33,7 +33,7 @@ Reads from:
 - Calculate pass rate and execution time
 
 ### 4. Save execution results
-Write to `runs/<run-id>/test_execution.json`:
+Write to `sdlc_agent_output/runs/<run-id>/test_execution.json`:
 ```json
 {
   "run_id": "<run-id>",
@@ -59,7 +59,7 @@ Write to `runs/<run-id>/test_execution.json`:
 }
 ```
 
-Also generate HTML report at `runs/<run-id>/test-report.html` with:
+Also generate HTML report at `sdlc_agent_output/runs/<run-id>/test-report.html` with:
 - Visual test results dashboard
 - Failed test screenshots
 - Execution timeline
@@ -76,8 +76,8 @@ Print summary:
 ```
 ✅ Stage 5.3 complete. Executed <N> tests with <X>% pass rate.
    Passed: <passed> | Failed: <failed> | Skipped: <skipped>
-   Report: runs/<run-id>/test-report.html
-   Results: runs/<run-id>/test_execution.json
+   Report: sdlc_agent_output/runs/<run-id>/test-report.html
+   Results: sdlc_agent_output/runs/<run-id>/test_execution.json
 ```
 
 If failures detected, prompt:
