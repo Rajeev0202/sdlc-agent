@@ -23,7 +23,7 @@ from rich.markdown import Markdown
 from .harness import ensure_harness
 from .harness import get_harness
 from .integrations import (
-    MockClaudeClient,
+    ClaudeClient,
     MockGitHubClient,
 )
 from .core.models import (
@@ -251,7 +251,7 @@ def code(
     pr = stage3_code.run(
         b,
         github=MockGitHubClient(),
-        claude=MockClaudeClient(),
+        claude=ClaudeClient(),
         inject_defect=inject_defect,
     )
     _write_json(output, pr)

@@ -71,10 +71,10 @@ Aggregated metrics include token totals:
 
 ```python
 from sdlc_agent import get_harness, record_llm_usage
-from sdlc_agent.integrations import MockClaudeClient
+from sdlc_agent.integrations import ClaudeClient
 
 harness = get_harness()
-claude = MockClaudeClient()
+claude = ClaudeClient()
 
 with harness.tool_span("claude_analyze", input_data="Analyze requirements") as span:
     result = claude.complete_json(

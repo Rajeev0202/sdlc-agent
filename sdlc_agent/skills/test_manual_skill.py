@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from ..integrations.anthropic_client import MockClaudeClient
+from ..integrations.anthropic_client import ClaudeClient
 from ..core.models import UserStory
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class TestManualSkillAutomation:
     def __init__(self, root_dir: Path, demo_mode: bool = True):
         self.root_dir = root_dir
         self.state_file = root_dir / ".claude" / "sdlc-state.json"
-        self.llm = MockClaudeClient()
+        self.llm = ClaudeClient()
         self.demo_mode = demo_mode
 
     def run(self, run_id: str) -> dict[str, Any]:

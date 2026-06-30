@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from ..integrations.anthropic_client import MockClaudeClient
+from ..integrations.anthropic_client import ClaudeClient
 from ..core.models import PullRequest, ReviewReport, ReviewFinding, Severity
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class ReviewSkillAutomation:
         # Haiku is ~12x cheaper than Sonnet ($0.25/1M vs $3/1M input)
         # Configurable via ANTHROPIC_REVIEW_MODEL env var
         review_model = _os.getenv("ANTHROPIC_REVIEW_MODEL", "claude-3-5-haiku-latest")
-        self.llm = MockClaudeClient(model=review_model)
+        self.llm = ClaudeClient(model=review_model)
         logger.info(f"[Stage 4] Using model: {review_model} (Haiku for cost reduction)")
         # Fast-fail tracking (same pattern as Stage 3)
         self._llm_failures = 0

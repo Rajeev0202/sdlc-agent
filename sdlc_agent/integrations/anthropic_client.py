@@ -1,31 +1,22 @@
-"""Claude / Anthropic / Gemini client.
+"""Claude / Anthropic client.
 
-Five modes, picked at construction time:
+Three modes, picked at construction time (in priority order):
 
-1. **Copilot bridge** — if `SDLC_COPILOT_BRIDGE_URL` is set (or the default
-   `http://127.0.0.1:6789` responds to `/health`), requests are POSTed to
-   the local VS Code extension which calls GitHub Copilot via the VS Code
-   Language Model API. No API key needed.
-2. **Claude Code CLI** — if `claude` CLI is available, invoke it as a
+1. **Claude Code CLI** — if `claude` CLI is available, invoke it as a
    subprocess. Uses your Claude Code subscription. No API key needed.
-3. **Google Gemini** — if `GOOGLE_API_KEY` or `GEMINI_API_KEY` is set AND the
-   `google-generativeai` SDK is installed, calls hit the Gemini API.
-4. **Live Anthropic** — if `ANTHROPIC_API_KEY` is set AND the `anthropic`
-   SDK is installed, calls hit the Messages API.
-5. **Stub** — deterministic offline mode (default).
-
-Class name `MockClaudeClient` is preserved for backwards compatibility.
+   (Preferred for local development)
+2. **Live Anthropic API** — if `ANTHROPIC_API_KEY` is set AND the `anthropic`
+   SDK is installed, calls hit the Messages API directly.
+   (For production/automation)
+3. **Stub** — deterministic offline mode (default fallback).
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import os
 import shutil
 import subprocess
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -84,26 +75,16 @@ def _find_claude_cli() -> str | None:
     return None
 
 
-class MockClaudeClient:
+class ClaudeClient:
     DEFAULT_MODEL = "claude-3-5-sonnet-latest"
-    DEFAULT_BRIDGE_URL = "http://127.0.0.1:6789"
 
     def __init__(self, model: str | None = None) -> None:
         self.model = model or os.getenv("ANTHROPIC_MODEL") or self.DEFAULT_MODEL
         self.calls: list[dict[str, Any]] = []
         self._client = None
-        self._gemini_model = None
-        self._bridge_url: str | None = None
         self._claude_cli: str | None = None
 
-        # Mode 1: Copilot bridge (preferred when reachable).
-        candidate = os.getenv("SDLC_COPILOT_BRIDGE_URL", self.DEFAULT_BRIDGE_URL).rstrip("/")
-        if _bridge_alive(candidate):
-            self._bridge_url = candidate
-            logger.info("Copilot bridge detected at %s", candidate)
-            return
-
-        # Mode 2: Claude Code CLI (uses subscription, no API key needed)
+        # Mode 1: Claude Code CLI (uses subscription, no API key needed)
         # Skip if user explicitly opts out
         if os.getenv("SDLC_DISABLE_CLAUDE_CLI", "").lower() not in ("1", "true", "yes"):
             cli_path = _find_claude_cli()
@@ -112,20 +93,7 @@ class MockClaudeClient:
                 logger.info("Claude Code CLI detected at %s", cli_path)
                 return
 
-        # Mode 3: Google Gemini API.
-        google_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-        if google_key:
-            try:
-                from google import genai  # type: ignore
-
-                self._gemini_model = genai.Client(api_key=google_key)
-                logger.info("Gemini client initialized (model=gemini-1.5-flash).")
-                return
-            except Exception as exc:  # pragma: no cover - depends on env
-                logger.warning("Failed to initialize Gemini, trying Anthropic: %s", exc)
-                self._gemini_model = None
-
-        # Mode 4: direct Anthropic API.
+        # Mode 2: Anthropic API (fallback)
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if api_key:
             try:
@@ -134,27 +102,18 @@ class MockClaudeClient:
                 self._client = anthropic.Anthropic(api_key=api_key)
                 logger.info("Claude live client initialised (model=%s).", self.model)
             except Exception as exc:  # pragma: no cover - depends on env
-                logger.warning("Falling back to mock Claude client: %s", exc)
+                logger.warning("Falling back to stub mode: %s", exc)
                 self._client = None
 
     @property
     def is_live(self) -> bool:
         """True if any real LLM backend is configured."""
-        return (
-            self._bridge_url is not None
-            or self._claude_cli is not None
-            or self._gemini_model is not None
-            or self._client is not None
-        )
+        return self._claude_cli is not None or self._client is not None
 
     @property
     def backend(self) -> str:
-        if self._bridge_url:
-            return f"copilot-bridge ({self._bridge_url})"
         if self._claude_cli:
             return f"claude-code-cli ({self._claude_cli})"
-        if self._gemini_model:
-            return "gemini (gemini-1.5-flash)"
         if self._client:
             return f"anthropic ({self.model})"
         return "stub"
@@ -179,45 +138,13 @@ class MockClaudeClient:
         text: str | None = None
         self.last_token_usage: dict[str, int] | None = None
 
-        if self._bridge_url:
-            text = _bridge_complete(self._bridge_url, system=system, user=user)
-            if text is not None:
-                self.calls.append({"task": "complete_json", "backend": "copilot-bridge"})
-        elif self._claude_cli is not None:
+        if self._claude_cli is not None:
             # 90s timeout per call - fail fast to avoid 10-min stalls
             text = _claude_cli_complete(
                 self._claude_cli, system=system, user=user, timeout=90.0
             )
             if text is not None:
                 self.calls.append({"task": "complete_json", "backend": "claude-code-cli"})
-        elif self._gemini_model is not None:
-            logger.debug("Attempting Gemini call (prompt length=%s)", len(system) + len(user))
-            try:
-                # Combine system and user prompts for Gemini
-                prompt = f"{system}\n\n{user}"
-
-                response = self._gemini_model.models.generate_content(
-                    model="gemini-1.5-flash",
-                    contents=prompt,
-                    config={
-                        "temperature": temperature,
-                        "max_output_tokens": max_tokens,
-                    }
-                )
-
-                text = response.text.strip()
-                logger.debug("Gemini response length=%s", len(text))
-                self.calls.append({"task": "complete_json", "backend": "gemini"})
-            except Exception as exc:  # pragma: no cover - network/SDK errors
-                logger.warning("Gemini call failed, falling back: %s", exc)
-                try:
-                    with open(debug_file, "a", encoding="utf-8") as f:
-                        import traceback
-                        f.write(f"  EXCEPTION: {exc}\n")
-                        f.write(f"  Traceback: {traceback.format_exc()}\n")
-                except Exception:
-                    pass
-                text = None
         elif self._client is not None:
             # Result cache (Redis or in-memory): avoid re-calling LLM with identical prompts
             cache = get_cache()
@@ -280,17 +207,6 @@ class MockClaudeClient:
         return extracted
 
 
-def _bridge_alive(url: str, timeout: float = 1.0) -> bool:
-    try:
-        with urllib.request.urlopen(f"{url}/health", timeout=timeout) as r:
-            if r.status != 200:
-                return False
-            data = json.loads(r.read().decode("utf-8"))
-            return bool(data.get("ok"))
-    except (urllib.error.URLError, OSError, ValueError, TimeoutError):
-        return False
-
-
 def _claude_cli_complete(
     cli_path: str, *, system: str, user: str, timeout: float = 180.0
 ) -> str | None:
@@ -334,28 +250,6 @@ def _claude_cli_complete(
         return None
     except (OSError, FileNotFoundError) as exc:
         logger.warning("Claude CLI invocation failed: %s", exc)
-        return None
-
-
-def _bridge_complete(
-    url: str, *, system: str, user: str, timeout: float = 120.0
-) -> str | None:
-    body = json.dumps({"system": system, "user": user}).encode("utf-8")
-    req = urllib.request.Request(
-        f"{url}/complete",
-        data=body,
-        headers={"content-type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            payload = json.loads(r.read().decode("utf-8"))
-        if not payload.get("ok"):
-            logger.warning("Copilot bridge error: %s", payload.get("error"))
-            return None
-        return str(payload.get("text") or "")
-    except (urllib.error.URLError, OSError, ValueError, TimeoutError) as exc:
-        logger.warning("Copilot bridge call failed: %s", exc)
         return None
 
 

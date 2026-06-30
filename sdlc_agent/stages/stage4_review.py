@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import re
 
-from ..integrations import MockClaudeClient
+from ..integrations import ClaudeClient
 from ..core.models import PullRequest, ReviewFinding, ReviewReport, Severity
 
 logger = logging.getLogger(__name__)
@@ -79,9 +79,9 @@ def _coverage_gap(pr: PullRequest) -> ReviewFinding | None:
 def run(
     pr: PullRequest,
     *,
-    claude: MockClaudeClient | None = None,
+    claude: ClaudeClient | None = None,
 ) -> ReviewReport:
-    claude = claude or MockClaudeClient()
+    claude = claude or ClaudeClient()
     claude.complete("stage4_review", {"pr": pr.number, "files": len(pr.files)})
 
     backend = getattr(claude, "backend", "stub")
@@ -190,7 +190,7 @@ _VALID_SEVERITIES = {s.value for s in Severity}
 
 
 def _review_with_llm(
-    pr: PullRequest, claude: MockClaudeClient
+    pr: PullRequest, claude: ClaudeClient
 ) -> list[ReviewFinding] | None:
     """Ask the LLM to review the PR against NatWest standards.
 

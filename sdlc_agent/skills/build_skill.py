@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from ..integrations.anthropic_client import MockClaudeClient
+from ..integrations.anthropic_client import ClaudeClient
 from ..core.models import StoryBacklog, PullRequest, CodeFile
 from ..guardrails import CodeQualityGuardrails, format_guardrail_report
 from ..core.code_layout import (
@@ -35,7 +35,7 @@ class BuildSkillAutomation:
     def __init__(self, root_dir: Path, enable_guardrails: bool = True):
         self.root_dir = root_dir
         self.state_file = root_dir / ".claude" / "sdlc-state.json"
-        self.llm = MockClaudeClient()
+        self.llm = ClaudeClient()
         # Track LLM usage so we can fast-fail to templates if calls keep failing
         self._llm_failures = 0
         self._llm_max_failures = 2  # After 2 fails, stop trying LLM

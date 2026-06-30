@@ -7,10 +7,10 @@ from datetime import datetime, timezone
 
 from ..core.models import StoryBacklog, PullRequest, UserStory
 from ..testing_assets import write_manual_tests_xlsx, write_playwright_suite
-from ..integrations.anthropic_client import MockClaudeClient
+from ..integrations.anthropic_client import ClaudeClient
 
 
-def _generate_detailed_test_cases_with_llm(story: UserStory, llm: MockClaudeClient) -> list[dict]:
+def _generate_detailed_test_cases_with_llm(story: UserStory, llm: ClaudeClient) -> list[dict]:
     """Use LLM to generate detailed test cases with steps for a story."""
     system_prompt = """You are a QA engineer creating detailed manual test cases.
 For each acceptance criterion, generate a comprehensive test case with:
@@ -63,7 +63,7 @@ Generate detailed test cases for each acceptance criterion."""
     return []
 
 
-def _generate_playwright_script_with_llm(story: UserStory, llm: MockClaudeClient) -> str:
+def _generate_playwright_script_with_llm(story: UserStory, llm: ClaudeClient) -> str:
     """Use LLM to generate intelligent Playwright test script."""
     system_prompt = """You are a test automation engineer writing Playwright TypeScript tests.
 Generate a complete, runnable Playwright test file that:
@@ -113,7 +113,7 @@ def generate_manual_tests(run_id: str, root: Path, manual_tests_dir: Path) -> di
         backlog = StoryBacklog.model_validate_json(backlog_path.read_text(encoding="utf-8"))
 
         # Initialize LLM client
-        llm = MockClaudeClient()
+        llm = ClaudeClient()
 
         # Debug logging to file (since stderr isn't showing up)
         debug_file = root / "stage5_debug.log"
@@ -226,7 +226,7 @@ def generate_automation_scripts(run_id: str, root: Path, automation_dir: Path) -
         backlog = StoryBacklog.model_validate_json(backlog_path.read_text(encoding="utf-8"))
 
         # Initialize LLM client
-        llm = MockClaudeClient()
+        llm = ClaudeClient()
 
         # Generate Playwright suite
         automation_dir.mkdir(parents=True, exist_ok=True)
@@ -390,7 +390,7 @@ def heal_tests(run_id: str, root: Path, automation_dir: Path, results_dir: Path)
             }
 
         # Initialize LLM client for intelligent healing
-        llm = MockClaudeClient()
+        llm = ClaudeClient()
 
         # Analyze failures and suggest fixes using LLM
         healing_suggestions = []
@@ -427,7 +427,7 @@ def heal_tests(run_id: str, root: Path, automation_dir: Path, results_dir: Path)
         return {"error": str(e)}, 500
 
 
-def analyze_failure(failure: dict, llm: MockClaudeClient = None) -> dict:
+def analyze_failure(failure: dict, llm: ClaudeClient = None) -> dict:
     """Analyze a single test failure using LLM for intelligent diagnosis"""
     test_name = failure["test"]
     error_msg = failure["error"]

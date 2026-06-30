@@ -11,7 +11,7 @@ import os
 import re
 
 from ..harness import ensure_harness
-from ..integrations import MockClaudeClient, MockJiraClient, JiraClient
+from ..integrations import ClaudeClient, MockJiraClient, JiraClient
 from ..core.models import RequirementBrief, StoryBacklog, UserStory
 
 logger = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ def _derive_acceptance_criteria(
 
 
 def _generate_with_llm(
-    brief: RequirementBrief, claude: MockClaudeClient
+    brief: RequirementBrief, claude: ClaudeClient
 ) -> list[UserStory] | None:
     """Ask Claude to produce stories. Returns None if LLM unavailable or invalid."""
     if not getattr(claude, "is_live", False):
@@ -172,7 +172,7 @@ def run(
     brief: RequirementBrief,
     *,
     jira: object = None,
-    claude: MockClaudeClient | None = None,
+    claude: ClaudeClient | None = None,
 ) -> StoryBacklog:
     # Ensure harness is initialized (with hooks)
     ensure_harness()
@@ -189,7 +189,7 @@ def run(
             )
         else:
             jira = MockJiraClient()
-    claude = claude or MockClaudeClient()
+    claude = claude or ClaudeClient()
     claude.complete("stage2_stories", {"title": brief.title})
 
     backend = getattr(claude, "backend", "stub")

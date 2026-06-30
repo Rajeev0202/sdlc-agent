@@ -112,7 +112,7 @@ If Claude Code CLI is unreliable in the web context, switch to direct Anthropic 
 ANTHROPIC_API_KEY=your_key_here
 ```
 
-Then the `MockClaudeClient` will use the Messages API instead of the CLI subprocess.
+Then the `ClaudeClient` will use the Messages API instead of the CLI subprocess.
 
 ### Option 3: Use Gemini (Free Alternative)
 

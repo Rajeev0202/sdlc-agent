@@ -11,7 +11,7 @@ Gates checked:
 """
 from __future__ import annotations
 
-from ..integrations import MockClaudeClient, MockGitHubClient
+from ..integrations import ClaudeClient, MockGitHubClient
 from ..core.models import (
     DeploymentDecision,
     PullRequest,
@@ -51,9 +51,9 @@ def run(
     backlog: StoryBacklog,
     *,
     github: MockGitHubClient | None = None,
-    claude: MockClaudeClient | None = None,
+    claude: ClaudeClient | None = None,
 ) -> DeploymentDecision:
-    claude = claude or MockClaudeClient()
+    claude = claude or ClaudeClient()
     claude.complete("stage6_deploy", {"pr": pr.number})
 
     backlog_ids = {s.id for s in backlog.stories}

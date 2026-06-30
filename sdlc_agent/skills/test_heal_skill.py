@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from ..integrations.anthropic_client import MockClaudeClient
+from ..integrations.anthropic_client import ClaudeClient
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class TestHealSkillAutomation:
 
     def __init__(self, root_dir: Path, demo_mode: bool = True):
         self.root_dir = root_dir
-        self.llm = MockClaudeClient()
+        self.llm = ClaudeClient()
         self.demo_mode = demo_mode
 
     def run(self, run_id: str) -> dict[str, Any]:

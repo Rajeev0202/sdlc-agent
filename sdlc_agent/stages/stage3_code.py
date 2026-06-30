@@ -12,7 +12,7 @@ import ast
 import logging
 import re
 
-from ..integrations import MockClaudeClient, MockGitHubClient
+from ..integrations import ClaudeClient, MockGitHubClient
 from ..core.models import CodeFile, PullRequest, StoryBacklog, UserStory
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ def run(
     backlog: StoryBacklog,
     *,
     github: MockGitHubClient | None = None,
-    claude: MockClaudeClient | None = None,
+    claude: ClaudeClient | None = None,
     inject_defect: bool = False,
 ) -> PullRequest:
     """Generate code for the approved backlog and open a draft PR.
@@ -91,7 +91,7 @@ def run(
         )
 
     github = github or MockGitHubClient()
-    claude = claude or MockClaudeClient()
+    claude = claude or ClaudeClient()
     claude.complete(
         "stage3_code",
         {"stories": len(backlog.stories), "inject_defect": inject_defect},
@@ -151,7 +151,7 @@ def run(
 
 
 def _generate_with_llm(
-    backlog: StoryBacklog, module_path: str, claude: MockClaudeClient
+    backlog: StoryBacklog, module_path: str, claude: ClaudeClient
 ) -> str | None:
     """Ask the LLM to emit a single Python module for the backlog.
 

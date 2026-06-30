@@ -15,7 +15,7 @@ from typing import Callable
 from ..harness import ensure_harness
 from ..harness import get_harness, Severity
 from ..integrations import (
-    MockClaudeClient,
+    ClaudeClient,
     MockConfluenceClient,
     MockGitHubClient,
     MockJiraClient,
@@ -46,7 +46,7 @@ class Orchestrator:
         confluence: MockConfluenceClient | None = None,
         jira: object = None,
         github: MockGitHubClient | None = None,
-        claude: MockClaudeClient | None = None,
+        claude: ClaudeClient | None = None,
         max_remediation_attempts: int = 2,
         use_harness: bool = True,
     ) -> None:
@@ -70,7 +70,7 @@ class Orchestrator:
         else:
             self.jira = MockJiraClient()
         self.github = github or MockGitHubClient()
-        self.claude = claude or MockClaudeClient()
+        self.claude = claude or ClaudeClient()
         self.max_remediation_attempts = max_remediation_attempts
         self.harness = get_harness() if use_harness else None
 

@@ -98,12 +98,12 @@ You should see:
 
 Check server logs:
 ```bash
-tail -50 server.log | grep "MockClaudeClient\|LLM extraction"
+tail -50 server.log | grep "ClaudeClient\|LLM extraction"
 ```
 
 **Should see:**
 ```
-[MockClaudeClient] Using Anthropic API (claude-3-5-sonnet-latest)
+[ClaudeClient] Using Anthropic API (claude-3-5-sonnet-latest)
 [Ingest Parser] LLM extracted 3 stories, 10 ACs
 ```
 

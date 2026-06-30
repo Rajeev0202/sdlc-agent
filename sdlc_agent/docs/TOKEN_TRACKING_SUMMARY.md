@@ -106,7 +106,7 @@ with harness.tool_span("claude_analyze") as span:
 
 ### 6. Anthropic API Integration
 
-The `MockClaudeClient` now captures token usage from Anthropic API responses:
+The `ClaudeClient` now captures token usage from Anthropic API responses:
 
 ```python
 # In anthropic_client.py

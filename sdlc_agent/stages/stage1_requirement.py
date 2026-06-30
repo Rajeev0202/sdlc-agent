@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 
-from ..integrations import MockClaudeClient, MockConfluenceClient
+from ..integrations import ClaudeClient, MockConfluenceClient
 from ..core.models import Persona, RequirementBrief
 
 
@@ -87,11 +87,11 @@ def run(
     source_ref: str,
     *,
     confluence: MockConfluenceClient | None = None,
-    claude: MockClaudeClient | None = None,
+    claude: ClaudeClient | None = None,
 ) -> RequirementBrief:
     """Ingest a requirement and return a structured brief."""
     confluence = confluence or MockConfluenceClient()
-    claude = claude or MockClaudeClient()
+    claude = claude or ClaudeClient()
 
     text = confluence.fetch_page(source_ref)
     claude.complete("stage1_ingest", {"chars": len(text)})

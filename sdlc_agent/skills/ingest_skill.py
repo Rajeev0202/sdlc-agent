@@ -26,34 +26,43 @@ class IngestSkillAutomation:
     def llm(self):
         """Lazy-loaded LLM client."""
         if self._llm is None:
-            from ..integrations.anthropic_client import MockClaudeClient
-            self._llm = MockClaudeClient()
+            from ..integrations.anthropic_client import ClaudeClient
+            self._llm = ClaudeClient()
         return self._llm
 
     def run(self, source: str) -> dict[str, Any]:
         """
-        Execute the /sdlc-ingest skill logic.
+        Execute the /sdlc-ingest skill logic with codebase analysis.
 
         Args:
             source: Confluence URL, file path, or search query
 
         Returns:
-            dict with parsed requirements and state
+            dict with parsed requirements, codebase analysis, and contextual questions
         """
         # Step 1: Fetch the requirements
+        print("[Ingest] Step 1: Fetching requirements...")
         content = self._fetch_requirements(source)
 
         # Step 2: Parse and structure
+        print("[Ingest] Step 2: Parsing requirements...")
         parsed = self._parse_requirements(content, source)
 
-        # Step 3: Identify gaps & ambiguities
-        questions = self._identify_gaps(parsed)
+        # Step 3: Analyze current codebase for impact
+        print("[Ingest] Step 3: Analyzing codebase for impact...")
+        codebase_analysis = self._analyze_codebase(parsed)
+
+        # Step 4: Generate contextual questions (combining requirement gaps + codebase insights)
+        print("[Ingest] Step 4: Generating contextual questions...")
+        questions = self._identify_gaps_with_context(parsed, codebase_analysis)
         parsed["open_questions"] = questions
 
-        # Step 4: Save state (skip user confirmation for UI automation)
-        state = self._create_state(source, parsed)
+        # Step 5: Save state with codebase analysis
+        print("[Ingest] Step 5: Saving state...")
+        state = self._create_state(source, parsed, codebase_analysis)
         self._save_state(state)
 
+        print(f"[Ingest] ✓ Complete: {len(parsed['stories'])} stories, {len(questions)} questions")
         return state
 
     def _fetch_requirements(self, source: str) -> str:
@@ -126,22 +135,24 @@ class IngestSkillAutomation:
 
     def _parse_requirements(self, content: str, source: str) -> dict[str, Any]:
         """
-        Parse requirements from document content.
+        Parse requirements from plain English business documents.
 
-        Strategy (smart and adaptive):
-        1. Try regex extraction first - if BRD already has formal user stories, use them as-is
-        2. If no formal stories found OR stories are incomplete, use LLM to convert prose/bullets
-        3. Always extract AC, NFR, out-of-scope via regex (these are typically well-structured)
+        Strategy:
+        1. PRIMARY: Use LLM to convert plain English into structured requirements
+           - Business users write in natural language (not formal user stories)
+           - LLM understands context and extracts intent
+        2. FALLBACK: If LLM unavailable, use basic regex extraction
+           - Only works if document happens to have structured sections
+           - Limited capability compared to LLM
         """
-        # Clean content: strip markdown bold/italic that breaks regex matching
+        # Clean content: strip markdown bold/italic
         cleaned = self._clean_markdown(content)
-        lines = cleaned.split("\n")
 
-        # Debug: log what we received (visible in server console)
-        print(f"[Ingest Parser] Content length: {len(content)} chars, {len(lines)} lines")
-        print(f"[Ingest Parser] First 500 chars: {cleaned[:500]}")
+        # Debug logging
+        print(f"[Ingest Parser] Content length: {len(content)} chars")
+        print(f"[Ingest Parser] First 300 chars: {cleaned[:300]}...")
 
-        # Initialize result
+        # Initialize result structure
         result = {
             "epic": "",
             "stories": [],
@@ -151,167 +162,155 @@ class IngestSkillAutomation:
             "dependencies": [],
         }
 
-        # Extract title/epic (first heading)
+        # STRATEGY 1: Use LLM to parse plain English requirements (PRIMARY)
+        if self.llm.is_live and len(cleaned.strip()) > 50:
+            print(f"[Ingest Parser] Using LLM ({self.llm.backend}) to parse plain English requirements...")
+            llm_result = self._llm_extract(cleaned)
+            if llm_result and llm_result.get("stories"):
+                print(f"[Ingest Parser] ✓ LLM extracted {len(llm_result['stories'])} stories from business requirements")
+                return llm_result
+            else:
+                print("[Ingest Parser] LLM extraction returned no results, falling back to regex")
+        else:
+            print("[Ingest Parser] LLM unavailable, using fallback regex parser")
+
+        # STRATEGY 2: Fallback regex extraction (LIMITED - only if LLM fails)
+        print("[Ingest Parser] WARNING: Using limited regex parser - results may be incomplete")
+
+        lines = cleaned.split("\n")
+
+        # Extract title/epic from first heading
         for line in lines:
             line = line.strip()
             if line.startswith("#"):
                 result["epic"] = line.lstrip("#").strip()
                 break
 
-        # STEP 1: Extract user stories using regex (if they exist in formal format)
-        # Support multiple formats:
-        #   "As a X, I want Y, so that Z"
-        #   "As a X I want Y so that Z" (no commas)
-        #   Multi-line stories with line breaks
-        story_patterns = [
-            # Standard with optional commas, single line or with line breaks (DOTALL)
-            r"(?is)\bas\s+a[n]?\s+(.+?)[,\n]\s*i\s+want\s+(?:to\s+)?(.+?)[,\n]\s*so\s+that\s+(.+?)(?=\.\s|\n\s*\n|\n#|\n-|\n\*|$)",
-        ]
+        # Try to find formal user stories (rare in business docs)
+        story_pattern = r"(?is)\bas\s+a[n]?\s+(.+?)[,\n]\s*i\s+want\s+(?:to\s+)?(.+?)[,\n]\s*so\s+that\s+(.+?)(?=\.\s|\n\s*\n|\n#|\n-|\n\*|$)"
+        for match in re.finditer(story_pattern, cleaned):
+            story = {
+                "as_a": self._cleanup_text(match.group(1)),
+                "i_want": self._cleanup_text(match.group(2)),
+                "so_that": self._cleanup_text(match.group(3)),
+            }
+            if not any(s["i_want"] == story["i_want"] for s in result["stories"]):
+                result["stories"].append(story)
 
-        for pattern in story_patterns:
-            for match in re.finditer(pattern, cleaned):
-                story = {
-                    "as_a": self._cleanup_text(match.group(1)),
-                    "i_want": self._cleanup_text(match.group(2)),
-                    "so_that": self._cleanup_text(match.group(3)),
-                }
-                # Avoid duplicates
-                if not any(s["i_want"] == story["i_want"] for s in result["stories"]):
-                    result["stories"].append(story)
+        # Extract any bullet points as potential requirements
+        if not result["stories"]:
+            bullet_requirements = []
+            for line in lines:
+                stripped = line.strip()
+                if (stripped.startswith("-") or stripped.startswith("*")) and len(stripped) > 10:
+                    req_text = stripped.lstrip("-*").strip()
+                    # Convert bullet point to basic story structure
+                    bullet_requirements.append({
+                        "as_a": "User",
+                        "i_want": req_text,
+                        "so_that": "fulfill business requirements",
+                    })
+            result["stories"] = bullet_requirements[:10]  # Limit to avoid noise
 
-        print(f"[Ingest Parser] Regex found {len(result['stories'])} formal user stories")
-
-        # DECISION POINT: Use LLM only if no formal stories found
-        if len(result["stories"]) == 0 and self.llm.is_live and len(cleaned.strip()) > 50:
-            print(f"[Ingest Parser] No formal stories found - using LLM to convert dynamic requirements via {self.llm.backend}")
-            llm_result = self._llm_extract(cleaned)
-            if llm_result and llm_result.get("stories"):
-                print(f"[Ingest Parser] LLM extracted {len(llm_result['stories'])} stories from informal requirements")
-                # Merge LLM results (stories + other sections)
-                result["epic"] = llm_result.get("epic", result["epic"])
-                result["stories"] = llm_result.get("stories", [])
-                result["acceptance_criteria"] = llm_result.get("acceptance_criteria", [])
-                result["nfr"] = llm_result.get("nfr", [])
-                result["out_of_scope"] = llm_result.get("out_of_scope", [])
-                result["dependencies"] = llm_result.get("dependencies", [])
-                return result  # Return early - LLM handled everything
-            print(f"[Ingest Parser] LLM extraction failed - continuing with regex-based parsing")
-
-        # Extract acceptance criteria (Given/When/Then or bullet points)
+        # Extract acceptance criteria if section exists
         in_ac_section = False
-        current_criteria = []
-
         for line in lines:
             stripped = line.strip()
-
-            # Check for AC section headers (including markdown like "## Acceptance Criteria")
             if re.search(r"(?i)acceptance\s+criteria|definition\s+of\s+done", stripped):
                 in_ac_section = True
                 continue
-
-            # Check for section end (next heading)
             if stripped.startswith("#") and in_ac_section:
                 in_ac_section = False
-                continue
+            if in_ac_section and (stripped.startswith("-") or stripped.startswith("*")):
+                result["acceptance_criteria"].append(stripped.lstrip("-*").strip())
 
-            # Collect AC items
-            if in_ac_section and stripped:
-                if stripped.startswith("-") or stripped.startswith("*"):
-                    ac = stripped.lstrip("-*").strip()
-                    if ac:
-                        current_criteria.append(ac)
-                elif re.match(r"(?i)^(given|when|then)\s", stripped):
-                    current_criteria.append(stripped)
-                elif re.match(r"^\d+\.\s", stripped):  # numbered list "1. xxx"
-                    current_criteria.append(re.sub(r"^\d+\.\s", "", stripped))
-
-        result["acceptance_criteria"] = current_criteria
-        print(f"[Ingest Parser] Found {len(current_criteria)} acceptance criteria")
-
-        # Extract NFRs
+        # Extract NFRs (basic keyword matching)
         nfr_keywords = ["performance", "security", "accessibility", "scalability", "availability"]
         for line in lines:
-            line_lower = line.lower()
-            if any(kw in line_lower for kw in nfr_keywords):
-                stripped = line.strip()
-                if stripped.startswith("-") or stripped.startswith("*"):
-                    result["nfr"].append(stripped.lstrip("-*").strip())
+            if any(kw in line.lower() for kw in nfr_keywords):
+                if line.strip().startswith("-") or line.strip().startswith("*"):
+                    result["nfr"].append(line.strip().lstrip("-*").strip())
 
-        # Extract out of scope
-        in_oos_section = False
-        for line in lines:
-            line_strip = line.strip()
-            if re.search(r"(?i)out\s+of\s+scope|not\s+in\s+scope", line_strip):
-                in_oos_section = True
-                continue
-
-            if line_strip.startswith("#") and in_oos_section:
-                in_oos_section = False
-
-            if in_oos_section and (line_strip.startswith("-") or line_strip.startswith("*")):
-                result["out_of_scope"].append(line_strip.lstrip("-*").strip())
-
-        # Extract dependencies
-        dep_pattern = r"(?i)depends?\s+on|requires?|integration\s+with"
-        for line in lines:
-            if re.search(dep_pattern, line):
-                result["dependencies"].append(line.strip())
-
+        print(f"[Ingest Parser] Regex fallback: {len(result['stories'])} stories (may be incomplete)")
         return result
 
     def _llm_extract(self, content: str) -> dict[str, Any] | None:
-        """Use Claude LLM to extract structured requirements from any prose format.
+        """Use Claude LLM to extract structured requirements from plain English business documents.
 
-        Works with: bullet lists, formal user stories, prose paragraphs,
-        Confluence code blocks, tables, etc.
+        Handles:
+        - Plain English descriptions ("The system needs to...", "Users should be able to...")
+        - Bullet lists without formal structure
+        - Prose paragraphs explaining business needs
+        - Confluence pages, Word docs, meeting notes
+        - Any informal business language
         """
-        system_prompt = """You are a Business Analyst extracting structured requirements from a BRD document.
+        system_prompt = """You are a Senior Business Analyst converting plain English business requirements into structured, development-ready user stories.
 
-The document may contain:
-- Bullet lists of features ("Customer can freeze card", "Agent can view freeze history")
-- Prose descriptions ("The system should allow customers to...")
-- Tables with requirements
-- Mixed informal formats
+**INPUT**: Business users write requirements in natural language:
+- "The system needs to allow customers to freeze their cards"
+- "We want agents to see a history of all card freezes"
+- "Users should be able to unfreeze cards they previously froze"
+- Prose paragraphs, bullet points, meeting notes, informal descriptions
 
-Your job: Convert ALL functional requirements into structured user stories.
+**YOUR JOB**: Convert ALL business requirements into structured user stories that developers can implement.
 
-For EACH requirement, create a separate user story with:
-- as_a (who) - infer persona from context (Customer, Agent, Admin, System, etc.)
-- i_want (what) - the specific action/capability (be precise and atomic)
-- so_that (why) - business value (infer from business goal if not stated)
-- acceptance_criteria (optional) - per-story testable conditions if mentioned
+**EXTRACTION RULES**:
+1. **Identify Personas** - Infer who benefits from each feature:
+   - Customer, User, End User (external users)
+   - Admin, Administrator (internal power users)
+   - Support Agent, Call Center Agent (support staff)
+   - System, Application (automated processes)
 
-IMPORTANT:
-- Create ONE story per distinct feature/capability
-- If document says "Customer can freeze card and unfreeze card", create TWO stories
-- Keep stories atomic and testable
-- Infer reasonable personas if not explicit (Customer, Admin, Support Agent, etc.)
-- Put document-level ACs in the top-level "acceptance_criteria" field
+2. **Extract Capabilities** - Each distinct action = ONE story:
+   - "freeze card" → one story
+   - "unfreeze card" → separate story
+   - "view freeze history" → separate story
 
-Return ONLY valid JSON (no markdown, no commentary):
+3. **Infer Business Value** - Why does the persona need this?
+   - Security: "prevent fraud", "protect account"
+   - Efficiency: "save time", "reduce manual work"
+   - Compliance: "meet regulations", "audit trail"
+   - Usability: "improve experience", "self-service"
+
+4. **Extract Non-Functionals** (NFR):
+   - Performance: response time, throughput, concurrency
+   - Security: authentication, authorization, encryption
+   - Compliance: GDPR, PCI-DSS, SOX, audit requirements
+   - Scalability: user load, data volume
+
+5. **Identify Out of Scope** - Explicitly mentioned exclusions
+
+6. **Extract Dependencies** - Services, APIs, systems mentioned
+
+**OUTPUT FORMAT** (JSON only, no markdown):
 {
-  "epic": "Overall feature title from document",
+  "epic": "High-level feature name (extract from title or infer from context)",
   "stories": [
     {
       "as_a": "Customer",
-      "i_want": "freeze my debit card instantly via mobile app",
-      "so_that": "I can prevent fraudulent transactions immediately",
-      "acceptance_criteria": ["Card status updates to FROZEN within 2 seconds", "Push notification sent on successful freeze"]
+      "i_want": "freeze my debit card instantly from the mobile app",
+      "so_that": "I can immediately prevent unauthorized transactions if my card is lost",
+      "acceptance_criteria": ["Card status changes to FROZEN within 2 seconds", "SMS confirmation sent to registered mobile"]
     },
     {
-      "as_a": "Customer",
-      "i_want": "unfreeze my previously frozen card",
-      "so_that": "I can resume normal card usage",
-      "acceptance_criteria": ["Card status updates to ACTIVE", "Unfreeze requires authentication"]
+      "as_a": "Support Agent",
+      "i_want": "view the complete freeze/unfreeze history for a customer's card",
+      "so_that": "I can answer customer queries about past card activity"
     }
   ],
-  "acceptance_criteria": ["All operations must be audited", "System must handle 1000 concurrent users"],
-  "nfr": ["Performance: API response time < 500ms", "Security: All endpoints require OAuth2"],
-  "out_of_scope": ["Credit card freeze", "Physical card replacement"],
-  "dependencies": ["Card Management Service v2.1", "Notification Service"]
+  "acceptance_criteria": ["All card state changes must be audited with timestamp and user ID", "System must support 10,000 concurrent freeze requests"],
+  "nfr": ["Performance: Freeze/unfreeze API must respond within 500ms p95", "Security: All operations require OAuth2 authentication", "Audit: All transactions logged to immutable audit store"],
+  "out_of_scope": ["Credit card freeze (only debit cards in scope)", "Physical card replacement process"],
+  "dependencies": ["Card Management Service v2", "Customer Notification Service", "Audit Logging Service"]
 }
 
-If no requirements found, return: {"epic": "", "stories": [], "acceptance_criteria": [], "nfr": [], "out_of_scope": [], "dependencies": []}"""
+**IMPORTANT**:
+- Be generous in extraction - if business need is implied, include it
+- Keep stories small and testable (one capability per story)
+- Infer reasonable acceptance criteria even if not explicitly stated
+- Extract ALL mentioned requirements - don't skip anything
+- If unsure about persona, default to "User"
+- Return empty arrays for missing sections (don't omit them)"""
 
         user_prompt = f"""Extract structured requirements from this document:
 
@@ -400,6 +399,227 @@ Return only the JSON object."""
         text = re.sub(r"\s+", " ", text)
         return text.strip()
 
+    def _analyze_codebase(self, parsed: dict[str, Any]) -> dict[str, Any]:
+        """
+        Analyze the current codebase to understand:
+        - Existing architecture and patterns
+        - Similar features that exist
+        - Integration points and impacts
+        - Technical risks and challenges
+
+        Returns codebase analysis summary
+        """
+        print("[Codebase Analysis] Scanning repository structure...")
+
+        analysis = {
+            "architecture_summary": "",
+            "similar_features": [],
+            "integration_points": [],
+            "potential_impacts": [],
+            "technical_risks": [],
+            "recommended_approach": "",
+        }
+
+        # Scan codebase structure
+        codebase_context = self._scan_codebase_structure()
+
+        # Use LLM to analyze if available
+        if self.llm.is_live and codebase_context:
+            print(f"[Codebase Analysis] Analyzing with {self.llm.backend}...")
+            llm_analysis = self._llm_analyze_codebase(parsed, codebase_context)
+            if llm_analysis:
+                analysis = llm_analysis
+                print(f"[Codebase Analysis] ✓ Found {len(analysis.get('integration_points', []))} integration points")
+            else:
+                print("[Codebase Analysis] LLM analysis unavailable, using structural scan only")
+                analysis["architecture_summary"] = f"Repository structure: {codebase_context['summary']}"
+        else:
+            print("[Codebase Analysis] LLM unavailable, using basic structural analysis")
+            analysis["architecture_summary"] = f"Repository structure: {codebase_context.get('summary', 'Not analyzed')}"
+
+        return analysis
+
+    def _scan_codebase_structure(self) -> dict[str, Any]:
+        """Scan repository to understand structure and key files."""
+        structure = {
+            "summary": "",
+            "key_files": [],
+            "technologies": set(),
+            "patterns": [],
+        }
+
+        # Common source directories to scan
+        scan_dirs = ["src", "sdlc_agent", "app", "lib", "api", "services"]
+
+        for dir_name in scan_dirs:
+            scan_path = self.root_dir / dir_name
+            if scan_path.exists():
+                # Scan Python files
+                py_files = list(scan_path.rglob("*.py"))
+                if py_files:
+                    structure["technologies"].add("Python")
+                    structure["key_files"].extend([str(f.relative_to(self.root_dir)) for f in py_files[:20]])
+
+                # Scan TypeScript/JavaScript
+                ts_files = list(scan_path.rglob("*.ts")) + list(scan_path.rglob("*.tsx"))
+                if ts_files:
+                    structure["technologies"].add("TypeScript")
+                    structure["key_files"].extend([str(f.relative_to(self.root_dir)) for f in ts_files[:20]])
+
+                js_files = list(scan_path.rglob("*.js")) + list(scan_path.rglob("*.jsx"))
+                if js_files:
+                    structure["technologies"].add("JavaScript")
+
+        # Check for common framework indicators
+        if (self.root_dir / "package.json").exists():
+            structure["patterns"].append("Node.js project")
+        if (self.root_dir / "requirements.txt").exists() or (self.root_dir / "pyproject.toml").exists():
+            structure["patterns"].append("Python project")
+        if (self.root_dir / "manage.py").exists():
+            structure["patterns"].append("Django project")
+        if any(Path(self.root_dir).glob("**/flask*")):
+            structure["patterns"].append("Flask project")
+
+        structure["summary"] = f"{', '.join(structure['technologies'])} project with {len(structure['key_files'])} source files"
+        return structure
+
+    def _llm_analyze_codebase(self, parsed: dict[str, Any], codebase_context: dict[str, Any]) -> dict[str, Any] | None:
+        """Use LLM to analyze compatibility between requirements and existing codebase."""
+
+        # Read sample files for context (limit to avoid token overflow)
+        sample_files_content = []
+        for file_path in codebase_context.get("key_files", [])[:10]:
+            try:
+                full_path = self.root_dir / file_path
+                if full_path.exists():
+                    content = full_path.read_text(encoding="utf-8")
+                    # Include first 500 chars of each file
+                    sample_files_content.append(f"### {file_path}\n{content[:500]}...")
+            except Exception:
+                continue
+
+        system_prompt = """You are a Technical Architect analyzing how new requirements will integrate with an existing codebase.
+
+Analyze:
+1. **Architecture** - Current tech stack and patterns
+2. **Similar Features** - Existing functionality that's similar to new requirements
+3. **Integration Points** - Where new features will touch existing code
+4. **Potential Impacts** - Files/modules that will need changes
+5. **Technical Risks** - Complexity, breaking changes, migration challenges
+6. **Recommended Approach** - Implementation strategy
+
+Return ONLY valid JSON:
+{
+  "architecture_summary": "Brief description of current architecture",
+  "similar_features": ["Feature X in module Y", "Feature Z in service W"],
+  "integration_points": ["API endpoint /api/cards", "Database table card_status", "Service CardManagementService"],
+  "potential_impacts": ["card_service.py will need new freeze/unfreeze methods", "Database migration for freeze_timestamp column"],
+  "technical_risks": ["Breaking change to Card API contract", "Need backward compatibility for existing clients"],
+  "recommended_approach": "Extend existing CardService with freeze/unfreeze methods. Add new status field to cards table with migration."
+}"""
+
+        requirements_summary = f"""Epic: {parsed.get('epic', 'N/A')}
+
+User Stories:
+{json.dumps(parsed.get('stories', [])[:5], indent=2)}
+
+Dependencies: {', '.join(parsed.get('dependencies', []))}
+
+NFRs: {', '.join(parsed.get('nfr', []))}"""
+
+        codebase_summary = f"""Tech Stack: {codebase_context.get('summary', 'Unknown')}
+
+Patterns: {', '.join(codebase_context.get('patterns', []))}
+
+Sample Files:
+{''.join(sample_files_content[:3000])}"""
+
+        user_prompt = f"""Analyze how these requirements integrate with the existing codebase:
+
+## New Requirements
+{requirements_summary}
+
+## Current Codebase
+{codebase_summary}
+
+Return only the JSON analysis object."""
+
+        try:
+            result = self.llm.complete_json(
+                system=system_prompt,
+                user=user_prompt,
+                max_tokens=2048,
+                temperature=0.2,
+            )
+
+            if result and isinstance(result, dict):
+                return {
+                    "architecture_summary": str(result.get("architecture_summary", "")),
+                    "similar_features": [str(f) for f in (result.get("similar_features") or [])],
+                    "integration_points": [str(i) for i in (result.get("integration_points") or [])],
+                    "potential_impacts": [str(p) for p in (result.get("potential_impacts") or [])],
+                    "technical_risks": [str(r) for r in (result.get("technical_risks") or [])],
+                    "recommended_approach": str(result.get("recommended_approach", "")),
+                }
+        except Exception as e:
+            print(f"[Codebase Analysis] LLM analysis failed: {e}")
+
+        return None
+
+    def _identify_gaps_with_context(
+        self, parsed: dict[str, Any], codebase_analysis: dict[str, Any]
+    ) -> list[str]:
+        """
+        Generate contextual questions combining requirement gaps AND codebase insights.
+
+        This produces smarter questions that consider both:
+        - Missing/vague requirements
+        - Integration challenges discovered in codebase analysis
+        """
+        questions = []
+        q_num = 1
+
+        # Start with basic requirement gaps
+        basic_gaps = self._identify_gaps(parsed)
+        questions.extend(basic_gaps)
+        q_num = len(questions) + 1
+
+        # Add codebase-specific questions
+        if codebase_analysis.get("technical_risks"):
+            questions.append(
+                f"Q{q_num}. [Integration Risk] — Analysis found potential risks: "
+                f"{'; '.join(codebase_analysis['technical_risks'][:2])}. "
+                "How should we mitigate these?"
+            )
+            q_num += 1
+
+        if codebase_analysis.get("similar_features"):
+            questions.append(
+                f"Q{q_num}. [Existing Features] — Similar features exist: "
+                f"{'; '.join(codebase_analysis['similar_features'][:2])}. "
+                "Should new features reuse/extend these or be built separately?"
+            )
+            q_num += 1
+
+        if codebase_analysis.get("potential_impacts"):
+            questions.append(
+                f"Q{q_num}. [Breaking Changes] — {len(codebase_analysis['potential_impacts'])} files may be impacted. "
+                "Do we need a migration strategy for existing users?"
+            )
+            q_num += 1
+
+        # Ask about integration points if discovered
+        integration_points = codebase_analysis.get("integration_points", [])
+        if integration_points:
+            questions.append(
+                f"Q{q_num}. [Integration] — New features will integrate with: "
+                f"{', '.join(integration_points[:3])}. "
+                "Are these the correct integration points, or should we use different services/APIs?"
+            )
+            q_num += 1
+
+        return questions
+
     def _identify_gaps(self, parsed: dict[str, Any]) -> list[str]:
         """
         Identify gaps and ambiguities in requirements.
@@ -443,9 +663,14 @@ Return only the JSON object."""
 
         return questions
 
-    def _create_state(self, source: str, parsed: dict[str, Any]) -> dict[str, Any]:
-        """Create state object matching skill's expected format."""
-        return {
+    def _create_state(
+        self,
+        source: str,
+        parsed: dict[str, Any],
+        codebase_analysis: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Create state object with requirements and codebase analysis."""
+        state = {
             "stage": "ingest",
             "source": source,
             "epic": parsed["epic"],
@@ -458,6 +683,12 @@ Return only the JSON object."""
             "answered_questions": [],
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
+        # Include codebase analysis if available
+        if codebase_analysis:
+            state["codebase_analysis"] = codebase_analysis
+
+        return state
 
     def _save_state(self, state: dict[str, Any]) -> None:
         """Save state to .claude/sdlc-state.json"""

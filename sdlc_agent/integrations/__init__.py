@@ -5,13 +5,13 @@ exercised end-to-end without credentials. Swap any class for a real client
 without changing the stage code — the stage modules only depend on the
 public methods defined here.
 """
-from .anthropic_client import MockClaudeClient
+from .anthropic_client import ClaudeClient
 from .confluence_client import ConfluenceClient, MockConfluenceClient, fetch_confluence_page
 from .github_client import MockGitHubClient
 from .jira_client import MockJiraClient, JiraClient
 
 __all__ = [
-    "MockClaudeClient",
+    "ClaudeClient",
     "ConfluenceClient",
     "MockConfluenceClient",
     "fetch_confluence_page",

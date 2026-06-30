@@ -577,7 +577,7 @@ def record_llm_usage(
             cache_creation_tokens=getattr(usage, "cache_creation_input_tokens", 0),
             cache_read_tokens=getattr(usage, "cache_read_input_tokens", 0),
         )
-    # Handle dict-based usage (from MockClaudeClient.last_token_usage)
+    # Handle dict-based usage (from ClaudeClient.last_token_usage)
     elif isinstance(response, dict) and "input_tokens" in response:
         span_context.set_token_usage(
             input_tokens=response.get("input_tokens", 0),

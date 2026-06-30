@@ -14,7 +14,7 @@ import ast
 import logging
 import re
 
-from ..integrations import MockClaudeClient, MockGitHubClient
+from ..integrations import ClaudeClient, MockGitHubClient
 from ..core.models import (
     CodeFile,
     PullRequest,
@@ -78,9 +78,9 @@ def run(
     backlog: StoryBacklog,
     *,
     github: MockGitHubClient | None = None,
-    claude: MockClaudeClient | None = None,
+    claude: ClaudeClient | None = None,
 ) -> TestSuite:
-    claude = claude or MockClaudeClient()
+    claude = claude or ClaudeClient()
     claude.complete("stage5_tests", {"stories": len(backlog.stories)})
 
     module_slug = _slug(backlog.brief_title)

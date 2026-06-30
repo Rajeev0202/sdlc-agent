@@ -276,8 +276,8 @@ system = (
 
 ### Check What Backend is Active
 ```bash
-python -c "from sdlc_agent.integrations.anthropic_client import MockClaudeClient; \
-  llm = MockClaudeClient(); \
+python -c "from sdlc_agent.integrations.anthropic_client import ClaudeClient; \
+  llm = ClaudeClient(); \
   print(f'Backend: {llm.backend}, Live: {llm.is_live}')"
 ```
 

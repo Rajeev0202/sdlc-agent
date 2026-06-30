@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from ..integrations.anthropic_client import MockClaudeClient
+from ..integrations.anthropic_client import ClaudeClient
 from ..core.models import RequirementBrief, StoryBacklog, UserStory
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class PlanSkillAutomation:
     def __init__(self, root_dir: Path):
         self.root_dir = root_dir
         self.state_file = root_dir / ".claude" / "sdlc-state.json"
-        self.llm = MockClaudeClient()
+        self.llm = ClaudeClient()
         self.jira = self._init_jira_client()
         logger.info(f"PlanSkillAutomation initialized with backend: {self.llm.backend}")
         logger.info(f"Jira client: {type(self.jira).__name__}")
