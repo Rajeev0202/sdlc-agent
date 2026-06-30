@@ -14,8 +14,10 @@ from pathlib import Path
 from typing import Any
 
 from ..integrations.anthropic_client import ClaudeClient
+from ..integrations import GitOperations, GitHubRestClient
 from ..core.models import StoryBacklog, PullRequest, CodeFile
 from ..guardrails import CodeQualityGuardrails, format_guardrail_report
+from ..core.github_config import should_use_real_github
 from ..core.code_layout import (
     get_implementation_path,
     get_test_path,
@@ -43,8 +45,14 @@ class BuildSkillAutomation:
         # Initialize guardrails for code quality validation
         self.guardrails = CodeQualityGuardrails(strict_mode=True) if enable_guardrails else None
         self._guardrail_rejections = 0  # Track how many times guardrails reject code
+        # Initialize git operations for committing code
+        self.git_ops = GitOperations()
+        # Initialize GitHub client if token is available
+        self.use_real_github = should_use_real_github()
+        self.github = GitHubRestClient() if self.use_real_github else None
         logger.info(f"BuildSkillAutomation initialized with backend: {self.llm.backend}, "
-                   f"guardrails: {'enabled' if enable_guardrails else 'disabled'}")
+                   f"guardrails: {'enabled' if enable_guardrails else 'disabled'}, "
+                   f"github: {'real' if self.use_real_github else 'mock'}")
 
     def run(self, backlog: StoryBacklog, inject_defect: bool = False) -> PullRequest:
         """
@@ -63,10 +71,18 @@ class BuildSkillAutomation:
         # Step 1: Generate code files for each story
         code_files = self._generate_code_files(backlog, inject_defect)
 
-        # Step 2: Create pull request model
-        pr = self._create_pull_request(backlog, code_files)
+        # Step 2: Commit files to git (ALWAYS, even without GitHub token)
+        branch_name = f"feature/{backlog.brief_title.lower().replace(' ', '-')}"
+        self._commit_files_to_git(code_files, backlog, branch_name)
 
-        # Step 3: Update state
+        # Step 3: Create pull request model
+        pr = self._create_pull_request(backlog, code_files, branch_name)
+
+        # Step 4: Create real GitHub PR if token is available
+        if self.github:
+            pr = self._create_github_pr(pr)
+
+        # Step 5: Update state
         self._update_state(pr)
 
         logger.info(f"Generated {len(code_files)} code files for PR #{pr.number}")
@@ -735,13 +751,64 @@ class Test{class_name}:
             language=code_file.language,
         )
 
+    def _commit_files_to_git(
+        self, files: list[CodeFile], backlog: StoryBacklog, branch_name: str
+    ) -> None:
+        """Commit generated files to git."""
+        print(f"\n[Stage 3] 📝 Committing files to git...", flush=True)
+
+        try:
+            # Create branch
+            self.git_ops.create_branch(branch_name)
+            logger.info(f"Created branch: {branch_name}")
+            print(f"[Stage 3] ✅ Created branch: {branch_name}", flush=True)
+        except Exception as exc:
+            logger.warning(f"Could not create branch (may already exist): {exc}")
+            print(f"[Stage 3] ⚠️  Using existing branch or current location", flush=True)
+
+        # Write files to disk
+        written_paths = self.git_ops.write_files(files)
+        logger.info(f"Wrote {len(written_paths)} files to disk")
+        print(f"[Stage 3] ✅ Wrote {len(written_paths)} files to disk", flush=True)
+
+        # Stage files
+        self.git_ops.stage_files(written_paths)
+        logger.info(f"Staged {len(written_paths)} files")
+
+        # Check if there are actually changes to commit
+        if not self.git_ops.has_uncommitted_changes():
+            print(f"[Stage 3] ℹ️  No changes to commit (files may be identical)", flush=True)
+            return
+
+        # Commit changes
+        commit_message = f"feat: {backlog.brief_title}"
+        try:
+            commit_sha = self.git_ops.commit_changes(commit_message, backlog)
+            logger.info(f"Committed changes: {commit_sha[:8]}")
+            print(f"[Stage 3] ✅ Committed: {commit_sha[:8]}", flush=True)
+        except Exception as exc:
+            logger.error(f"Failed to commit changes: {exc}")
+            print(f"[Stage 3] ❌ Failed to commit: {exc}", flush=True)
+            raise
+
+        # Push to remote (only if using real GitHub)
+        if self.github:
+            try:
+                self.git_ops.push_branch(branch_name)
+                logger.info(f"Pushed branch {branch_name} to remote")
+                print(f"[Stage 3] ✅ Pushed branch to GitHub", flush=True)
+            except Exception as exc:
+                logger.warning(f"Failed to push branch: {exc}")
+                print(f"[Stage 3] ⚠️  Failed to push (branch may already exist on remote)", flush=True)
+        else:
+            print(f"[Stage 3] ℹ️  Branch not pushed (GITHUB_TOKEN not set)", flush=True)
+
     def _create_pull_request(
-        self, backlog: StoryBacklog, files: list[CodeFile]
+        self, backlog: StoryBacklog, files: list[CodeFile], branch_name: str
     ) -> PullRequest:
         """Create pull request model."""
-        # Generate PR number and branch name
+        # Generate PR number
         pr_number = self._get_next_pr_number()
-        branch_name = f"feature/{backlog.brief_title.lower().replace(' ', '-')}"
 
         # Build PR title and description
         title = f"feat: {backlog.brief_title}"
@@ -761,6 +828,29 @@ class Test{class_name}:
         pr.__dict__["_generation_backend"] = "sdlc-build"
 
         return pr
+
+    def _create_github_pr(self, pr: PullRequest) -> PullRequest:
+        """Create actual GitHub PR if token is available."""
+        if not self.github:
+            return pr
+
+        print(f"\n[Stage 3] 🚀 Creating GitHub PR...", flush=True)
+        try:
+            github_pr = self.github.open_pull_request(
+                branch=pr.branch,
+                title=pr.title,
+                body=pr.body,
+                files=pr.files,
+                story_ids=pr.story_ids,
+            )
+            print(f"[Stage 3] ✅ GitHub PR created: #{github_pr.number}", flush=True)
+            logger.info(f"Created GitHub PR: #{github_pr.number}")
+            return github_pr
+        except Exception as exc:
+            logger.error(f"Failed to create GitHub PR: {exc}")
+            print(f"[Stage 3] ⚠️  Failed to create GitHub PR: {exc}", flush=True)
+            # Return the local PR model
+            return pr
 
     def _build_pr_description(self, backlog: StoryBacklog) -> str:
         """Build PR description from backlog."""

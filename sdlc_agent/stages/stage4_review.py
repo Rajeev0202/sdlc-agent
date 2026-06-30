@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import re
 
-from ..integrations import ClaudeClient
+from ..integrations import ClaudeClient, GitHubRestClient
 from ..core.models import PullRequest, ReviewFinding, ReviewReport, Severity
 
 logger = logging.getLogger(__name__)
@@ -80,6 +80,8 @@ def run(
     pr: PullRequest,
     *,
     claude: ClaudeClient | None = None,
+    github: GitHubRestClient | None = None,
+    post_comments: bool = False,
 ) -> ReviewReport:
     claude = claude or ClaudeClient()
     claude.complete("stage4_review", {"pr": pr.number, "files": len(pr.files)})
@@ -87,16 +89,30 @@ def run(
     backend = getattr(claude, "backend", "stub")
     is_live = getattr(claude, "is_live", False)
     logger.info("Stage 4 starting (backend=%s, is_live=%s)", backend, is_live)
+
+    # For real GitHub PRs, fetch the actual files from GitHub
+    files_to_review = pr.files
+    if github is not None and isinstance(github, GitHubRestClient):
+        logger.info("Fetching actual files from GitHub PR #%d", pr.number)
+        github_files = github.get_pr_files(pr.number)
+        if github_files:
+            files_to_review = github_files
+            logger.info("Using %d files from GitHub PR", len(files_to_review))
+        else:
+            logger.warning("Could not fetch files from GitHub, using PR object files")
+
     print(f"\n{'='*70}")
     print(f"🔍 Stage 4: Code Review Started")
     print(f"{'='*70}")
     print(f"PR Number: #{pr.number}")
-    print(f"Files to review: {len(pr.files)}")
+    print(f"Files to review: {len(files_to_review)}")
     print(f"Review backend: {backend} {'(Live LLM)' if is_live else '(Rules-based)'}")
+    if github is not None:
+        print(f"Review source: {'GitHub PR' if isinstance(github, GitHubRestClient) else 'Local files'}")
     print(f"{'='*70}\n")
 
     findings: list[ReviewFinding] = []
-    for f in pr.files:
+    for f in files_to_review:
         print(f"📄 Reviewing: {f.path} ({len(f.contents.splitlines())} lines)")
         file_findings = _scan_file(f.path, f.contents)
         if file_findings:
@@ -119,7 +135,17 @@ def run(
 
     # Layer an LLM review on top of the deterministic regex pass.
     print(f"\n🤖 LLM Review:")
-    llm_findings = _review_with_llm(pr, claude) if is_live else None
+    # Create a temporary PR object with the actual files for LLM review
+    pr_for_review = PullRequest(
+        number=pr.number,
+        branch=pr.branch,
+        title=pr.title,
+        body=pr.body,
+        files=list(files_to_review),  # Use actual fetched files
+        story_ids=pr.story_ids,
+        state=pr.state,
+    )
+    llm_findings = _review_with_llm(pr_for_review, claude) if is_live else None
     review_source = "rules"
     if llm_findings is not None:
         findings.extend(llm_findings)
@@ -182,6 +208,17 @@ def run(
     report = ReviewReport(pr_number=pr.number, findings=findings, verdict=verdict)
     report.__dict__["_review_source"] = review_source
     report.__dict__["_review_backend"] = backend
+
+    # Post review comments to GitHub if requested
+    if post_comments and github is not None:
+        print(f"\n📝 Posting review comments to GitHub PR #{pr.number}...")
+        try:
+            github.post_review_comments(pr.number, report)
+            print(f"✅ Successfully posted {len(findings)} review comments")
+        except Exception as exc:
+            logger.warning("Failed to post review comments: %s", exc)
+            print(f"⚠️  Failed to post review comments: {exc}")
+
     return report
 
 

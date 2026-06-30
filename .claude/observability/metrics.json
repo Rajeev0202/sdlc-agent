@@ -1,127 +1,28 @@
 {
   "totals": {
-    "tool_calls": 506,
-    "errors": 172,
-    "error_rate_pct": 33.99,
-    "agents_stopped": 46,
-    "total_input_tokens": 3046,
-    "total_output_tokens": 974,
-    "total_cache_creation_tokens": 200,
-    "total_cache_read_tokens": 2400,
-    "total_tokens": 4220
+    "agents_stopped": 2,
+    "tool_calls": 2,
+    "errors": 1,
+    "error_rate_pct": 50
   },
   "by_stage": {
-    "ingest": {
-      "tool_calls": 41,
-      "errors": 18,
-      "error_rate_pct": 43.9,
-      "total_duration_ms": 51554,
-      "avg_tool_duration_ms": 1257,
-      "runs": 6,
-      "last_wall_ms": 908909
-    },
     "plan": {
-      "tool_calls": 104,
-      "errors": 53,
-      "error_rate_pct": 50.96,
-      "total_duration_ms": 350747,
-      "avg_tool_duration_ms": 3373,
-      "runs": 13,
-      "last_wall_ms": 1508260
-    },
-    "review": {
-      "tool_calls": 99,
-      "errors": 35,
-      "error_rate_pct": 35.35,
-      "total_duration_ms": 5934907,
-      "avg_tool_duration_ms": 59949,
-      "runs": 8,
-      "total_tokens": 4220,
-      "input_tokens": 3046,
-      "output_tokens": 974,
-      "last_wall_ms": 2494202
-    },
-    "init": {
-      "tool_calls": 69,
-      "errors": 19,
-      "error_rate_pct": 27.54,
-      "total_duration_ms": 246290,
-      "avg_tool_duration_ms": 3569,
-      "runs": 19,
-      "last_wall_ms": 22022298
+      "runs": 2,
+      "last_wall_ms": 719947770,
+      "tool_calls": 2,
+      "errors": 1,
+      "error_rate_pct": 50,
+      "total_duration_ms": 1056,
+      "avg_tool_duration_ms": 528
     }
   },
+  "last_updated": "2026-06-30T15:43:50.318Z",
   "by_tool": {
-    "Glob": {
-      "calls": 27,
-      "errors": 0,
-      "total_duration_ms": 22309,
-      "avg_duration_ms": 826
-    },
     "Read": {
-      "calls": 125,
-      "errors": 58,
-      "total_duration_ms": 418561,
-      "avg_duration_ms": 3348
-    },
-    "Write": {
-      "calls": 53,
-      "errors": 28,
-      "total_duration_ms": 4217278,
-      "avg_duration_ms": 79571
-    },
-    "Edit": {
-      "calls": 114,
-      "errors": 74,
-      "total_duration_ms": 5864699,
-      "avg_duration_ms": 51445
-    },
-    "Bash": {
-      "calls": 100,
-      "errors": 8,
-      "total_duration_ms": 1042795,
-      "avg_duration_ms": 10428
-    },
-    "Grep": {
-      "calls": 55,
-      "errors": 2,
-      "total_duration_ms": 58436,
-      "avg_duration_ms": 1062
-    },
-    "claude_complete": {
-      "calls": 3,
-      "avg_duration_ms": 23421.33
-    },
-    "claude_code_review": {
-      "calls": 3,
-      "errors": 2,
-      "avg_duration_ms": 60070.67
-    },
-    "test_llm_call": {
       "calls": 2,
-      "avg_duration_ms": 100,
-      "total_tokens": 4220,
-      "input_tokens": 3046,
-      "output_tokens": 974
-    },
-    "PowerShell": {
-      "calls": 20,
-      "errors": 0,
-      "total_duration_ms": 169180,
-      "avg_duration_ms": 8459
-    },
-    "ToolSearch": {
-      "calls": 3,
-      "errors": 0,
-      "total_duration_ms": 1674,
-      "avg_duration_ms": 558
-    },
-    "AskUserQuestion": {
-      "calls": 1,
-      "errors": 0,
-      "total_duration_ms": 6747,
-      "avg_duration_ms": 6747
+      "errors": 1,
+      "total_duration_ms": 1056,
+      "avg_duration_ms": 528
     }
-  },
-  "last_updated": "2026-06-22T08:16:19.429Z"
+  }
 }

@@ -1,21 +1,21 @@
 """
-Tests for US-001: display my name and tagline in a banner section
+Tests for US-008: experience fast page load and accessible content
 
 This file follows TDD approach - tests written first.
 """
 import pytest
-from src.us_001 import US001Feature
+from src.us_008 import US008Feature
 
 
-class TestUS001Feature:
-    """Test suite for US001Feature."""
+class TestUS008Feature:
+    """Test suite for US008Feature."""
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.instance = US001Feature()
+        self.instance = US008Feature()
 
     def test_initialization(self):
-        """Test that US001Feature initializes correctly."""
+        """Test that US008Feature initializes correctly."""
         assert self.instance.initialized is True
 
     def test_execute_returns_success(self):
@@ -27,33 +27,33 @@ class TestUS001Feature:
         """Test validation passes for valid implementation."""
         assert self.instance.validate() is True
 
-    def test_ac1_given_a_visitor_loads(self):
+    def test_ac1_given_the_page_loads(self):
         """
-        AC1: Given a visitor loads the portfolio page, when the page renders, then a banner section appears at the top
+        AC1: Given the page loads, when performance is measured, then total page load time is within 2 seconds on standard broadband
         """
         # TODO: Implement test for acceptance criterion 1
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac2_given_the_banner_section(self):
+    def test_ac2_given_the_banner_loads(self):
         """
-        AC2: Given the banner section is rendered, when viewed, then it displays the portfolio owner's name prominently
+        AC2: Given the banner loads, when timing is measured, then it appears within 500ms
         """
         # TODO: Implement test for acceptance criterion 2
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac3_given_the_banner_section(self):
+    def test_ac3_given_the_page_is(self):
         """
-        AC3: Given the banner section is rendered, when viewed, then it displays a professional tagline below the name
+        AC3: Given the page is rendered, when accessibility is tested, then semantic HTML elements are used throughout
         """
         # TODO: Implement test for acceptance criterion 3
         result = self.instance.execute()
         assert result["success"] is True
 
-    def test_ac4_given_the_page_loads(self):
+    def test_ac4_given_the_page_structure(self):
         """
-        AC4: Given the page loads, when measured, then the banner section appears within 500ms
+        AC4: Given the page structure exists, when tested, then proper heading hierarchy (h1, h2, h3) is maintained for WCAG 2.1 Level A compliance
         """
         # TODO: Implement test for acceptance criterion 4
         result = self.instance.execute()

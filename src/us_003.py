@@ -1,8 +1,8 @@
 """
-Implementation for US-003: audit every freeze and unfreeze event for the last 24 months
+Implementation for US-003: showcase my completed projects in a projects section
 
-Persona: Customer
-Goal: Instant Card Freeze/Unfreeze
+Persona: Portfolio Owner
+Goal: visitors can see examples of my work
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US003Feature:
-    """Implementation of audit every freeze and unfreeze event for the last 24 months."""
+    """Implementation of showcase my completed projects in a projects section."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,7 +30,9 @@ class US003Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - System should audit every freeze and unfreeze event for the last 24 months
+        - Given a visitor scrolls to projects, when the section loads, then at least 3 projects are displayed
+        - Given a project is displayed, when viewed, then it shows project name, description, and technologies used
+        - Given projects are rendered, when the page loads, then all project content is hardcoded in the application
 
         Args:
             user_id: Authenticated user ID (required for security)

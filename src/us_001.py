@@ -1,8 +1,8 @@
 """
-Implementation for US-001: interact with 💳 Credit Card Management System – Overview
+Implementation for US-001: display my name and tagline in a banner section
 
-Persona: User
-Goal: 💳 Credit Card Management System – Overview
+Persona: Portfolio Owner
+Goal: visitors immediately know whose portfolio they are viewing
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US001Feature:
-    """Implementation of interact with 💳 Credit Card Management System – Overview."""
+    """Implementation of display my name and tagline in a banner section."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,8 +30,10 @@ class US001Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - Placeholder AC - requirements need clarification
-        - Review Stage 1 open questions before proceeding
+        - Given a visitor loads the portfolio page, when the page renders, then a banner section appears at the top
+        - Given the banner section is rendered, when viewed, then it displays the portfolio owner's name prominently
+        - Given the banner section is rendered, when viewed, then it displays a professional tagline below the name
+        - Given the page loads, when measured, then the banner section appears within 500ms
 
         Args:
             user_id: Authenticated user ID (required for security)

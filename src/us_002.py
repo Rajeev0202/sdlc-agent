@@ -1,8 +1,8 @@
 """
-Implementation for US-002: unfreeze my previously frozen debit card after passing step-up authentication
+Implementation for US-002: display my professional bio and skills in an about section
 
-Persona: Customer
-Goal: Instant Card Freeze/Unfreeze
+Persona: Portfolio Owner
+Goal: visitors can learn about my professional background
 """
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class US002Feature:
-    """Implementation of unfreeze my previously frozen debit card after passing step-up authentication."""
+    """Implementation of display my professional bio and skills in an about section."""
 
     def __init__(self, audit_service=None, auth_service=None):
         """
@@ -30,7 +30,9 @@ class US002Feature:
         Execute the main functionality.
 
         Acceptance Criteria:
-        - System should unfreeze my previously frozen debit card after passing step-up authentication
+        - Given a visitor scrolls down, when the about section is visible, then it displays a professional bio
+        - Given the about section is rendered, when viewed, then it includes key skills and technologies
+        - Given the content is hardcoded, when deployed, then no external data source is required
 
         Args:
             user_id: Authenticated user ID (required for security)

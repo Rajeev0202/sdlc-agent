@@ -18,9 +18,11 @@ from ..integrations import (
     ClaudeClient,
     MockConfluenceClient,
     MockGitHubClient,
+    GitHubRestClient,
     MockJiraClient,
     JiraClient,
 )
+from .github_config import should_use_real_github, should_post_review_comments
 from .models import PipelineResult, StoryBacklog
 from ..stages import (
     stage1_requirement,
@@ -45,10 +47,11 @@ class Orchestrator:
         *,
         confluence: MockConfluenceClient | None = None,
         jira: object = None,
-        github: MockGitHubClient | None = None,
+        github: MockGitHubClient | GitHubRestClient | None = None,
         claude: ClaudeClient | None = None,
         max_remediation_attempts: int = 2,
         use_harness: bool = True,
+        use_real_github: bool | None = None,
     ) -> None:
         # Ensure harness is initialized with hooks (if enabled)
         if use_harness:
@@ -69,7 +72,16 @@ class Orchestrator:
             )
         else:
             self.jira = MockJiraClient()
-        self.github = github or MockGitHubClient()
+
+        # Determine GitHub client to use
+        self.use_real_github = use_real_github if use_real_github is not None else should_use_real_github()
+        if github is not None:
+            self.github = github
+        elif self.use_real_github:
+            self.github = GitHubRestClient()
+        else:
+            self.github = MockGitHubClient()
+
         self.claude = claude or ClaudeClient()
         self.max_remediation_attempts = max_remediation_attempts
         self.harness = get_harness() if use_harness else None
@@ -136,6 +148,7 @@ class Orchestrator:
                     github=self.github,
                     claude=self.claude,
                     inject_defect=inject_defect,
+                    use_real_github=self.use_real_github,
                 )
         else:
             pr = stage3_code.run(
@@ -143,14 +156,28 @@ class Orchestrator:
                 github=self.github,
                 claude=self.claude,
                 inject_defect=inject_defect,
+                use_real_github=self.use_real_github,
             )
+
+        post_comments = should_post_review_comments()
+        github_for_review = self.github if isinstance(self.github, GitHubRestClient) else None
 
         if self.harness:
             self.harness.transition_to("review", "Devon")
             with self.harness.tool_span("stage4_review"):
-                review = stage4_review.run(pr, claude=self.claude)
+                review = stage4_review.run(
+                    pr,
+                    claude=self.claude,
+                    github=github_for_review,
+                    post_comments=post_comments,
+                )
         else:
-            review = stage4_review.run(pr, claude=self.claude)
+            review = stage4_review.run(
+                pr,
+                claude=self.claude,
+                github=github_for_review,
+                post_comments=post_comments,
+            )
 
         attempts = 0
         while review.verdict == "fail" and attempts < self.max_remediation_attempts:
@@ -166,17 +193,29 @@ class Orchestrator:
                         github=self.github,
                         claude=self.claude,
                         inject_defect=False,
+                        use_real_github=self.use_real_github,
                     )
                 with self.harness.tool_span(f"stage4_review_retry_{attempts}"):
-                    review = stage4_review.run(pr, claude=self.claude)
+                    review = stage4_review.run(
+                        pr,
+                        claude=self.claude,
+                        github=github_for_review,
+                        post_comments=post_comments,
+                    )
             else:
                 pr = stage3_code.run(
                     backlog,
                     github=self.github,
                     claude=self.claude,
                     inject_defect=False,
+                    use_real_github=self.use_real_github,
                 )
-                review = stage4_review.run(pr, claude=self.claude)
+                review = stage4_review.run(
+                    pr,
+                    claude=self.claude,
+                    github=github_for_review,
+                    post_comments=post_comments,
+                )
 
         # Stage 5
         if self.harness:
